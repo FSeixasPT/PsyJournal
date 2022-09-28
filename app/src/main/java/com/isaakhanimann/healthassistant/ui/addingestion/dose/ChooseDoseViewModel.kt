@@ -11,7 +11,6 @@ import com.isaakhanimann.healthassistant.data.substances.classes.roa.DoseClass
 import com.isaakhanimann.healthassistant.data.substances.classes.roa.RoaDose
 import com.isaakhanimann.healthassistant.data.substances.repositories.SubstanceRepository
 import com.isaakhanimann.healthassistant.ui.main.routers.ADMINISTRATION_ROUTE_KEY
-import com.isaakhanimann.healthassistant.ui.main.routers.EXPERIENCE_ID_KEY
 import com.isaakhanimann.healthassistant.ui.main.routers.SUBSTANCE_NAME_KEY
 import com.isaakhanimann.healthassistant.ui.search.substance.roa.toReadableString
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,7 +23,6 @@ class ChooseDoseViewModel @Inject constructor(
 ) : ViewModel() {
     val substance: Substance
     val administrationRoute: AdministrationRoute
-    val experienceId = state.get<String>(EXPERIENCE_ID_KEY)?.toIntOrNull()
     val roaDose: RoaDose?
     var isEstimate by mutableStateOf(false)
     var doseText by mutableStateOf("")
@@ -41,12 +39,12 @@ class ChooseDoseViewModel @Inject constructor(
     val isPurityValid: Boolean get() = purity != null
     val rawDoseWithUnit: String?
         get() {
-            dose.let { safeDose ->
-                if (safeDose == null) return null
+            dose.let {
+                if (it == null) return null
                 purity.let { safePurity ->
                     if (safePurity == null) return null
                     return String
-                        .format("%.2f", safeDose.div(safePurity).times(100))
+                        .format("%.2f", it.div(safePurity).times(100))
                         .toDouble()
                         .toReadableString() + " ${roaDose?.units ?: ""}"
                 }
