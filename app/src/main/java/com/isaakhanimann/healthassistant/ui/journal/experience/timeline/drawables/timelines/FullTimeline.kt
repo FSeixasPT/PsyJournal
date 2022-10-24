@@ -6,9 +6,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.isaakhanimann.healthassistant.data.substances.classes.roa.RoaDuration
 import com.isaakhanimann.healthassistant.ui.journal.experience.timeline.AllTimelinesModel
 import com.isaakhanimann.healthassistant.ui.journal.experience.timeline.AllTimelinesModel.Companion.shapeAlpha
-import com.isaakhanimann.healthassistant.ui.journal.experience.timeline.drawables.FullDurationRange
 import com.isaakhanimann.healthassistant.ui.journal.experience.timeline.drawables.TimelineDrawable
-import com.isaakhanimann.healthassistant.ui.journal.experience.timeline.drawables.toFullDurationRange
 
 data class FullTimeline(
     val onset: FullDurationRange,
@@ -17,7 +15,7 @@ data class FullTimeline(
     val offset: FullDurationRange,
 ) : TimelineDrawable {
 
-    fun getPeakDurationRangeInSeconds(startDurationInSeconds: Float): ClosedRange<Float> {
+    override fun getPeakDurationRangeInSeconds(startDurationInSeconds: Float): ClosedRange<Float> {
         val startRange =
             startDurationInSeconds + onset.interpolateAtValueInSeconds(0.5f) + comeup.interpolateAtValueInSeconds(
                 0.5f
