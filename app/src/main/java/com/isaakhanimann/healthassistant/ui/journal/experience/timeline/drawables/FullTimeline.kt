@@ -2,10 +2,9 @@ package com.isaakhanimann.healthassistant.ui.journal.experience.timeline.drawabl
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import com.isaakhanimann.healthassistant.data.substances.classes.roa.RoaDuration
+import com.isaakhanimann.healthassistant.ui.journal.experience.timeline.AllTimelinesModel
 import com.isaakhanimann.healthassistant.ui.journal.experience.timeline.AllTimelinesModel.Companion.shapeAlpha
 
 data class FullTimeline(
@@ -32,7 +31,6 @@ data class FullTimeline(
         startX: Float,
         pixelsPerSec: Float,
         color: Color,
-        strokeWidth: Float
     ) {
         drawScope.drawPath(
             path = Path().apply {
@@ -52,10 +50,7 @@ data class FullTimeline(
                 lineTo(x = offsetEndX, y = height)
             },
             color = color,
-            style = Stroke(
-                width = strokeWidth,
-                cap = StrokeCap.Round,
-            )
+            style = AllTimelinesModel.normalStroke
         )
     }
 
