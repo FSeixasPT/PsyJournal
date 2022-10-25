@@ -6,8 +6,6 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.isaakhanimann.healthassistant.data.substances.classes.roa.RoaDuration
 import com.isaakhanimann.healthassistant.ui.journal.experience.timeline.AllTimelinesModel
 import com.isaakhanimann.healthassistant.ui.journal.experience.timeline.drawables.TimelineDrawable
-import com.isaakhanimann.healthassistant.ui.journal.experience.timeline.endSmoothLineTo
-import com.isaakhanimann.healthassistant.ui.journal.experience.timeline.startSmoothLineTo
 
 data class OnsetComeupTotalTimeline(
     val onset: FullDurationRange,
@@ -48,7 +46,7 @@ data class OnsetComeupTotalTimeline(
                 moveTo(x = comeupEndX, y = 0f)
                 val offsetEndX = total.interpolateAtValueInSeconds(weight) * pixelsPerSec
                 startSmoothLineTo(
-                    percentSmoothness = 0.5f,
+                    smoothnessBetween0And1 = 0.5f,
                     startX = comeupEndX,
                     startY = 0f,
                     endX = offsetEndX,
@@ -81,7 +79,7 @@ data class OnsetComeupTotalTimeline(
                 lineTo(x = comeupEndMinX, y = 0f)
                 lineTo(x = comeupEndMaxX, y = 0f)
                 startSmoothLineTo(
-                    percentSmoothness = 0.5f,
+                    smoothnessBetween0And1 = 0.5f,
                     startX = comeupEndMaxX,
                     startY = 0f,
                     endX = offsetEndMaxX,
@@ -89,7 +87,7 @@ data class OnsetComeupTotalTimeline(
                 )
                 lineTo(x = offsetEndMinX, y = height)
                 endSmoothLineTo(
-                    percentSmoothness = 0.5f,
+                    smoothnessBetween0And1 = 0.5f,
                     startX = offsetEndMinX,
                     endX = comeupEndMinX,
                     endY = 0f
