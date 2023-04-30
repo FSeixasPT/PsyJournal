@@ -27,7 +27,7 @@ import java.time.Instant
 data class ShulginRating(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    var time: Instant,
+    var time: Instant?,
     var creationDate: Instant? = Instant.now(),
     var option: ShulginRatingOption,
     var experienceId: Int

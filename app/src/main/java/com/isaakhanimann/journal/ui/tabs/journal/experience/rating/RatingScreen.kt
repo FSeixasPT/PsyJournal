@@ -20,27 +20,11 @@ package com.isaakhanimann.journal.ui.tabs.journal.experience.rating
 
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.isaakhanimann.journal.data.room.experiences.entities.ShulginRatingOption
-import com.isaakhanimann.journal.ui.tabs.journal.addingestion.time.DatePickerButton
-import com.isaakhanimann.journal.ui.tabs.journal.addingestion.time.TimePickerButton
-import com.isaakhanimann.journal.ui.tabs.journal.experience.components.CardWithTitle
 import com.isaakhanimann.journal.ui.theme.JournalTheme
-import com.isaakhanimann.journal.ui.theme.horizontalPadding
-import com.isaakhanimann.journal.ui.utils.getStringOfPattern
 import java.time.LocalDateTime
 
 
@@ -70,113 +54,5 @@ fun RatingScreen(
     onRatingChange: (ShulginRatingOption) -> Unit,
     onDelete: (() -> Unit)? = null
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(title) },
-                actions = {
-                    if (onDelete != null) {
-                        IconButton(
-                            onClick = { onDelete() },
-                        ) {
-                            Icon(
-                                Icons.Default.Delete,
-                                contentDescription = "Delete Rating",
-                            )
-                        }
-                    }
-                }
-            )
-        },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onDone,
-                icon = {
-                    Icon(
-                        Icons.Filled.Done,
-                        contentDescription = "Done Icon"
-                    )
-                },
-                text = { Text("Done") }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .padding(padding)
-                .padding(horizontal = horizontalPadding)
-        ) {
-            Spacer(modifier = Modifier.height(3.dp))
-            CardWithTitle(title = "Time") {
-                Column(
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    DatePickerButton(
-                        localDateTime = selectedTime,
-                        onChange = onTimeChange,
-                        dateString = selectedTime.getStringOfPattern("EEE dd MMM yyyy"),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    TimePickerButton(
-                        localDateTime = selectedTime,
-                        onChange = onTimeChange,
-                        timeString = selectedTime.getStringOfPattern("HH:mm"),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-            CardWithTitle(title = "Shulgin Rating") {
-                val ratings = ShulginRatingOption.values()
-                // Modifier.selectableGroup() is essential to ensure correct accessibility behavior
-                Column(Modifier.selectableGroup()) {
-                    ratings.forEach { oneRating ->
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(56.dp)
-                                .selectable(
-                                    selected = (oneRating == selectedRating),
-                                    onClick = { onRatingChange(oneRating) },
-                                    role = Role.RadioButton
-                                )
-                                .padding(horizontal = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = (oneRating == selectedRating),
-                                onClick = null // null recommended for accessibility with screen readers
-                            )
-                            Text(
-                                text = oneRating.sign,
-                                style = MaterialTheme.typography.titleLarge,
-                                modifier = Modifier.padding(start = 16.dp)
-                            )
-                            Text(
-                                text = oneRating.shortDescription,
-                                style = MaterialTheme.typography.labelSmall,
-                                modifier = Modifier.padding(start = 16.dp)
-                            )
-                        }
-                    }
-                }
-            }
-            CardWithTitle(title = "Longer Explanations") {
-                val ratings = ShulginRatingOption.values()
-                ratings.forEach { oneRating ->
-                    Column(modifier = Modifier.padding(vertical = 5.dp)) {
-                        Text(
-                            text = oneRating.sign,
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        Text(
-                            text = oneRating.longDescription,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-            }
-        }
-    }
+
 }
