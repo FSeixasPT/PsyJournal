@@ -26,13 +26,10 @@ interface TimelineDrawable {
     fun drawTimeLine(
         drawScope: DrawScope,
         height: Float,
-        startX: Float,
         pixelsPerSec: Float,
         color: Color,
         density: Density
     )
 
-    val widthInSeconds: Float
-
-    fun getPeakDurationRangeInSeconds(startDurationInSeconds: Float): ClosedRange<Float>?
+    val endOfLineRelativeToStartInSeconds: Float
 }
