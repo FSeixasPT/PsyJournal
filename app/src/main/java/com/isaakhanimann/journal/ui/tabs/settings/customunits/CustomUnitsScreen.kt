@@ -28,10 +28,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -54,11 +56,13 @@ fun CustomUnitsScreen(
     viewModel: CustomUnitsViewModel = hiltViewModel(),
     navigateToEditCustomUnit: (customUnitId: Int) -> Unit,
     navigateToAddCustomUnit: () -> Unit,
-) {
+    navigateToCustomUnitArchive: () -> Unit,
+    ) {
     CustomUnitsScreenContent(
         customUnits = viewModel.customUnitsFlow.collectAsState().value,
         navigateToEditCustomUnit = navigateToEditCustomUnit,
-        navigateToAddCustomUnit = navigateToAddCustomUnit
+        navigateToAddCustomUnit = navigateToAddCustomUnit,
+        navigateToCustomUnitArchive = navigateToCustomUnitArchive
     )
 }
 
@@ -93,7 +97,8 @@ fun CustomUnitsScreenPreview() {
             ),
         ),
         navigateToEditCustomUnit = { _ -> },
-        navigateToAddCustomUnit = {}
+        navigateToAddCustomUnit = {},
+        navigateToCustomUnitArchive = {}
     )
 }
 
@@ -103,10 +108,17 @@ fun CustomUnitsScreenContent(
     customUnits: List<CustomUnit>,
     navigateToEditCustomUnit: (customUnitId: Int) -> Unit,
     navigateToAddCustomUnit: () -> Unit,
+    navigateToCustomUnitArchive: () -> Unit,
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Custom Units") })
+            TopAppBar(
+                title = { Text("Custom Units") },
+                actions = {
+                    IconButton(onClick = navigateToCustomUnitArchive) {
+                        Icon(Icons.Default.Inventory, contentDescription = "Go to archive")
+                    }
+                })
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
