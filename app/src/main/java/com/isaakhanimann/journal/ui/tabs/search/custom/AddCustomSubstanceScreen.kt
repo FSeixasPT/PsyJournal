@@ -51,8 +51,9 @@ fun AddCustomSubstanceScreen(
                 ExtendedFloatingActionButton(
                     modifier = Modifier.imePadding(),
                     onClick = {
-                        viewModel.onDoneTap()
-                        navigateBack()
+                        viewModel.addCustomSubstance {
+                            navigateBack()
+                        }
                     },
                     icon = {
                         Icon(
