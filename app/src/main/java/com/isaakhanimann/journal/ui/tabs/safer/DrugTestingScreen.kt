@@ -40,15 +40,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -246,20 +243,6 @@ fun DrugTestingScreen() {
                     name = "The Loop",
                     city = "Bristol",
                     url = "https://wearetheloop.org"
-                )
-            }
-            val uriHandler = LocalUriHandler.current
-            val reportServiceText = "Report missing service"
-            TextButton(
-                onClick = {
-                    uriHandler.openUri("https://t.me/isaakhanimann")
-                },
-                modifier = Modifier.semantics {
-                    contentDescription = reportServiceText
-                }) {
-                Text(
-                    reportServiceText,
-                    textDecoration = TextDecoration.Underline
                 )
             }
         }

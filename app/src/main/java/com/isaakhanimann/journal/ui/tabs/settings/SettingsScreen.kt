@@ -35,7 +35,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ContactSupport
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.FileDownload
@@ -45,7 +44,6 @@ import androidx.compose.material.icons.outlined.Medication
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.QuestionAnswer
 import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material.icons.outlined.VolunteerActivism
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -404,21 +402,10 @@ fun SettingsScreen(
                 SettingsButton(imageVector = Icons.Outlined.QuestionAnswer, text = "FAQ") {
                     navigateToFAQ()
                 }
-                HorizontalDivider()
-                SettingsButton(
-                    imageVector = Icons.AutoMirrored.Outlined.ContactSupport,
-                    text = "Question, bug report"
-                ) {
-                    uriHandler.openUri("https://t.me/+ss8uZhBF6g00MTY8")
-                }
-                HorizontalDivider()
-                SettingsButton(imageVector = Icons.Outlined.VolunteerActivism, text = "Donate") {
-                    navigateToDonate()
-                }
             }
             CardWithTitle(title = "App", innerPaddingHorizontal = 0.dp) {
                 SettingsButton(imageVector = Icons.Outlined.Code, text = "Source Code") {
-                    uriHandler.openUri("https://github.com/isaakhanimann/psychonautwiki-journal-android")
+                    uriHandler.openUri(SOURCE_CODE_URL)
                 }
                 HorizontalDivider()
                 val context = LocalContext.current
@@ -444,7 +431,8 @@ fun SettingsScreen(
     }
 }
 
-const val SHARE_APP_URL = "https://psychonautwiki.org/wiki/PsychonautWiki_Journal"
+const val SOURCE_CODE_URL = "https://github.com/FSeixasPT/PsyJournal"
+const val SHARE_APP_URL = SOURCE_CODE_URL
 
 
 @Composable
