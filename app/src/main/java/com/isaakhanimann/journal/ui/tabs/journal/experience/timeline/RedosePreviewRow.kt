@@ -95,13 +95,15 @@ fun RedosePreviewRow(
                 )
             }
         }
-        peak?.let {
-            Text(
-                text = "Peak after redose: ≈ ${it.doseEquivalent.toReadableString()} ${it.units} equivalent at ${it.time.getShortTimeText()}",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
+        // the line is always laid out so that nothing moves when it appears
+        Text(
+            text = peak?.let {
+                "Peak after redose: ≈ ${it.doseEquivalent.toReadableString()} ${it.units} equivalent at ${it.time.getShortTimeText()}"
+            } ?: "",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            minLines = 1
+        )
     }
     optionBeingEdited?.let { option ->
         EditDoseDialog(

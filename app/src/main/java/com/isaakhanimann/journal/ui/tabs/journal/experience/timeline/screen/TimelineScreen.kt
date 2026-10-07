@@ -50,7 +50,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.isaakhanimann.journal.ui.tabs.journal.experience.TimelineDisplayOption
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.TimeDisplayOption
+import com.isaakhanimann.journal.ui.YOU
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.AllTimelines
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.RedoseOption
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.RedosePreviewRow
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.TimelineQuantityDetails
 import com.isaakhanimann.journal.ui.theme.horizontalPadding
 import java.time.Instant
@@ -61,6 +64,7 @@ fun TimelineScreen(
 ) {
     TimelineScreen(
         title = viewModel.consumerName,
+        isRedosePreviewAvailable = viewModel.consumerName == YOU,
         timelineDisplayOption = viewModel.timelineDisplayOptionFlow.collectAsState().value,
         timeDisplayOption = viewModel.timeDisplayOptionFlow.collectAsState().value,
     )
@@ -70,6 +74,7 @@ fun TimelineScreen(
 @Composable
 fun TimelineScreen(
      title: String,
+     isRedosePreviewAvailable: Boolean,
      timelineDisplayOption: TimelineDisplayOption,
      timeDisplayOption: TimeDisplayOption,
 ) {
@@ -91,6 +96,13 @@ fun TimelineScreen(
             val screenWidth = configuration.screenWidthDp.toFloat()
             var canvasWidth by remember { mutableFloatStateOf(screenWidth) }
             var selectedTime by remember { mutableStateOf<Instant?>(null) }
+            var previewedOption by remember { mutableStateOf<RedoseOption?>(null) }
+            val realModel = (timelineDisplayOption as? TimelineDisplayOption.Shown)?.allTimelinesModel
+            val displayedModel = remember(realModel, previewedOption) {
+                previewedOption?.let {
+                    realModel?.withPlannedIngestion(it, dose = it.dose, time = Instant.now())
+                } ?: realModel
+            }
             val isOrientationPortrait =
                 LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
             Box(
@@ -105,7 +117,7 @@ fun TimelineScreen(
                     TimelineDisplayOption.NotWorthDrawing -> {}
                     is TimelineDisplayOption.Shown -> {
                         AllTimelines(
-                            model = timelineDisplayOption.allTimelinesModel,
+                            model = displayedModel ?: timelineDisplayOption.allTimelinesModel,
                             timeDisplayOption = timeDisplayOption,
                             isShowingCurrentTime = true,
                             modifier = Modifier
@@ -117,12 +129,21 @@ fun TimelineScreen(
                     }
                 }
             }
-            if (timelineDisplayOption is TimelineDisplayOption.Shown) {
+            if (realModel != null && displayedModel != null) {
                 TimelineQuantityDetails(
-                    model = timelineDisplayOption.allTimelinesModel,
+                    model = displayedModel,
                     selectedTime = selectedTime,
                     modifier = Modifier.padding(horizontal = horizontalPadding)
                 )
+                val timelineEnd = realModel.startTime.plusSeconds(realModel.widthInSeconds.toLong())
+                if (isRedosePreviewAvailable && Instant.now() < timelineEnd) {
+                    RedosePreviewRow(
+                        options = realModel.redoseOptions,
+                        peak = displayedModel.plannedPeak,
+                        onPreviewChange = { previewedOption = it },
+                        modifier = Modifier.padding(horizontal = horizontalPadding)
+                    )
+                }
             }
             Slider(
                 value = canvasWidth,
