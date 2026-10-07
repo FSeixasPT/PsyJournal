@@ -183,6 +183,13 @@ data class FullTimelines(
         ).heightAt(secondsFromStart)
     }
 
+    // highest point of the curve at or after the given time, as seconds from start and height
+    fun highestPointFrom(secondsFromStart: Float): Point {
+        val candidates = listOf(Point(secondsFromStart, heightAt(secondsFromStart))) +
+                finalPoints.filter { it.x > secondsFromStart }.map { Point(it.x, it.y) }
+        return candidates.maxBy { it.y }
+    }
+
     private fun getLineSegments(weightedLine: WeightedLine): List<LineSegment> {
         if (weightedLine.endTime == null) {
             return emptyList()

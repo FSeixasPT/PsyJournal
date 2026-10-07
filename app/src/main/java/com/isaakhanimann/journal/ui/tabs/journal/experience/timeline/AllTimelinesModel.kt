@@ -30,10 +30,13 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
 class AllTimelinesModel(
-    dataForLines: List<DataForOneEffectLine>,
+    private val dataForLines: List<DataForOneEffectLine>,
     val dataForRatings: List<DataForOneRating>,
     val timedNotes: List<DataForOneTimedNote>,
-    areSubstanceHeightsIndependent: Boolean,
+    private val areSubstanceHeightsIndependent: Boolean,
+    // set if this model is a preview of a planned ingestion that is not logged
+    private val plannedOption: RedoseOption? = null,
+    val plannedIngestionTime: Instant? = null,
 ) {
     val startTime: Instant
     val widthInSeconds: Float
@@ -119,6 +122,70 @@ class AllTimelinesModel(
         )
         widthInSeconds = maxCandidates.max() + 10.minutes.inWholeSeconds.toFloat()
         axisDrawable = AxisDrawable(startTime, widthInSeconds)
+    }
+
+    val redoseOptions: List<RedoseOption> by lazy {
+        roaGroups.zip(groupDrawables).mapNotNull { (group, drawable) ->
+            if (drawable.fullTimelines == null) return@mapNotNull null
+            val referenceDose = group.referenceDose ?: return@mapNotNull null
+            val units = group.doseUnits ?: return@mapNotNull null
+            val lastLine = dataForLines
+                .filter { it.substanceName == group.substanceName && it.route == group.route }
+                .maxBy { it.startTime }
+            RedoseOption(
+                substanceName = group.substanceName,
+                route = group.route,
+                dose = lastLine.height * referenceDose,
+                units = units,
+                color = group.color
+            )
+        }
+    }
+
+    fun withPlannedIngestion(option: RedoseOption, dose: Double, time: Instant): AllTimelinesModel {
+        val lastLine = dataForLines
+            .filter { it.substanceName == option.substanceName && it.route == option.route }
+            .maxBy { it.startTime }
+        val referenceDose = lastLine.referenceDose ?: return this
+        val plannedLine = lastLine.copy(
+            height = (dose / referenceDose).toFloat(),
+            startTime = time,
+            endTime = null
+        )
+        return AllTimelinesModel(
+            dataForLines = dataForLines + plannedLine,
+            dataForRatings = dataForRatings,
+            timedNotes = timedNotes,
+            areSubstanceHeightsIndependent = areSubstanceHeightsIndependent,
+            plannedOption = option,
+            plannedIngestionTime = time
+        )
+    }
+
+    // highest combined intensity of the planned substance from the planned ingestion on
+    val plannedPeak: TimelinePeak? by lazy {
+        val option = plannedOption ?: return@lazy null
+        val time = plannedIngestionTime ?: return@lazy null
+        val index = roaGroups.indexOfFirst { it.substanceName == option.substanceName && it.route == option.route }
+        val group = roaGroups.getOrNull(index) ?: return@lazy null
+        val referenceDose = group.referenceDose ?: return@lazy null
+        val fullTimelines = groupDrawables[index].fullTimelines ?: return@lazy null
+        val highestPoint = fullTimelines.highestPointFrom(Duration.between(startTime, time).seconds.toFloat())
+        TimelinePeak(
+            time = startTime.plusSeconds(highestPoint.x.toLong()),
+            doseEquivalent = highestPoint.y * referenceDose,
+            units = option.units
+        )
+    }
+
+    // position of the planned ingestion on its curve: seconds from start and height from 0 to 1
+    val plannedIngestionPoint: Pair<Float, Float>? by lazy {
+        val option = plannedOption ?: return@lazy null
+        val time = plannedIngestionTime ?: return@lazy null
+        val index = roaGroups.indexOfFirst { it.substanceName == option.substanceName && it.route == option.route }
+        val fullTimelines = groupDrawables.getOrNull(index)?.fullTimelines ?: return@lazy null
+        val seconds = Duration.between(startTime, time).seconds.toFloat()
+        Pair(seconds, fullTimelines.heightAt(seconds) / fullTimelines.referenceHeight)
     }
 
     fun getQuantityDetails(time: Instant): List<TimelineQuantityDetail> {

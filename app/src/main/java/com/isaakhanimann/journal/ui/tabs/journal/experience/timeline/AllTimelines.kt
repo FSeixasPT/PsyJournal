@@ -35,10 +35,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.inset
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
@@ -202,6 +204,15 @@ fun AllTimelines(
                     density = density
                 )
             }
+            model.plannedIngestionPoint?.let { (seconds, height) ->
+                drawPlannedIngestionDot(
+                    center = Offset(
+                        x = seconds * pixelsPerSec,
+                        y = canvasHeightWithVerticalLine - height * canvasHeightWithVerticalLine
+                    ),
+                    isDarkTheme = isDarkTheme
+                )
+            }
             model.dataForRatings.forEach { dataForOneRating ->
                 drawRating(
                     startTime = model.startTime,
@@ -255,7 +266,45 @@ fun AllTimelines(
             canvasHeight = canvasWithLabelsHeight,
             textPaint = axisLabelTextPaint
         )
+        if (model.plannedIngestionTime != null) {
+            drawPreviewLabel(textMeasurer, isDarkTheme)
+        }
     }
+}
+
+private fun DrawScope.drawPlannedIngestionDot(center: Offset, isDarkTheme: Boolean) {
+    val radius = ingestionDotRadius
+    drawCircle(
+        color = if (isDarkTheme) Color.Black else Color.White,
+        radius = radius,
+        center = center
+    )
+    drawCircle(
+        color = if (isDarkTheme) Color.White else Color.Black,
+        radius = radius,
+        center = center,
+        style = Stroke(width = 3.dp.toPx())
+    )
+}
+
+private fun DrawScope.drawPreviewLabel(textMeasurer: TextMeasurer, isDarkTheme: Boolean) {
+    val backgroundColor = if (isDarkTheme) Color.White else Color.Black
+    val textColor = if (isDarkTheme) Color.Black else Color.White
+    val measuredText = textMeasurer.measure(
+        "Preview",
+        style = TextStyle(fontSize = 13.sp, color = textColor)
+    )
+    val padding = 6.dp.toPx()
+    drawRoundRect(
+        color = backgroundColor,
+        topLeft = Offset.Zero,
+        size = Size(
+            width = measuredText.size.width + 2 * padding,
+            height = measuredText.size.height + padding
+        ),
+        cornerRadius = CornerRadius(x = 15f, y = 15f)
+    )
+    drawText(measuredText, topLeft = Offset(x = padding, y = padding / 2))
 }
 
 private fun DrawScope.drawDragPointLineAndTimeLabel(

@@ -100,6 +100,8 @@ import com.isaakhanimann.journal.ui.tabs.journal.experience.models.ConsumerWithI
 import com.isaakhanimann.journal.ui.tabs.journal.experience.models.CumulativeDose
 import com.isaakhanimann.journal.ui.tabs.journal.experience.models.OneExperienceScreenModel
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.AllTimelines
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.RedoseOption
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.RedosePreviewRow
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.TimelineQuantityDetails
 import com.isaakhanimann.journal.ui.theme.JournalTheme
 import com.isaakhanimann.journal.ui.theme.horizontalPadding
@@ -692,8 +694,14 @@ private fun MyTimelineSection(
                     verticalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
                     var selectedTime by remember { mutableStateOf<Instant?>(null) }
+                    var previewedOption by remember { mutableStateOf<RedoseOption?>(null) }
+                    val displayedModel = remember(timelineModel, previewedOption) {
+                        previewedOption?.let {
+                            timelineModel.withPlannedIngestion(it, dose = it.dose, time = Instant.now())
+                        } ?: timelineModel
+                    }
                     AllTimelines(
-                        model = timelineModel,
+                        model = displayedModel,
                         timeDisplayOption = timeDisplayOption,
                         isShowingCurrentTime = true,
                         modifier = Modifier
@@ -701,7 +709,17 @@ private fun MyTimelineSection(
                             .height(200.dp),
                         onSelectedTimeChange = { selectedTime = it }
                     )
-                    TimelineQuantityDetails(model = timelineModel, selectedTime = selectedTime)
+                    TimelineQuantityDetails(model = displayedModel, selectedTime = selectedTime)
+                    val now = Instant.now()
+                    val timelineEnd = timelineModel.startTime.plusSeconds(timelineModel.widthInSeconds.toLong())
+                    if (now < timelineEnd) {
+                        RedosePreviewRow(
+                            options = timelineModel.redoseOptions,
+                            peak = displayedModel.plannedPeak,
+                            onPreviewChange = { previewedOption = it },
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
                     val hasOralIngestion =
                         oneExperienceScreenModel.ingestionElements.any { it.ingestionWithCompanionAndCustomUnit.ingestion.administrationRoute == AdministrationRoute.ORAL }
                     if (hasOralIngestion && !isOralDisclaimerHidden) {

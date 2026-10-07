@@ -1,0 +1,158 @@
+/*
+ * Copyright (c) 2026. Francisco Seixas.
+ * This file is part of PsyJournal, a fork of PsychonautWiki Journal.
+ *
+ * PsyJournal is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ *
+ * PsyJournal is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PsyJournal.  If not, see https://www.gnu.org/licenses/gpl-3.0.en.html.
+ */
+
+package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
+
+import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
+import com.isaakhanimann.journal.data.substances.AdministrationRoute
+import com.isaakhanimann.journal.data.substances.classes.roa.DurationRange
+import com.isaakhanimann.journal.data.substances.classes.roa.DurationUnits
+import com.isaakhanimann.journal.data.substances.classes.roa.RoaDuration
+import com.isaakhanimann.journal.ui.tabs.journal.experience.components.DataForOneEffectLine
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+
+class RedosePreviewTest {
+
+    private val start = Instant.parse("2026-01-01T20:00:00Z")
+
+    // onset 30m, comeup 30m, peak 60m, offset 60m (min == max so weights don't matter)
+    private val exactDuration = RoaDuration(
+        onset = DurationRange(30f, 30f, DurationUnits.MINUTES),
+        comeup = DurationRange(30f, 30f, DurationUnits.MINUTES),
+        peak = DurationRange(60f, 60f, DurationUnits.MINUTES),
+        offset = DurationRange(60f, 60f, DurationUnits.MINUTES),
+        total = null,
+        afterglow = null
+    )
+
+    private fun line(
+        minutesAfterStart: Long,
+        dose: Double?,
+        substanceName: String = "Ketamine",
+        route: AdministrationRoute = AdministrationRoute.INSUFFLATED,
+        units: String = "mg",
+        roaDuration: RoaDuration? = exactDuration,
+    ) = DataForOneEffectLine(
+        substanceName = substanceName,
+        route = route,
+        roaDuration = roaDuration,
+        height = if (dose != null) (dose / 100.0).toFloat() else 1f,
+        horizontalWeight = 0.5f,
+        color = AdaptiveColor.PINK,
+        startTime = start.plus(minutesAfterStart, ChronoUnit.MINUTES),
+        endTime = null,
+        referenceDose = if (dose != null) 100.0 else null,
+        doseUnits = if (dose != null) units else null
+    )
+
+    private fun model(vararg lines: DataForOneEffectLine) = AllTimelinesModel(
+        dataForLines = lines.toList(),
+        dataForRatings = emptyList(),
+        timedNotes = emptyList(),
+        areSubstanceHeightsIndependent = false
+    )
+
+    private fun at(minutes: Long) = start.plus(minutes, ChronoUnit.MINUTES)
+
+    @Test
+    fun redoseOptionUsesLastDoseOfSubstanceAndRoute() {
+        val option = model(line(0, dose = 40.0), line(30, dose = 25.0)).redoseOptions.single()
+        assertEquals("Ketamine", option.substanceName)
+        assertEquals(AdministrationRoute.INSUFFLATED, option.route)
+        assertEquals(25.0, option.dose, 0.001)
+        assertEquals("mg", option.units)
+        assertEquals(AdaptiveColor.PINK, option.color)
+    }
+
+    @Test
+    fun thereIsOneRedoseOptionPerSubstanceAndRoute() {
+        val options = model(
+            line(0, dose = 40.0),
+            line(10, dose = 30.0, route = AdministrationRoute.ORAL),
+            line(20, dose = 80.0, substanceName = "MDMA", route = AdministrationRoute.ORAL),
+        ).redoseOptions
+        assertEquals(3, options.size)
+    }
+
+    @Test
+    fun noRedoseOptionWhenADoseIsUnknown() {
+        assertTrue(model(line(0, dose = 40.0), line(30, dose = null)).redoseOptions.isEmpty())
+    }
+
+    @Test
+    fun noRedoseOptionWhenDurationIsIncomplete() {
+        val incomplete = exactDuration.copy(offset = null)
+        assertTrue(model(line(0, dose = 40.0, roaDuration = incomplete)).redoseOptions.isEmpty())
+    }
+
+    @Test
+    fun plannedIngestionIsAddedToTheCurve() {
+        // 100 mg at 0 min is fully worn off at 180 min; 50 mg planned at 120 min is at its peak from 180 min
+        val real = model(line(0, dose = 100.0))
+        val option = real.redoseOptions.single()
+        val preview = real.withPlannedIngestion(option, dose = 50.0, time = at(120))
+        val detail = preview.getQuantityDetails(at(180)).single()
+        assertEquals(50.0, detail.doseEquivalent!!, 0.01)
+        assertEquals(at(120), preview.plannedIngestionTime)
+    }
+
+    @Test
+    fun plannedIngestionDoesNotChangeTheRealModel() {
+        val real = model(line(0, dose = 100.0))
+        real.withPlannedIngestion(real.redoseOptions.single(), dose = 50.0, time = at(120))
+        assertEquals(0.0, real.getQuantityDetails(at(180)).single().doseEquivalent!!, 0.01)
+        assertNull(real.plannedIngestionTime)
+    }
+
+    @Test
+    fun plannedPeakIsTheHighestPointOfTheCombinedCurve() {
+        // 100 mg at 0 min (peak 60-120 min) and 50 mg planned at 60 min (peak 120-180 min) add up to 150 mg at 120 min
+        val real = model(line(0, dose = 100.0))
+        val peak = real.withPlannedIngestion(real.redoseOptions.single(), dose = 50.0, time = at(60)).plannedPeak!!
+        assertEquals(150.0, peak.doseEquivalent, 0.01)
+        assertEquals("mg", peak.units)
+        assertEquals(at(120), peak.time)
+    }
+
+    @Test
+    fun plannedPeakOnlyLooksAtTheTimeFromThePlannedIngestionOn() {
+        // 100 mg at 0 min is at 50 mg equivalent at 150 min and wearing off; 10 mg planned at 150 min only reaches 10
+        val real = model(line(0, dose = 100.0))
+        val peak = real.withPlannedIngestion(real.redoseOptions.single(), dose = 10.0, time = at(150)).plannedPeak!!
+        assertEquals(50.0, peak.doseEquivalent, 0.01)
+        assertEquals(at(150), peak.time)
+    }
+
+    @Test
+    fun realModelHasNoPlannedPeak() {
+        assertNull(model(line(0, dose = 100.0)).plannedPeak)
+    }
+
+    @Test
+    fun previewExtendsTheTimelineToShowTheWholePlannedCurve() {
+        val real = model(line(0, dose = 100.0))
+        val preview = real.withPlannedIngestion(real.redoseOptions.single(), dose = 50.0, time = at(120))
+        // planned curve ends 120 + 180 = 300 minutes after start
+        assertTrue(preview.widthInSeconds >= 300 * 60f)
+    }
+}
