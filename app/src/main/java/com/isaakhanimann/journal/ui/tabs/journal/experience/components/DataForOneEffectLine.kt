@@ -31,5 +31,8 @@ data class DataForOneEffectLine(
     val horizontalWeight: Float,
     val color: AdaptiveColor,
     val startTime: Instant,
-    val endTime: Instant?
+    val endTime: Instant?,
+    // the dose that corresponds to a height of 1, null if the dose of this ingestion is unknown
+    val referenceDose: Double? = null,
+    val doseUnits: String? = null
 )

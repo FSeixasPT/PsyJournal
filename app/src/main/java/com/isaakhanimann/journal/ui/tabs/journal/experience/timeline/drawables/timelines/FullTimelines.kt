@@ -170,6 +170,19 @@ data class FullTimelines(
         this.endOfLineRelativeToStartInSeconds = finalPoints.maxOfOrNull { it.x } ?: (onset.maxInSeconds + comeup.maxInSeconds + peak.maxInSeconds + offset.maxInSeconds)
     }
 
+    fun heightAt(secondsFromStart: Float): Float {
+        val first = finalPoints.firstOrNull() ?: return 0f
+        val last = finalPoints.last()
+        if (secondsFromStart < first.x || secondsFromStart > last.x) return 0f
+        val segment = finalPoints.zipWithNext().firstOrNull { (start, end) ->
+            start.x <= secondsFromStart && secondsFromStart <= end.x
+        } ?: return 0f
+        return LineSegment(
+            start = Point(segment.first.x, segment.first.y),
+            end = Point(segment.second.x, segment.second.y)
+        ).heightAt(secondsFromStart)
+    }
+
     private fun getLineSegments(weightedLine: WeightedLine): List<LineSegment> {
         if (weightedLine.endTime == null) {
             return emptyList()

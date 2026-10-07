@@ -19,6 +19,7 @@
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
+import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.data.substances.classes.roa.RoaDuration
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.DataForOneEffectLine
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.drawables.AxisDrawable
@@ -40,10 +41,16 @@ class AllTimelinesModel(
     val axisDrawable: AxisDrawable
 
     data class RoaGroup(
+        val substanceName: String,
+        val route: AdministrationRoute,
         val color: AdaptiveColor,
         val roaDuration: RoaDuration?,
-        val weightedLines: List<WeightedLine>
+        val weightedLines: List<WeightedLine>,
+        val referenceDose: Double?,
+        val doseUnits: String?
     )
+
+    private val roaGroups: List<RoaGroup>
 
     init {
         val ratingTimes = dataForRatings.map { it.time }
@@ -57,7 +64,13 @@ class AllTimelinesModel(
                 val linesPerSubstance = substanceGroup.value
                 return@flatMap linesPerSubstance.groupBy { it.route }.map { routeGroup ->
                     val linesPerRoute = routeGroup.value
+                    val isDoseEquivalentKnown = linesPerRoute.all { it.referenceDose != null } &&
+                            linesPerRoute.map { it.doseUnits }.distinct().size == 1
                     return@map RoaGroup(
+                        substanceName = substanceGroup.key,
+                        route = routeGroup.key,
+                        referenceDose = if (isDoseEquivalentKnown) linesPerRoute.first().referenceDose else null,
+                        doseUnits = if (isDoseEquivalentKnown) linesPerRoute.first().doseUnits else null,
                         color = linesPerRoute.first().color,
                         roaDuration = linesPerRoute.first().roaDuration,
                         weightedLines = linesPerRoute.map {
@@ -70,6 +83,7 @@ class AllTimelinesModel(
                         })
                 }
             }
+        this.roaGroups = roaGroups
         val groupDrawables = roaGroups.map { group ->
             GroupDrawable(
                 startTimeGraph = startTime,
@@ -105,5 +119,23 @@ class AllTimelinesModel(
         )
         widthInSeconds = maxCandidates.max() + 10.minutes.inWholeSeconds.toFloat()
         axisDrawable = AxisDrawable(startTime, widthInSeconds)
+    }
+
+    fun getQuantityDetails(time: Instant): List<TimelineQuantityDetail> {
+        val secondsFromStart = Duration.between(startTime, time).seconds.toFloat()
+        return roaGroups.zip(groupDrawables).mapNotNull { (group, drawable) ->
+            val fullTimelines = drawable.fullTimelines ?: return@mapNotNull null
+            val height = fullTimelines.heightAt(secondsFromStart)
+            val maxHeight = fullTimelines.nonNormalisedHeight
+            if (maxHeight <= 0f) return@mapNotNull null
+            TimelineQuantityDetail(
+                substanceName = group.substanceName,
+                route = group.route,
+                color = group.color,
+                fractionOfPeak = height / maxHeight,
+                doseEquivalent = group.referenceDose?.let { it * height },
+                doseUnits = group.doseUnits
+            )
+        }
     }
 }

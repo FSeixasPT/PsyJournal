@@ -35,6 +35,7 @@ import com.isaakhanimann.journal.ui.tabs.journal.addingestion.time.hourLimitToSe
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.DataForOneEffectLine
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.SavedTimeDisplayOption
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.TimeDisplayOption
+import com.isaakhanimann.journal.ui.tabs.journal.experience.components.getCommonDose
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.getStrengthRelativeToCommonDose
 import com.isaakhanimann.journal.ui.tabs.journal.experience.models.ConsumerWithIngestions
 import com.isaakhanimann.journal.ui.tabs.journal.experience.models.CumulativeDose
@@ -450,17 +451,23 @@ class ExperienceViewModel @Inject constructor(
                 } else {
                     oneElement.numDots.toFloat() / 4f
                 }
-                val ingestion = oneElement.ingestionWithCompanionAndCustomUnit.ingestion
+                val ingestionWithCompanion = oneElement.ingestionWithCompanionAndCustomUnit
+                val ingestion = ingestionWithCompanion.ingestion
+                val allIngestions = ingestionElements.map { it.ingestionWithCompanionAndCustomUnit }
+                val roaDose = substances.firstOrNull { it.name == ingestion.substanceName }
+                    ?.getRoa(ingestion.administrationRoute)?.roaDose
+                val isDoseKnown = ingestionWithCompanion.pureDose != null
                 DataForOneEffectLine(
                     substanceName = ingestion.substanceName,
                     route = ingestion.administrationRoute,
                     roaDuration = oneElement.roaDuration,
                     height = getStrengthRelativeToCommonDose(
-                        ingestion = oneElement.ingestionWithCompanionAndCustomUnit,
-                        allIngestions = ingestionElements.map { it.ingestionWithCompanionAndCustomUnit },
-                        roaDose = substances.firstOrNull { it.name == ingestion.substanceName }
-                            ?.getRoa(ingestion.administrationRoute)?.roaDose
+                        ingestion = ingestionWithCompanion,
+                        allIngestions = allIngestions,
+                        roaDose = roaDose
                     ).toFloat(),
+                    referenceDose = if (isDoseKnown) getCommonDose(ingestionWithCompanion, allIngestions, roaDose) else null,
+                    doseUnits = if (isDoseKnown) ingestionWithCompanion.originalUnit else null,
                     horizontalWeight = horizontalWeight,
                     color = oneElement.ingestionWithCompanionAndCustomUnit.substanceCompanion?.color
                         ?: AdaptiveColor.RED,

@@ -40,6 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -50,7 +51,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.isaakhanimann.journal.ui.tabs.journal.experience.TimelineDisplayOption
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.TimeDisplayOption
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.AllTimelines
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.TimelineQuantityDetails
 import com.isaakhanimann.journal.ui.theme.horizontalPadding
+import java.time.Instant
 
 @Composable
 fun TimelineScreen(
@@ -87,6 +90,7 @@ fun TimelineScreen(
             val configuration = LocalConfiguration.current
             val screenWidth = configuration.screenWidthDp.toFloat()
             var canvasWidth by remember { mutableFloatStateOf(screenWidth) }
+            var selectedTime by remember { mutableStateOf<Instant?>(null) }
             val isOrientationPortrait =
                 LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
             Box(
@@ -107,10 +111,18 @@ fun TimelineScreen(
                             modifier = Modifier
                                 .fillMaxHeight(if (isOrientationPortrait) 0.5f else 0.8f)
                                 .width(canvasWidth.dp)
-                                .padding(horizontal = horizontalPadding)
+                                .padding(horizontal = horizontalPadding),
+                            onSelectedTimeChange = { selectedTime = it }
                         )
                     }
                 }
+            }
+            if (timelineDisplayOption is TimelineDisplayOption.Shown) {
+                TimelineQuantityDetails(
+                    model = timelineDisplayOption.allTimelinesModel,
+                    selectedTime = selectedTime,
+                    modifier = Modifier.padding(horizontal = horizontalPadding)
+                )
             }
             Slider(
                 value = canvasWidth,

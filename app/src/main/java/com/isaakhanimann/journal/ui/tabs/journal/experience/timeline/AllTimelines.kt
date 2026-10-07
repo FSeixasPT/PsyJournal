@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -123,8 +124,11 @@ fun AllTimelines(
     isShowingCurrentTime: Boolean,
     timeDisplayOption: TimeDisplayOption,
     modifier: Modifier = Modifier,
+    onSelectedTimeChange: (Instant?) -> Unit = {},
 ) {
     val isDarkTheme = isSystemInDarkTheme()
+    val currentModel by rememberUpdatedState(model)
+    val currentOnSelectedTimeChange by rememberUpdatedState(onSelectedTimeChange)
     val density = LocalDensity.current
     val axisLabelSize = MaterialTheme.typography.labelMedium.fontSize
     val axisLabelTextPaint = remember(density) {
@@ -168,12 +172,17 @@ fun AllTimelines(
             onHorizontalDrag = { change, _ ->
                 change.consume()
                 dragPoint = change.position
+                val pixelsPerSec = size.width / currentModel.widthInSeconds
+                val secondsAtDragPoint = change.position.x.coerceIn(0f, size.width.toFloat()) / pixelsPerSec
+                currentOnSelectedTimeChange(currentModel.startTime.plusSeconds(secondsAtDragPoint.toLong()))
             },
             onDragEnd = {
                 dragPoint = null
+                currentOnSelectedTimeChange(null)
             },
             onDragCancel = {
                 dragPoint = null
+                currentOnSelectedTimeChange(null)
             }
         )
     }) {
@@ -221,6 +230,7 @@ fun AllTimelines(
                     pixelsPerSec = pixelsPerSec,
                     isDarkTheme = isDarkTheme,
                     canvasHeightOuter = canvasHeightWithVerticalLine,
+                    isDimmed = dragPoint != null,
                 )
             }
             dragPoint?.let {
@@ -375,18 +385,26 @@ fun DrawScope.drawCurrentTime(
     pixelsPerSec: Float,
     isDarkTheme: Boolean,
     canvasHeightOuter: Float,
+    // while dragging the current time is shown as a thinner dashed line so it doesn't compete with the drag line
+    isDimmed: Boolean = false,
 ) {
     val endTime = startTime.plusSeconds(timelineWidthInSeconds.toLong())
     if (startTime.isBefore(currentTime) && endTime.isAfter(currentTime)) {
         val timeStartInSec = Duration.between(startTime, currentTime).seconds
         val timeStartX = timeStartInSec * pixelsPerSec
         val color = if (isDarkTheme) Color.White else Color.Black
+        val strokeWidth = if (isDimmed) 2.dp.toPx() else 4.dp.toPx()
         drawLine(
-            color = color,
+            color = if (isDimmed) color.copy(alpha = 0.6f) else color,
             start = Offset(x = timeStartX, y = canvasHeightOuter),
             end = Offset(x = timeStartX, y = 0f),
-            strokeWidth = 4.dp.toPx(),
-            cap = StrokeCap.Round
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round,
+            pathEffect = if (isDimmed) {
+                PathEffect.dashPathEffect(floatArrayOf(strokeWidth * 2, strokeWidth * 2))
+            } else {
+                null
+            }
         )
     }
 }

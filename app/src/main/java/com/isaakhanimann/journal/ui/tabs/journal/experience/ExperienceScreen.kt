@@ -100,6 +100,7 @@ import com.isaakhanimann.journal.ui.tabs.journal.experience.models.ConsumerWithI
 import com.isaakhanimann.journal.ui.tabs.journal.experience.models.CumulativeDose
 import com.isaakhanimann.journal.ui.tabs.journal.experience.models.OneExperienceScreenModel
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.AllTimelines
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.TimelineQuantityDetails
 import com.isaakhanimann.journal.ui.theme.JournalTheme
 import com.isaakhanimann.journal.ui.theme.horizontalPadding
 import com.isaakhanimann.journal.ui.utils.getDateWithWeekdayText
@@ -409,14 +410,17 @@ private fun ConsumerSection(
                         .padding(bottom = 10.dp),
                     verticalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
+                    var selectedTime by remember { mutableStateOf<Instant?>(null) }
                     AllTimelines(
                         model = timelineModel,
                         timeDisplayOption = timeDisplayOption,
                         isShowingCurrentTime = true,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp)
+                            .height(200.dp),
+                        onSelectedTimeChange = { selectedTime = it }
                     )
+                    TimelineQuantityDetails(model = timelineModel, selectedTime = selectedTime)
                 }
             }
         }
@@ -687,14 +691,17 @@ private fun MyTimelineSection(
                         .padding(bottom = 10.dp),
                     verticalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
+                    var selectedTime by remember { mutableStateOf<Instant?>(null) }
                     AllTimelines(
                         model = timelineModel,
                         timeDisplayOption = timeDisplayOption,
                         isShowingCurrentTime = true,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp)
+                            .height(200.dp),
+                        onSelectedTimeChange = { selectedTime = it }
                     )
+                    TimelineQuantityDetails(model = timelineModel, selectedTime = selectedTime)
                     val hasOralIngestion =
                         oneExperienceScreenModel.ingestionElements.any { it.ingestionWithCompanionAndCustomUnit.ingestion.administrationRoute == AdministrationRoute.ORAL }
                     if (hasOralIngestion && !isOralDisclaimerHidden) {

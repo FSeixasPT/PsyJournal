@@ -44,6 +44,9 @@ class GroupDrawable(
     override var referenceHeight: Float = 1f
     override val nonNormalisedHeight: Float
 
+    // only full timelines describe the intensity over the whole duration
+    val fullTimelines: FullTimelines? get() = timelineDrawables.singleOrNull() as? FullTimelines
+
     init {
         val intermediateRanges = weightedLines.mapNotNull {
             if (it.endTime != null) {
