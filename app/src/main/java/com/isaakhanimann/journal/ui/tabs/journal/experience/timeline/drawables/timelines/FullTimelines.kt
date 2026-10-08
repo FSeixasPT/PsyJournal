@@ -28,6 +28,7 @@ import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.WeightedLin
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.drawables.TimelineDrawable
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.ingestionDotRadius
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.normalStroke
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.previewStroke
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.shapeAlpha
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.strokeWidth
 import java.time.Duration
@@ -83,6 +84,9 @@ data class FullTimelines(
     private val finalPoints: List<FinalPoint>
 
     override var referenceHeight: Float = 1f
+
+    // a preview of a planned ingestion is drawn as a dashed outline on top of the real curve
+    var isDrawnAsPreview: Boolean = false
 
     override val nonNormalisedHeight: Float
 
@@ -353,6 +357,14 @@ data class FullTimelines(
                 val heightInPx = point.y * canvasHeight
                 lineTo(x = point.x * pixelsPerSec, y = canvasHeight - heightInPx)
             }
+        }
+        if (isDrawnAsPreview) {
+            drawScope.drawPath(
+                path = path,
+                color = color,
+                style = density.previewStroke
+            )
+            return
         }
         drawScope.drawPath(
             path = path,

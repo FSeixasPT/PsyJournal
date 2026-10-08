@@ -206,6 +206,8 @@ fun AllTimelines(
             }
             model.plannedIngestionPoint?.let { (seconds, height) ->
                 drawPlannedIngestionDot(
+                    color = model.plannedIngestionColor?.getComposeColor(isDarkTheme)
+                        ?: if (isDarkTheme) Color.White else Color.Black,
                     center = Offset(
                         x = seconds * pixelsPerSec,
                         y = canvasHeightWithVerticalLine - height * canvasHeightWithVerticalLine
@@ -272,7 +274,7 @@ fun AllTimelines(
     }
 }
 
-private fun DrawScope.drawPlannedIngestionDot(center: Offset, isDarkTheme: Boolean) {
+private fun DrawScope.drawPlannedIngestionDot(color: Color, center: Offset, isDarkTheme: Boolean) {
     val radius = ingestionDotRadius
     drawCircle(
         color = if (isDarkTheme) Color.Black else Color.White,
@@ -280,7 +282,7 @@ private fun DrawScope.drawPlannedIngestionDot(center: Offset, isDarkTheme: Boole
         center = center
     )
     drawCircle(
-        color = if (isDarkTheme) Color.White else Color.Black,
+        color = color,
         radius = radius,
         center = center,
         style = Stroke(width = 3.dp.toPx())

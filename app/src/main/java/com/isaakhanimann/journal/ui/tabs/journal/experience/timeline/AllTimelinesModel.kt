@@ -39,6 +39,7 @@ class AllTimelinesModel(
     private val areRoutesMerged: Boolean = false,
     // set if this model is a preview of a planned ingestion that is not logged
     private val plannedOption: RedoseOption? = null,
+    private val plannedLine: DataForOneEffectLine? = null,
     val plannedIngestionTime: Instant? = null,
 ) {
     val startTime: Instant
@@ -96,13 +97,28 @@ class AllTimelinesModel(
                 routesPerGroup.map { createGroup(substanceName, it) }
             }
         this.roaGroups = roaGroups
+        val plannedWeightedLine = plannedLine?.let {
+            WeightedLine(
+                startTime = it.startTime,
+                endTime = it.endTime,
+                horizontalWeight = it.horizontalWeight,
+                height = it.height,
+                roaDuration = it.roaDuration
+            )
+        }
         val groupDrawables = roaGroups.map { group ->
+            val isPlannedGroup = plannedLine != null && group.contains(plannedLine.substanceName, plannedLine.route)
             GroupDrawable(
                 startTimeGraph = startTime,
                 color = group.color,
                 roaDuration = group.roaDuration,
                 weightedLines = group.weightedLines,
-                areSubstanceHeightsIndependent = areSubstanceHeightsIndependent
+                areSubstanceHeightsIndependent = areSubstanceHeightsIndependent,
+                previewBaselineLines = if (isPlannedGroup && plannedWeightedLine != null) {
+                    group.weightedLines - plannedWeightedLine
+                } else {
+                    null
+                }
             )
         }
         val overallMaxHeight = groupDrawables.maxOfOrNull { it.nonNormalisedHeight } ?: 1f
@@ -166,9 +182,12 @@ class AllTimelinesModel(
             areSubstanceHeightsIndependent = areSubstanceHeightsIndependent,
             areRoutesMerged = areRoutesMerged,
             plannedOption = option,
+            plannedLine = plannedLine,
             plannedIngestionTime = time
         )
     }
+
+    val plannedIngestionColor: AdaptiveColor? get() = plannedLine?.color
 
     // highest combined intensity of the planned substance from the planned ingestion on
     val plannedPeak: TimelinePeak? by lazy {

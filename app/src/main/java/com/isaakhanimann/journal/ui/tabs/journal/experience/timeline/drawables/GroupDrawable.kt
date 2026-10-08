@@ -36,7 +36,11 @@ class GroupDrawable(
     roaDuration: RoaDuration?,
     weightedLines: List<WeightedLine>,
     val areSubstanceHeightsIndependent: Boolean,
+    // the real ingestions of a group that contains a planned ingestion, drawn solid below the dashed preview
+    previewBaselineLines: List<WeightedLine>? = null,
 ) : TimelineDrawable {
+    val previewBaseline: FullTimelines? = previewBaselineLines?.toFullTimelines(startTimeGraph = startTimeGraph)
+
     private val timelineDrawables: List<TimelineDrawable>
     private val timeRangeDrawables: List<TimeRangeDrawable>
     private val nonNormalisedMaxOfRoute: Float
@@ -171,6 +175,9 @@ class GroupDrawable(
         } else {
             emptyList()
         }
+        if (previewBaseline != null) {
+            fullTimelines?.isDrawnAsPreview = true
+        }
         val pointHeights = timelineDrawables.map { it.nonNormalisedHeight }
         val nonNormalisedMaxOfRoute = pointHeights.maxOrNull() ?: 1f
         this.nonNormalisedMaxOfRoute = nonNormalisedMaxOfRoute
@@ -188,6 +195,7 @@ class GroupDrawable(
             overallMaxHeight
         }
         timelineDrawables.forEach { it.referenceHeight = finalNonNormalisedMaxHeight }
+        previewBaseline?.referenceHeight = finalNonNormalisedMaxHeight
     }
 
     private fun getDistanceFromStartGraphInSeconds(time: Instant): Float {
@@ -201,6 +209,13 @@ class GroupDrawable(
         color: Color,
         density: Density
     ) {
+        previewBaseline?.drawTimeLine(
+            drawScope = drawScope,
+            canvasHeight = canvasHeight,
+            pixelsPerSec = pixelsPerSec,
+            color = color,
+            density = density
+        )
         for (drawable in timelineDrawables) {
             drawable.drawTimeLine(
                 drawScope = drawScope,

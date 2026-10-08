@@ -155,4 +155,37 @@ class RedosePreviewTest {
         // planned curve ends 120 + 180 = 300 minutes after start
         assertTrue(preview.widthInSeconds >= 300 * 60f)
     }
+
+    @Test
+    fun previewKeepsTheRealCurveOfThePlannedSubstanceAsBaseline() {
+        // 100 mg at 0 min and 50 mg planned at 120 min, which is at its peak from 180 min
+        val real = model(line(0, dose = 100.0))
+        val preview = real.withPlannedIngestion(real.redoseOptions.single(), dose = 50.0, time = at(120))
+        val group = preview.groupDrawables.single()
+        val baseline = group.previewBaseline!!
+        val realCurve = real.groupDrawables.single().fullTimelines!!
+        assertEquals(realCurve.heightAt(90 * 60f), baseline.heightAt(90 * 60f), 0.001f)
+        assertEquals(0f, baseline.heightAt(180 * 60f), 0.001f)
+        assertEquals(0.5f, group.fullTimelines!!.heightAt(180 * 60f), 0.001f)
+    }
+
+    @Test
+    fun baselineIsDrawnOnTheSameScaleAsThePreview() {
+        val real = model(line(0, dose = 100.0))
+        val preview = real.withPlannedIngestion(real.redoseOptions.single(), dose = 100.0, time = at(60))
+        val group = preview.groupDrawables.single()
+        assertEquals(group.fullTimelines!!.referenceHeight, group.previewBaseline!!.referenceHeight, 0.001f)
+    }
+
+    @Test
+    fun realModelHasNoBaseline() {
+        assertNull(model(line(0, dose = 100.0)).groupDrawables.single().previewBaseline)
+    }
+
+    @Test
+    fun plannedIngestionHasTheColorOfItsSubstance() {
+        val real = model(line(0, dose = 100.0))
+        val preview = real.withPlannedIngestion(real.redoseOptions.single(), dose = 50.0, time = at(120))
+        assertEquals(AdaptiveColor.PINK, preview.plannedIngestionColor)
+    }
 }

@@ -49,6 +49,22 @@ val Density.dottedStroke: Stroke
         )
     }
 
+// thinner than the dotted stroke, which means an unknown trajectory, so the two can be told apart
+val Density.previewStroke: Stroke
+    get() {
+        val length = 8.dp.toPx()
+        val space = 5.dp.toPx()
+        return Stroke(
+            width = 3.dp.toPx(),
+            cap = StrokeCap.Round,
+            // round the corners like the normal stroke first, then cut the rounded line into dashes
+            pathEffect = PathEffect.chainPathEffect(
+                outer = PathEffect.dashPathEffect(floatArrayOf(length, space)),
+                inner = PathEffect.cornerPathEffect(15f)
+            )
+        )
+    }
+
 private val ingestionDotRadiusInDp = 7.dp
 
 val Density.ingestionDotRadius: Float get() = ingestionDotRadiusInDp.toPx()
