@@ -23,7 +23,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.PlannedIngestionActions
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.PlannedIngestionHelper
-import kotlinx.coroutines.launch
 import androidx.navigation.toRoute
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
 import com.isaakhanimann.journal.data.room.experiences.relations.IngestionWithCompanionAndCustomUnit

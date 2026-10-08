@@ -40,6 +40,8 @@ import kotlin.math.pow
 data class FullTimelines(
     val weightedLines: List<WeightedLine>,
     val startTimeGraph: Instant,
+    // the full durations of each line, in the same order; List<WeightedLine>.toFullTimelines computes them
+    private val durationsPerLine: List<FullDurations>,
 ) : TimelineDrawable {
 
     data class WeightedLineRelativeToFirst(
@@ -77,10 +79,6 @@ data class FullTimelines(
         val isIngestionPoint: Boolean = false
     )
 
-    // created through List<WeightedLine>.toFullTimelines which guarantees full durations for every line
-    private val durationsPerLine: List<FullDurations> =
-        weightedLines.map { requireNotNull(it.roaDuration?.toFullDurations()) }
-
     private val finalPoints: List<FinalPoint>
 
     override var referenceHeight: Float = 1f
@@ -93,6 +91,7 @@ data class FullTimelines(
     override val endOfLineRelativeToStartInSeconds: Float
 
     init {
+        require(durationsPerLine.size == weightedLines.size) { "every line needs its durations" }
         val timeRangeLineSegments = weightedLines.zip(durationsPerLine).flatMap { (line, durations) ->
             return@flatMap getLineSegments(weightedLine = line, durations = durations)
         }
@@ -415,9 +414,7 @@ fun RoaDuration.toFullDurations(): FullDurations? {
 }
 
 fun List<WeightedLine>.toFullTimelines(startTimeGraph: Instant): FullTimelines? {
-    return if (isNotEmpty() && all { it.roaDuration?.toFullDurations() != null }) {
-        FullTimelines(weightedLines = this, startTimeGraph = startTimeGraph)
-    } else {
-        null
-    }
+    if (isEmpty()) return null
+    val durations = map { it.roaDuration?.toFullDurations() ?: return null }
+    return FullTimelines(weightedLines = this, startTimeGraph = startTimeGraph, durationsPerLine = durations)
 }

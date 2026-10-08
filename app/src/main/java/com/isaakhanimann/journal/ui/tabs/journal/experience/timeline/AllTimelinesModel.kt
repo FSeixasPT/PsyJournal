@@ -97,7 +97,10 @@ class AllTimelinesModel(
                 } else {
                     routes.map { listOf(it) }
                 }
-                routesPerGroup.map { createGroup(substanceName, it) }
+                // the lines of a substance are in the order their routes were first taken
+                routesPerGroup
+                    .sortedBy { routes -> routes.minOf { (_, lines) -> lines.minOf { it.startTime } } }
+                    .map { createGroup(substanceName, it) }
             }
         this.roaGroups = roaGroups
         val plannedWeightedLine = plannedLine?.let {

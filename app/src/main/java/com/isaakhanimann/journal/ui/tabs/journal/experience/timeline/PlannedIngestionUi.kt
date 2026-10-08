@@ -168,7 +168,8 @@ fun PlannedIngestionSection(
     modifier: Modifier = Modifier,
 ) {
     var isEditing by remember { mutableStateOf(false) }
-    var isConfirmingLog by remember { mutableStateOf(false) }
+    // the planned ingestion and its color when ✓ was tapped, so the dialog logs exactly what it shows
+    var logSnapshot by remember { mutableStateOf<Pair<PlannedIngestion, AdaptiveColor>?>(null) }
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(text = "Hold to preview taking now:", style = MaterialTheme.typography.labelMedium)
         PlannedIngestionChip(
@@ -183,7 +184,9 @@ fun PlannedIngestionSection(
                     actions.pin(state.planned)
                 }
             },
-            onTookIt = { isConfirmingLog = true }
+            onTookIt = {
+                state.planned?.let { logSnapshot = it to (state.plannedLine?.color ?: AdaptiveColor.entries.first()) }
+            }
         )
         // both lines are always laid out so that nothing moves when they appear
         val model = state.displayedModel
@@ -222,23 +225,26 @@ fun PlannedIngestionSection(
             }
         )
     }
-    val planned = state.planned
-    if (isConfirmingLog && planned != null) {
+    val snapshot = logSnapshot
+    if (snapshot != null) {
+        val (planned, color) = snapshot
+        val names = state.experienceSubstanceNamesByRecency
+        val interactions = remember(planned, names) { actions.interactions(planned, names) }
         QuickLogDialog(
             planned = planned,
-            color = state.plannedLine?.color ?: AdaptiveColor.entries.first(),
+            color = color,
             now = state.now,
-            interactions = actions.interactions(planned, state.experienceSubstanceNamesByRecency),
-            onDismiss = { isConfirmingLog = false },
+            interactions = interactions,
+            onDismiss = { logSnapshot = null },
             onChangeDetails = {
                 actions.prepareChangeDetails(state.realModel.realLines.maxOfOrNull { it.startTime })
-                isConfirmingLog = false
+                logSnapshot = null
                 onChangeDetails(planned)
             },
             onLog = {
-                actions.log(planned, state.plannedLine?.color ?: AdaptiveColor.entries.first())
+                actions.log(planned, color)
                 state.clearChoice()
-                isConfirmingLog = false
+                logSnapshot = null
             }
         )
     }
@@ -271,9 +277,13 @@ private fun PlannedIngestionChip(
                             onPress = {
                                 isPressed = true
                                 currentSetHeld(true)
-                                tryAwaitRelease()
-                                isPressed = false
-                                currentSetHeld(false)
+                                try {
+                                    tryAwaitRelease()
+                                } finally {
+                                    // also when the gesture is cancelled, e.g. because the chip changed mid-press
+                                    isPressed = false
+                                    currentSetHeld(false)
+                                }
                             }
                         )
                     }
@@ -356,7 +366,9 @@ private fun PlannedIngestionEditorSheet(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                val entries = actions.searchSubstances(searchText, state.experienceSubstanceNamesByRecency)
+                val names = state.experienceSubstanceNamesByRecency
+                // only searched again when the text or the substances of the experience change
+                val entries = remember(searchText, names) { actions.searchSubstances(searchText, names) }
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     val inExperience = entries.filter { it.isInExperience }
                     val others = entries.filter { !it.isInExperience }

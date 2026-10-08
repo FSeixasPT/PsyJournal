@@ -223,97 +223,25 @@ fun SettingsScreen(
                     )
                 }
                 HorizontalDivider()
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = horizontalPadding),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-                    var showBottomSheet by remember { mutableStateOf(false) }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(5.dp),
-                        modifier = Modifier
-                            .clickable {
-                                showBottomSheet = true
-                            }
-                            .padding(end = ButtonDefaults.IconSpacing)
-                    ) {
-                        Text(text = "Independent substance heights")
-                        if (showBottomSheet) {
-                            ModalBottomSheet(
-                                onDismissRequest = {
-                                    showBottomSheet = false
-                                },
-                                sheetState = sheetState
-                            ) {
-                                Text(
-                                    text = """
+                SwitchWithInfoRow(
+                    title = "Independent substance heights",
+                    info = """
                                     Enable this setting if you want the timeline of different substances and routes of administration (roas) to be independent. Then ingestions of different substances and roas will always take the full height of the timeline.
                                     
                                     If this setting is disabled then timelines of different substances have a height relative to each other. In that case the average of the common dose is used as the point to compare it to.
                                     E.g. if the oral average common dose of MDMA is 100mg and the average common dose of insufflated MDMA is 50mg then the timeline for 100mg of oral MDMA is the same height as for 50mg of insufflated MDMA.
                                     This is also applied across substances. E.g. if the common dose of oral 2C-B is 20mg then the timeline of 40mg oral 2C-B will be twice as high as 100mg of oral MDMA.
                                 """.trimIndent(),
-                                    modifier = Modifier
-                                        .padding(horizontal = horizontalPadding)
-                                        .padding(bottom = 15.dp)
-                                        .verticalScroll(state = rememberScrollState())
-                                )
-                            }
-                        }
-                        Icon(Icons.Outlined.Info, contentDescription = "Show more info")
-                    }
-                    Switch(
-                        checked = areSubstanceHeightsIndependent,
-                        onCheckedChange = saveAreSubstanceHeightsIndependent
-                    )
-                }
+                    checked = areSubstanceHeightsIndependent,
+                    onCheckedChange = saveAreSubstanceHeightsIndependent
+                )
                 HorizontalDivider()
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = horizontalPadding),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-                    var showBottomSheet by remember { mutableStateOf(false) }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(5.dp),
-                        modifier = Modifier
-                            .clickable {
-                                showBottomSheet = true
-                            }
-                            .padding(end = ButtonDefaults.IconSpacing)
-                    ) {
-                        Text(text = "Merge routes of same substance")
-                        if (showBottomSheet) {
-                            ModalBottomSheet(
-                                onDismissRequest = {
-                                    showBottomSheet = false
-                                },
-                                sheetState = sheetState
-                            ) {
-                                Text(
-                                    text = "When enabled, ingestions of the same substance through different routes (e.g. insufflated and oral ketamine) are shown as one combined line. Each route keeps its own onset and duration, and doses are made comparable using each route's common dose range, so the line shows the combined effect rather than the combined amount. Routes without dose ranges in the database are always shown separately.",
-                                    modifier = Modifier
-                                        .padding(horizontal = horizontalPadding)
-                                        .padding(bottom = 15.dp)
-                                        .verticalScroll(state = rememberScrollState())
-                                )
-                            }
-                        }
-                        Icon(Icons.Outlined.Info, contentDescription = "Show more info")
-                    }
-                    Switch(
-                        checked = areRoutesMerged,
-                        onCheckedChange = saveAreRoutesMerged
-                    )
-                }
+                SwitchWithInfoRow(
+                    title = "Merge routes of same substance",
+                    info = "When enabled, ingestions of the same substance through different routes (e.g. insufflated and oral ketamine) are shown as one combined line. Each route keeps its own onset and duration, and doses are made comparable using each route's common dose range, so the line shows the combined effect rather than the combined amount. Routes without dose ranges in the database are always shown separately.",
+                    checked = areRoutesMerged,
+                    onCheckedChange = saveAreRoutesMerged
+                )
             }
             CardWithTitle(title = "App data", innerPaddingHorizontal = 0.dp) {
                 var isShowingExportDialog by remember { mutableStateOf(false) }
@@ -498,5 +426,58 @@ fun SettingsButton(imageVector: ImageVector, text: String, onClick: () -> Unit) 
         Spacer(Modifier.size(ButtonDefaults.IconSpacing))
         Text(text)
         Spacer(modifier = Modifier.weight(1f))
+    }
+}
+
+// a setting with a switch, whose title opens an explanation
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwitchWithInfoRow(
+    title: String,
+    info: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = horizontalPadding),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        var showBottomSheet by remember { mutableStateOf(false) }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            modifier = Modifier
+                .clickable {
+                    showBottomSheet = true
+                }
+                .padding(end = ButtonDefaults.IconSpacing)
+        ) {
+            Text(text = title)
+            if (showBottomSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = {
+                        showBottomSheet = false
+                    },
+                    sheetState = sheetState
+                ) {
+                    Text(
+                        text = info,
+                        modifier = Modifier
+                            .padding(horizontal = horizontalPadding)
+                            .padding(bottom = 15.dp)
+                            .verticalScroll(state = rememberScrollState())
+                    )
+                }
+            }
+            Icon(Icons.Outlined.Info, contentDescription = "Show more info")
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
     }
 }

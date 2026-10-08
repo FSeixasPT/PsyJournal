@@ -58,7 +58,14 @@ fun preselectedRoute(substance: Substance, experienceRoutesByRecency: List<Admin
     return experienceRoutesByRecency.firstOrNull { it in previewableRoutes } ?: previewableRoutes.firstOrNull()
 }
 
-fun parseDose(text: String): Double? = text.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 }
+// only plain decimal numbers, so text like "Infinity", "1e400" or "0x1p3" is not accepted as a dose
+private val plainDecimal = Regex("""\d+(\.\d*)?|\.\d+""")
+
+fun parseDose(text: String): Double? {
+    val normalized = text.trim().replace(',', '.')
+    if (!plainDecimal.matches(normalized)) return null
+    return normalized.toDoubleOrNull()?.takeIf { it > 0 && it.isFinite() }
+}
 
 fun RoaDose.rangesText(): String {
     val parts = listOfNotNull(

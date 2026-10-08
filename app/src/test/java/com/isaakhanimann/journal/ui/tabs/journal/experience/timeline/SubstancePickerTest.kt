@@ -100,4 +100,16 @@ class SubstancePickerTest {
         assertEquals(1234.0, parseDose(doseFieldText(1234.0))!!, 0.0)
         assertEquals(0.25, parseDose(doseFieldText(0.25))!!, 0.0)
     }
+
+    @Test
+    fun doseTextRejectsInfiniteAndUnusualNumberFormats() {
+        assertNull(parseDose("Infinity"))
+        assertNull(parseDose("1e400"))
+        assertNull(parseDose("5f"))
+        assertNull(parseDose("0x1p3"))
+        assertNull(parseDose("NaN"))
+        assertEquals(12.5, parseDose("12.5")!!, 0.0)
+        assertEquals(3.0, parseDose("3.")!!, 0.0)
+        assertEquals(0.5, parseDose(".5")!!, 0.0)
+    }
 }

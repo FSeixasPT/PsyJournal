@@ -218,4 +218,18 @@ class RouteMergingTest {
         assertEquals(true, mdmaGroup.fullTimelines!!.isDrawnAsPreview)
         assertEquals(null, mdmaGroup.previewBaseline)
     }
+
+    @Test
+    fun linesOfASubstanceAreInTheOrderTheyWereFirstTaken() {
+        // sublingual (partial durations, so a separate line) is taken before the merged insufflated and oral line
+        val partial = oralDuration.copy(peak = null, offset = null)
+        val model = model(
+            true,
+            line(0, SUBLINGUAL, 100.0, roaDuration = partial),
+            line(10, INSUFFLATED, 52.5),
+            line(20, ORAL, 200.0)
+        )
+        assertEquals(null, model.groupDrawables[0].fullTimelines)
+        assertEquals(true, model.groupDrawables[1].fullTimelines != null)
+    }
 }
