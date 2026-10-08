@@ -105,14 +105,18 @@ fun AdministrationRoutePicker(
                     } else {
                         Text("Hidden routes", style = MaterialTheme.typography.titleSmall)
                         hiddenRoutes.chunked(2).forEach { chunk ->
+                            // weighted like the other route rows, so all rows share the screen height
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
                                 horizontalArrangement = Arrangement.spacedBy(spacing.dp)
                             ) {
                                 chunk.forEach { route ->
                                     ElevatedCard(
                                         modifier = Modifier
                                             .clickable { onRouteTapped(route) }
+                                            .fillMaxHeight()
                                             .weight(1f)
                                     ) {
                                         RouteBox(route = route, titleStyle = MaterialTheme.typography.titleMedium)
