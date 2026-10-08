@@ -147,6 +147,7 @@ fun TimelineScreen(
                         state = planState,
                         actions = plannedIngestionActions,
                         selectedTime = selectedTime,
+                        timeDisplayOption = timeDisplayOption,
                         onChangeDetails = { navigateToChooseDose(it) },
                         modifier = Modifier.padding(horizontal = horizontalPadding)
                     )

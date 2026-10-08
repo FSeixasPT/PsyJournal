@@ -28,6 +28,7 @@ import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepositor
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.interactions.Interaction
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.interactions.InteractionChecker
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.DataForOneEffectLine
+import com.isaakhanimann.journal.ui.tabs.journal.experience.components.SavedTimeDisplayOption
 import com.isaakhanimann.journal.ui.tabs.settings.combinations.UserPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -47,6 +48,8 @@ interface PlannedIngestionActions {
     val chosenPlanFlow: StateFlow<PlannedIngestion?>
     // custom units that are not archived, to use doses like "5 sprays"
     val customUnitsFlow: StateFlow<List<CustomUnit>>
+    // the time display option chosen with the stopwatch, before "Auto" is resolved
+    val savedTimeDisplayOptionFlow: StateFlow<SavedTimeDisplayOption>
     fun choose(planned: PlannedIngestion?)
     // lets the normal add-ingestion flow propose this experience
     fun prepareChangeDetails(lastIngestionTime: Instant?)
@@ -96,6 +99,9 @@ class PlannedIngestionHelper @Inject constructor(
             override val pinnedRedoseFlow = pinFlow
 
             override val customUnitsFlow: StateFlow<List<CustomUnit>> = customUnits
+
+            override val savedTimeDisplayOptionFlow: StateFlow<SavedTimeDisplayOption> =
+                userPreferences.savedTimeDisplayOptionFlow.stateIn(scope, SharingStarted.Eagerly, SavedTimeDisplayOption.AUTO)
 
             override val chosenPlanFlow: StateFlow<PlannedIngestion?> = chosenFlow
 

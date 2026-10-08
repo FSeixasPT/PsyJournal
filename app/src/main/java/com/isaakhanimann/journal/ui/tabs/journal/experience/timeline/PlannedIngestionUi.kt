@@ -77,6 +77,7 @@ import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
 import com.isaakhanimann.journal.data.room.experiences.entities.CustomUnit
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.DataForOneEffectLine
+import com.isaakhanimann.journal.ui.tabs.journal.experience.components.TimeDisplayOption
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.roundToSignificantDigits
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toReadableString
 import com.isaakhanimann.journal.ui.utils.getShortTimeText
@@ -163,6 +164,8 @@ fun PlannedIngestionSection(
     state: PlannedIngestionState,
     actions: PlannedIngestionActions,
     selectedTime: Instant?,
+    // the time display option chosen with the stopwatch, used for the times below the chip
+    timeDisplayOption: TimeDisplayOption,
     // opens the normal add-ingestion flow with the planned ingestion filled in
     onChangeDetails: (PlannedIngestion) -> Unit,
     modifier: Modifier = Modifier,
@@ -190,20 +193,25 @@ fun PlannedIngestionSection(
         )
         // both lines are always laid out so that nothing moves when they appear
         val model = state.displayedModel
+        val experienceStart = state.realModel.startTime
+        val savedTimeDisplayOption = actions.savedTimeDisplayOptionFlow.collectAsState().value
+        val chipOption = chipTimeDisplayOption(savedTimeDisplayOption, resolved = timeDisplayOption)
+        fun timeText(time: Instant) = plannedTimeText(time, state.now, experienceStart, chipOption)
         val lines = if (model.isPlannedRedose) {
             val fractionLine = model.plannedFractionOfPeakAt(selectedTime ?: state.now)?.let {
-                val time = selectedTime?.let { time -> "at ${time.getShortTimeText()}" } ?: "now"
+                val time = selectedTime?.let { time -> timeText(time) } ?: "now"
                 "With redose: ${(it * 100).roundToInt()}% of peak $time"
             }
             val peakLine = model.plannedPeak?.let {
                 val route = it.route?.let { route -> " ${route.displayText.lowercase()}" } ?: ""
-                "Peak after redose: ≈ ${it.doseEquivalent.toReadableString()} ${it.units}$route equivalent at ${it.time.getShortTimeText()}"
+                "Peak after redose: ≈ ${it.doseEquivalent.toReadableString()} ${it.units}$route equivalent ${timeText(it.time)}"
             }
             listOfNotNull(fractionLine, peakLine)
         } else {
             // a substance not taken yet in this experience: when its effects would happen, to plan the overlap
             listOfNotNull(model.plannedEffectTimes?.let {
-                "If taken now: starts ≈ ${it.start.getShortTimeText()} · peaks ${it.peakStart.getShortTimeText()}–${it.peakEnd.getShortTimeText()} · ends ≈ ${it.end.getShortTimeText()}"
+                val peaks = plannedTimeRangeText(it.peakStart, it.peakEnd, state.now, experienceStart, chipOption)
+                "If taken now: starts ${timeText(it.start)} · peaks $peaks · ends ${timeText(it.end)}"
             })
         }
         Text(
