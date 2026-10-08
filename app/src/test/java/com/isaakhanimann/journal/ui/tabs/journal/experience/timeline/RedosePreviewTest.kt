@@ -188,4 +188,18 @@ class RedosePreviewTest {
         val preview = real.withPlannedIngestion(real.redoseOptions.single(), dose = 50.0, time = at(120))
         assertEquals(AdaptiveColor.PINK, preview.plannedIngestionColor)
     }
+
+    @Test
+    fun fractionOfPeakWithRedoseIsMeasuredOnTheCombinedCurve() {
+        // 100 mg at 0 and 50 mg planned at 60 min: combined curve peaks at 150 mg equivalent at 120 min
+        // at 150 min: 50 (first dose halfway down) + 50 (planned at peak) = 100 of 150
+        val real = model(line(0, dose = 100.0))
+        val preview = real.withPlannedIngestion(real.redoseOptions.single(), dose = 50.0, time = at(60))
+        assertEquals(100f / 150f, preview.plannedFractionOfPeakAt(at(150))!!, 0.001f)
+    }
+
+    @Test
+    fun realModelHasNoFractionWithRedose() {
+        assertNull(model(line(0, dose = 100.0)).plannedFractionOfPeakAt(at(90)))
+    }
 }

@@ -34,7 +34,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,10 +60,12 @@ import androidx.compose.ui.unit.dp
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toReadableString
 import com.isaakhanimann.journal.ui.utils.getShortTimeText
+import java.time.Instant
+import kotlin.math.roundToInt
 
 /**
- * Chips to preview taking a substance again now. The preview is shown only while a chip is held.
- * Edited doses are kept until the screen is left and are never saved.
+ * Chips to preview taking a substance again now. The preview is shown while a chip is held,
+ * or always for the pinned chip. Edited doses of chips that are not pinned are kept until the screen is left.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -69,14 +73,25 @@ fun RedosePreviewRow(
     options: List<RedoseOption>,
     // peak of the currently previewed redose, shown below the chips so they don't move while held
     peak: TimelinePeak?,
+    // intensity with the previewed redose at the selected time, or now if nothing is selected
+    fractionOfPeakWithRedose: Float?,
+    selectedTime: Instant?,
+    // the pinned chip with its pinned dose, if any
+    pinnedOption: RedoseOption?,
     onPreviewChange: (RedoseOption?) -> Unit,
+    // pins the given chip, or unpins if null
+    onPinChange: (RedoseOption?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (options.isEmpty()) return
     var editedDoses by remember { mutableStateOf(mapOf<Pair<String, AdministrationRoute>, Double>()) }
     var optionBeingEdited by remember { mutableStateOf<RedoseOption?>(null) }
+    fun RedoseOption.isPinned() = pinnedOption?.substanceName == substanceName && pinnedOption.route == route
     val optionsWithEditedDoses = options.map { option ->
-        editedDoses[Pair(option.substanceName, option.route)]?.let { option.copy(dose = it) } ?: option
+        when {
+            option.isPinned() -> option.copy(dose = pinnedOption!!.dose)
+            else -> editedDoses[Pair(option.substanceName, option.route)]?.let { option.copy(dose = it) } ?: option
+        }
     }
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
@@ -91,20 +106,27 @@ fun RedosePreviewRow(
                 RedoseChip(
                     option = option,
                     text = option.chipText(optionsWithEditedDoses),
+                    isPinned = option.isPinned(),
                     onPreviewChange = onPreviewChange,
+                    onTogglePin = { onPinChange(if (option.isPinned()) null else option) },
                     onEdit = { optionBeingEdited = option }
                 )
             }
         }
-        // the line is always laid out so that nothing moves when it appears
+        // both lines are always laid out so that nothing moves when they appear
+        val fractionLine = fractionOfPeakWithRedose?.let {
+            val time = selectedTime?.let { time -> "at ${time.getShortTimeText()}" } ?: "now"
+            "With redose: ${(it * 100).roundToInt()}% of peak $time"
+        }
+        val peakLine = peak?.let {
+            val route = it.route?.let { route -> " ${route.displayText.lowercase()}" } ?: ""
+            "Peak after redose: ≈ ${it.doseEquivalent.toReadableString()} ${it.units}$route equivalent at ${it.time.getShortTimeText()}"
+        }
         Text(
-            text = peak?.let {
-                val route = it.route?.let { route -> " ${route.displayText.lowercase()}" } ?: ""
-                "Peak after redose: ≈ ${it.doseEquivalent.toReadableString()} ${it.units}$route equivalent at ${it.time.getShortTimeText()}"
-            } ?: "",
+            text = listOfNotNull(fractionLine, peakLine).joinToString("\n"),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
-            minLines = 1
+            minLines = 2
         )
     }
     optionBeingEdited?.let { option ->
@@ -113,6 +135,9 @@ fun RedosePreviewRow(
             onDismiss = { optionBeingEdited = null },
             onConfirm = { newDose ->
                 editedDoses = editedDoses + (Pair(option.substanceName, option.route) to newDose)
+                if (option.isPinned()) {
+                    onPinChange(option.copy(dose = newDose))
+                }
                 optionBeingEdited = null
             }
         )
@@ -123,7 +148,9 @@ fun RedosePreviewRow(
 private fun RedoseChip(
     option: RedoseOption,
     text: String,
+    isPinned: Boolean,
     onPreviewChange: (RedoseOption?) -> Unit,
+    onTogglePin: () -> Unit,
     onEdit: () -> Unit,
 ) {
     val isDarkTheme = isSystemInDarkTheme()
@@ -133,7 +160,7 @@ private fun RedoseChip(
     Surface(
         shape = RoundedCornerShape(8.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        color = if (isPressed) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface
+        color = if (isPressed || isPinned) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Row(
@@ -161,6 +188,13 @@ private fun RedoseChip(
                     text = text,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(start = 6.dp)
+                )
+            }
+            IconButton(onClick = onTogglePin, modifier = Modifier.size(36.dp)) {
+                Icon(
+                    if (isPinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
+                    contentDescription = if (isPinned) "Unpin preview" else "Pin preview",
+                    modifier = Modifier.size(18.dp)
                 )
             }
             IconButton(onClick = onEdit, modifier = Modifier.size(36.dp)) {

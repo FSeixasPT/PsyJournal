@@ -21,6 +21,9 @@ package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.screen
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.RedoseOption
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.toPinnedRedose
+import kotlinx.coroutines.launch
 import androidx.navigation.toRoute
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
 import com.isaakhanimann.journal.data.room.experiences.relations.IngestionWithCompanionAndCustomUnit
@@ -57,7 +60,7 @@ import javax.inject.Inject
 class TimelineScreenViewModel @Inject constructor(
     experienceRepo: ExperienceRepository,
     private val substanceRepo: SubstanceRepository,
-    userPreferences: UserPreferences,
+    private val userPreferences: UserPreferences,
     state: SavedStateHandle
 ) : ViewModel() {
 
@@ -67,6 +70,21 @@ class TimelineScreenViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000)
         )
+
+    val pinnedRedoseFlow = userPreferences.pinnedRedoseFlow
+        .map { pin -> pin?.takeIf { it.experienceId == experienceID } }
+        .stateIn(
+            initialValue = null,
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000)
+        )
+
+    // pins the given redose preview of this experience, or unpins if null
+    fun pinRedose(option: RedoseOption?) = viewModelScope.launch {
+        userPreferences.savePinnedRedose(
+            option?.toPinnedRedose(experienceId = experienceID, currentPin = pinnedRedoseFlow.value, now = Instant.now())
+        )
+    }
 
     private val areRoutesMergedFlow =
         userPreferences.areRoutesMergedFlow.stateIn(

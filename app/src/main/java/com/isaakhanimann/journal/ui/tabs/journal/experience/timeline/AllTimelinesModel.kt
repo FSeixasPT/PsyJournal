@@ -165,6 +165,19 @@ class AllTimelinesModel(
         }
     }
 
+    // the option to preview for a pin, or null if the pin no longer applies to this timeline
+    fun resolvePinnedRedose(pin: PinnedRedose, now: Instant): RedoseOption? {
+        val option = redoseOptions.firstOrNull { it.substanceName == pin.substanceName && it.route == pin.route }
+            ?: return null
+        val isLoggedSincePinning = dataForLines.any {
+            it.substanceName == pin.substanceName && it.route == pin.route && it.startTime > pin.pinnedAt
+        }
+        if (isLoggedSincePinning) return null
+        val endTime = startTime.plusSeconds(widthInSeconds.toLong())
+        if (now > endTime) return null
+        return option.copy(dose = pin.dose)
+    }
+
     fun withPlannedIngestion(option: RedoseOption, dose: Double, time: Instant): AllTimelinesModel {
         val lastLine = dataForLines
             .filter { it.substanceName == option.substanceName && it.route == option.route }
@@ -206,6 +219,16 @@ class AllTimelinesModel(
             units = option.units,
             route = if (group.isMerged) option.route else null
         )
+    }
+
+    // intensity of the planned substance's combined curve at the given time relative to its highest point
+    fun plannedFractionOfPeakAt(time: Instant): Float? {
+        val option = plannedOption ?: return null
+        val index = roaGroups.indexOfFirst { it.contains(option.substanceName, option.route) }
+        val fullTimelines = groupDrawables.getOrNull(index)?.fullTimelines ?: return null
+        val maxHeight = fullTimelines.nonNormalisedHeight
+        if (maxHeight <= 0f) return null
+        return fullTimelines.heightAt(Duration.between(startTime, time).seconds.toFloat()) / maxHeight
     }
 
     // position of the planned ingestion on its curve: seconds from start and height from 0 to 1

@@ -52,7 +52,9 @@ import com.isaakhanimann.journal.ui.tabs.journal.experience.TimelineDisplayOptio
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.TimeDisplayOption
 import com.isaakhanimann.journal.ui.YOU
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.AllTimelines
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.PinnedRedose
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.RedoseOption
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.rememberRedosePreviewState
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.RedosePreviewRow
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.TimelineQuantityDetails
 import com.isaakhanimann.journal.ui.theme.horizontalPadding
@@ -65,6 +67,8 @@ fun TimelineScreen(
     TimelineScreen(
         title = viewModel.consumerName,
         isRedosePreviewAvailable = viewModel.consumerName == YOU,
+        pinnedRedose = viewModel.pinnedRedoseFlow.collectAsState().value,
+        onPinRedose = viewModel::pinRedose,
         timelineDisplayOption = viewModel.timelineDisplayOptionFlow.collectAsState().value,
         timeDisplayOption = viewModel.timeDisplayOptionFlow.collectAsState().value,
     )
@@ -75,6 +79,8 @@ fun TimelineScreen(
 fun TimelineScreen(
      title: String,
      isRedosePreviewAvailable: Boolean,
+     pinnedRedose: PinnedRedose? = null,
+     onPinRedose: (RedoseOption?) -> Unit = {},
      timelineDisplayOption: TimelineDisplayOption,
      timeDisplayOption: TimeDisplayOption,
 ) {
@@ -98,11 +104,15 @@ fun TimelineScreen(
             var selectedTime by remember { mutableStateOf<Instant?>(null) }
             var previewedOption by remember { mutableStateOf<RedoseOption?>(null) }
             val realModel = (timelineDisplayOption as? TimelineDisplayOption.Shown)?.allTimelinesModel
-            val displayedModel = remember(realModel, previewedOption) {
-                previewedOption?.let {
-                    realModel?.withPlannedIngestion(it, dose = it.dose, time = Instant.now())
-                } ?: realModel
+            val previewState = realModel?.let {
+                rememberRedosePreviewState(
+                    realModel = it,
+                    heldOption = previewedOption,
+                    pin = if (isRedosePreviewAvailable) pinnedRedose else null,
+                    onPinNoLongerApplies = { onPinRedose(null) }
+                )
             }
+            val displayedModel = previewState?.displayedModel
             val isOrientationPortrait =
                 LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
             Box(
@@ -130,17 +140,21 @@ fun TimelineScreen(
                 }
             }
             if (realModel != null && displayedModel != null) {
+                // the details always describe the real ingestions, the redose is described below the chips
                 TimelineQuantityDetails(
-                    model = displayedModel,
+                    model = realModel,
                     selectedTime = selectedTime,
                     modifier = Modifier.padding(horizontal = horizontalPadding)
                 )
-                val timelineEnd = realModel.startTime.plusSeconds(realModel.widthInSeconds.toLong())
-                if (isRedosePreviewAvailable && Instant.now() < timelineEnd) {
+                if (isRedosePreviewAvailable && previewState?.isRedosePossibleNow == true) {
                     RedosePreviewRow(
                         options = realModel.redoseOptions,
                         peak = displayedModel.plannedPeak,
+                        fractionOfPeakWithRedose = displayedModel.plannedFractionOfPeakAt(selectedTime ?: previewState.now),
+                        selectedTime = selectedTime,
+                        pinnedOption = previewState.pinnedOption,
                         onPreviewChange = { previewedOption = it },
+                        onPinChange = onPinRedose,
                         modifier = Modifier.padding(horizontal = horizontalPadding)
                     )
                 }

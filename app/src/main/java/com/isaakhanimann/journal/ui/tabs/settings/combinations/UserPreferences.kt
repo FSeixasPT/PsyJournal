@@ -25,6 +25,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.SavedTimeDisplayOption
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.PinnedRedose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.Instant
@@ -46,6 +47,7 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
         val KEY_HIDE_DOSAGE_DOTS = booleanPreferencesKey("key_hide_dosage_dots")
         val KEY_ARE_SUBSTANCE_HEIGHTS_INDEPENDENT = booleanPreferencesKey("KEY_ARE_SUBSTANCE_HEIGHTS_INDEPENDENT")
         val KEY_ARE_ROUTES_MERGED = booleanPreferencesKey("KEY_ARE_ROUTES_MERGED")
+        val KEY_PINNED_REDOSE = stringPreferencesKey("KEY_PINNED_REDOSE")
         val KEY_IS_TIMELINE_HIDDEN = booleanPreferencesKey("KEY_IS_TIMELINE_HIDDEN")
     }
 
@@ -135,6 +137,22 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
     val areRoutesMergedFlow: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[PreferencesKeys.KEY_ARE_ROUTES_MERGED] ?: true
+        }
+
+    // only one redose preview can be pinned at a time, across all experiences
+    suspend fun savePinnedRedose(value: PinnedRedose?) {
+        dataStore.edit { preferences ->
+            if (value == null) {
+                preferences.remove(PreferencesKeys.KEY_PINNED_REDOSE)
+            } else {
+                preferences[PreferencesKeys.KEY_PINNED_REDOSE] = value.toPreferenceString()
+            }
+        }
+    }
+
+    val pinnedRedoseFlow: Flow<PinnedRedose?> = dataStore.data
+        .map { preferences ->
+            PinnedRedose.fromPreferenceString(preferences[PreferencesKeys.KEY_PINNED_REDOSE])
         }
 
     val isTimelineHiddenFlow: Flow<Boolean> = dataStore.data
