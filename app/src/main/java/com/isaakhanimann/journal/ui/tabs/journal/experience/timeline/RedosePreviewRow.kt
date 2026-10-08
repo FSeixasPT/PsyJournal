@@ -90,6 +90,7 @@ fun RedosePreviewRow(
             optionsWithEditedDoses.forEach { option ->
                 RedoseChip(
                     option = option,
+                    text = option.chipText(optionsWithEditedDoses),
                     onPreviewChange = onPreviewChange,
                     onEdit = { optionBeingEdited = option }
                 )
@@ -121,6 +122,7 @@ fun RedosePreviewRow(
 @Composable
 private fun RedoseChip(
     option: RedoseOption,
+    text: String,
     onPreviewChange: (RedoseOption?) -> Unit,
     onEdit: () -> Unit,
 ) {
@@ -156,7 +158,7 @@ private fun RedoseChip(
                         .background(option.color.getComposeColor(isDarkTheme), CircleShape)
                 )
                 Text(
-                    text = "${option.substanceName} · ${option.dose.toReadableString()} ${option.units}",
+                    text = text,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(start = 6.dp)
                 )

@@ -201,4 +201,20 @@ class RouteMergingTest {
         val preview = real.withPlannedIngestion(real.redoseOptions.single(), dose = 52.5, time = at(20))
         assertEquals(1, preview.getQuantityDetails(at(30)).size)
     }
+
+    @Test
+    fun noPeakWhenAnotherRouteOfTheLineHasAnUnknownDose() {
+        // the oral dose is unknown, so the combined line contains an assumed dose and its peak can't be expressed as a dose
+        val real = model(true, line(0, INSUFFLATED, 52.5), line(10, ORAL, null))
+        val preview = real.withPlannedIngestion(real.redoseOptions.single(), dose = 52.5, time = at(20))
+        assertEquals(null, preview.plannedPeak)
+    }
+
+    @Test
+    fun chipNamesTheRouteOnlyWhenTheSubstanceHasSeveralChips() {
+        val options = model(true, line(0, INSUFFLATED, 40.0), line(10, ORAL, 150.0)).redoseOptions
+        assertEquals("Ketamine · 40 mg insufflated", options[0].chipText(options))
+        val single = model(true, line(0, INSUFFLATED, 40.0)).redoseOptions
+        assertEquals("Ketamine · 40 mg", single[0].chipText(single))
+    }
 }

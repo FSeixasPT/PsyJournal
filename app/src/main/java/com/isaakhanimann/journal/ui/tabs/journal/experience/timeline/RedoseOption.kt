@@ -20,6 +20,7 @@ package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
+import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toReadableString
 
 // a substance and route that can be previewed as taken again, with the last dose taken as default
 data class RedoseOption(
@@ -29,3 +30,10 @@ data class RedoseOption(
     val units: String,
     val color: AdaptiveColor
 )
+
+// names the route only if the substance has chips for several routes, because then they share one line
+fun RedoseOption.chipText(allOptions: List<RedoseOption>): String {
+    val isRouteShown = allOptions.count { it.substanceName == substanceName } > 1
+    val route = if (isRouteShown) " ${route.displayText.lowercase()}" else ""
+    return "$substanceName · ${dose.toReadableString()} $units$route"
+}

@@ -176,6 +176,8 @@ class AllTimelinesModel(
         val time = plannedIngestionTime ?: return@lazy null
         val index = roaGroups.indexOfFirst { it.contains(option.substanceName, option.route) }
         val group = roaGroups.getOrNull(index) ?: return@lazy null
+        // a line with an assumed dose (unknown or in other units) can't be expressed as a dose
+        if (!group.isDoseEquivalentKnown) return@lazy null
         val referenceDose = group.routes.first { it.route == option.route }.referenceDose ?: return@lazy null
         val fullTimelines = groupDrawables[index].fullTimelines ?: return@lazy null
         val highestPoint = fullTimelines.highestPointFrom(Duration.between(startTime, time).seconds.toFloat())
