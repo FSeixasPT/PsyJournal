@@ -66,6 +66,10 @@ data class RouteVisibility(
 
     fun hasOverrides(substanceName: String): Boolean = overrides.any { it.substanceName == substanceName }
 
+    // also true for an override that matches the global setting, e.g. after the global setting changed
+    fun hasOverride(substanceName: String, route: AdministrationRoute): Boolean =
+        overrides.any { it.substanceName == substanceName && it.route == route }
+
     // only stores an override if it differs from the global setting
     fun withSubstanceRoute(substanceName: String, route: AdministrationRoute, isShown: Boolean): RouteVisibility {
         val others = overrides.filterNot { it.substanceName == substanceName && it.route == route }.toSet()

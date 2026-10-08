@@ -18,7 +18,6 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
-import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -81,6 +80,7 @@ import com.isaakhanimann.journal.ui.tabs.journal.experience.components.DataForOn
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.TimeDisplayOption
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.roundToSignificantDigits
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toReadableString
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import com.isaakhanimann.journal.ui.utils.getShortTimeText
 import kotlinx.coroutines.delay
 import java.time.Instant
@@ -385,7 +385,7 @@ private fun PlannedIngestionEditorSheet(
                 )
                 val names = state.experienceSubstanceNamesByRecency
                 // only searched again when the text or the substances of the experience change
-                val entries = remember(searchText, names) { actions.searchSubstances(searchText, names) }
+                val entries = remember(searchText, names, state.routeVisibility) { actions.searchSubstances(searchText, names) }
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     val inExperience = entries.filter { it.isInExperience }
                     val others = entries.filter { !it.isInExperience }
@@ -405,7 +405,7 @@ private fun PlannedIngestionEditorSheet(
                 }
                 Text("Route", style = MaterialTheme.typography.labelMedium)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    editorRoutes(substance, state.routeVisibility, plannedRoute = initial?.route).forEach { roa ->
+                    editorRoutes(substance, state.routeVisibility, plannedRoute = plannedRouteForEditor(initial, selectedName)).forEach { roa ->
                         val problem = roa.previewProblem()
                         FilterChip(
                             selected = route == roa.route,

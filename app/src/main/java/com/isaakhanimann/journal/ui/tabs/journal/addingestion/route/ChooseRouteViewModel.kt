@@ -18,22 +18,23 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.route
 
-import com.isaakhanimann.journal.ui.tabs.settings.combinations.UserPreferences
-import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
-import com.isaakhanimann.journal.ui.tabs.settings.routes.splitRoutes
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepository
 import com.isaakhanimann.journal.ui.main.navigation.graphs.ChooseRouteOfAddIngestionRoute
+import com.isaakhanimann.journal.ui.tabs.settings.combinations.UserPreferences
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
+import com.isaakhanimann.journal.ui.tabs.settings.routes.splitRoutes
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
@@ -54,8 +55,9 @@ class ChooseRouteViewModel @Inject constructor(
     val pwRoutes = allPwRoutes
     val otherRoutesChunked = allOtherRoutes.chunked(2)
 
-    val routeVisibilityFlow = userPreferences.routeVisibilityFlow.stateIn(
-        initialValue = RouteVisibility(),
+    // null until loaded, so hidden routes don't show for a moment
+    val routeVisibilityFlow = userPreferences.routeVisibilityFlow.map<RouteVisibility, RouteVisibility?> { it }.stateIn(
+        initialValue = null,
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000)
     )

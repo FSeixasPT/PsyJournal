@@ -31,6 +31,7 @@ import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.PinnedRedos
 import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteOverride
 import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import java.time.Instant
 import javax.inject.Inject
@@ -166,7 +167,7 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
             .toSet()
     )
 
-    val routeVisibilityFlow: Flow<RouteVisibility> = dataStore.data.map { routeVisibilityOf(it) }
+    val routeVisibilityFlow: Flow<RouteVisibility> = dataStore.data.map { routeVisibilityOf(it) }.distinctUntilChanged()
 
     // reads and writes in one transaction, so concurrent changes are not lost
     suspend fun updateRouteVisibility(change: (RouteVisibility) -> RouteVisibility) {

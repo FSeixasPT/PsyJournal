@@ -120,4 +120,14 @@ class RouteVisibilityTest {
         val visibility = RouteVisibility().withSubstanceRoute("Ketamine", RECTAL, isShown = false)
         assertEquals(listOf(SMOKED) to listOf(RECTAL), splitRoutes("Ketamine", listOf(RECTAL, SMOKED), visibility))
     }
+
+    @Test
+    fun anOverrideIsVisibleEvenWhenItMatchesTheGlobalSetting() {
+        // shown for ketamine while insufflated was hidden, then insufflated is shown globally
+        val visibility = insufflatedHidden
+            .withSubstanceRoute("Ketamine", INSUFFLATED, isShown = true)
+            .withGlobalRoute(INSUFFLATED, isShown = true)
+        assertEquals(true, visibility.hasOverride("Ketamine", INSUFFLATED))
+        assertEquals(false, visibility.hasOverride("Ketamine", ORAL))
+    }
 }

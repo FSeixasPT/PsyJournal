@@ -18,11 +18,6 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.route
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.material3.TextButton
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -38,7 +33,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -56,6 +56,8 @@ fun AdministrationRoutePicker(
     hiddenRoutes: List<AdministrationRoute> = emptyList(),
 ) {
     val spacing = 6
+    // saved, so it stays expanded after going to the dose screen and back, or rotating
+    var isShowingHidden by rememberSaveable { mutableStateOf(false) }
     Column(
         modifier = Modifier.padding(10.dp),
         verticalArrangement = Arrangement.spacedBy(spacing.dp)
@@ -97,7 +99,6 @@ fun AdministrationRoutePicker(
                     }
                 }
                 if (hiddenRoutes.isNotEmpty()) {
-                    var isShowingHidden by remember { mutableStateOf(false) }
                     if (!isShowingHidden) {
                         TextButton(onClick = { isShowingHidden = true }) {
                             Text("Show hidden routes (${hiddenRoutes.size})")
@@ -170,6 +171,14 @@ fun AdministrationRoutePicker(
                             text = "Other routes",
                             style = MaterialTheme.typography.headlineSmall
                         )
+                    }
+                }
+                if (hiddenRoutes.isNotEmpty()) {
+                    TextButton(onClick = {
+                        isShowingHidden = true
+                        onChangeOfShowOtherRoutes(true)
+                    }) {
+                        Text("Show hidden routes (${hiddenRoutes.size})")
                     }
                 }
             }

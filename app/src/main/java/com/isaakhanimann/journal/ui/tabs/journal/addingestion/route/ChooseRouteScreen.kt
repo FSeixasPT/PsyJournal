@@ -18,7 +18,6 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.route
 
-import androidx.compose.runtime.collectAsState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,6 +45,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -64,7 +65,8 @@ fun ChooseRouteScreen(
     navigateToRouteExplanationScreen: () -> Unit,
     viewModel: ChooseRouteViewModel = hiltViewModel()
 ) {
-    val routes = viewModel.routesFor(viewModel.routeVisibilityFlow.collectAsState().value)
+    val visibility = viewModel.routeVisibilityFlow.collectAsState().value
+    val routes = remember(visibility) { visibility?.let { viewModel.routesFor(it) } } ?: return
     ChooseRouteScreen(
         showOtherRoutes = viewModel.showOtherRoutes,
         onChangeOfShowOtherRoutes = {

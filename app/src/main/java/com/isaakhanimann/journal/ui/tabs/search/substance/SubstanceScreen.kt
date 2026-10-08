@@ -18,7 +18,6 @@
 
 package com.isaakhanimann.journal.ui.tabs.search.substance
 
-import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -83,6 +82,7 @@ import com.isaakhanimann.journal.ui.tabs.search.substance.roa.ToleranceSection
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.dose.RoaDoseView
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.duration.RoaDurationView
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toReadableString
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import com.isaakhanimann.journal.ui.theme.JournalTheme
 import com.isaakhanimann.journal.ui.theme.horizontalPadding
 import com.isaakhanimann.journal.ui.theme.verticalPaddingCards
@@ -157,7 +157,7 @@ fun SubstanceScreen(
     navigateToCategoryScreen: (categoryName: String) -> Unit,
     substanceWithCategories: SubstanceWithCategories,
     customUnits: List<CustomUnit>,
-    routeVisibility: RouteVisibility = RouteVisibility(),
+    routeVisibility: RouteVisibility? = null,
     onRouteShownChange: (AdministrationRoute, Boolean) -> Unit = { _, _ -> },
     onResetRoutes: () -> Unit = {},
 ) {
@@ -539,7 +539,7 @@ fun SubstanceScreen(
                     }
                 }
             }
-            RoutesShownSection(
+            if (routeVisibility != null) RoutesShownSection(
                 substanceName = substance.name,
                 routes = substance.roas.map { it.route },
                 routeVisibility = routeVisibility,

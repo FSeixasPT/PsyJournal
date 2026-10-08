@@ -18,13 +18,13 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
-import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.data.substances.classes.Substance
 import com.isaakhanimann.journal.data.substances.classes.roa.Roa
 import com.isaakhanimann.journal.data.substances.classes.roa.RoaDose
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toPreservedString
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toReadableString
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 
 data class PickerEntry(
     val substanceName: String,
@@ -68,6 +68,10 @@ fun preselectedRoute(
         .map { it.route }
     return experienceRoutesByRecency.firstOrNull { it in previewableRoutes } ?: previewableRoutes.firstOrNull()
 }
+
+// the route of the plan being edited, only while the editor still shows the planned substance
+fun plannedRouteForEditor(planned: PlannedIngestion?, selectedSubstanceName: String): AdministrationRoute? =
+    planned?.route?.takeIf { planned.substanceName == selectedSubstanceName }
 
 // the routes offered in the editor: the shown ones, and the route being edited so a selection never disappears
 fun editorRoutes(substance: Substance, visibility: RouteVisibility, plannedRoute: AdministrationRoute?): List<Roa> =

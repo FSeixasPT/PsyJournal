@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
@@ -43,6 +45,7 @@ import com.isaakhanimann.journal.ui.tabs.settings.combinations.UserPreferences
 import com.isaakhanimann.journal.ui.theme.horizontalPadding
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -51,8 +54,9 @@ import javax.inject.Inject
 class RouteVisibilityViewModel @Inject constructor(
     private val userPreferences: UserPreferences,
 ) : ViewModel() {
-    val routeVisibilityFlow = userPreferences.routeVisibilityFlow.stateIn(
-        initialValue = RouteVisibility(),
+    // null until loaded, so the switches don't flip on first open
+    val routeVisibilityFlow = userPreferences.routeVisibilityFlow.map<RouteVisibility, RouteVisibility?> { it }.stateIn(
+        initialValue = null,
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000)
     )
@@ -73,7 +77,7 @@ fun RouteVisibilityScreen(viewModel: RouteVisibilityViewModel = hiltViewModel())
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RouteVisibilityScreen(
-    routeVisibility: RouteVisibility,
+    routeVisibility: RouteVisibility?,
     setShown: (AdministrationRoute, Boolean) -> Unit,
 ) {
     Scaffold(topBar = { TopAppBar(title = { Text("Routes of administration") }) }) { padding ->
@@ -85,19 +89,20 @@ fun RouteVisibilityScreen(
                     modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 12.dp)
                 )
             }
+            if (routeVisibility == null) return@LazyColumn
             items(AdministrationRoute.entries) { route ->
+                val isShown = routeVisibility.isShownGlobally(route)
+                // the whole row is the switch, so screen readers read the route name with it
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .toggleable(value = isShown, role = Role.Switch, onValueChange = { setShown(route, it) })
                         .padding(horizontal = horizontalPadding, vertical = 4.dp)
                 ) {
                     Text(route.displayText, modifier = Modifier.weight(1f))
                     Text("Shown", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(end = 8.dp))
-                    Switch(
-                        checked = routeVisibility.isShownGlobally(route),
-                        onCheckedChange = { setShown(route, it) }
-                    )
+                    Switch(checked = isShown, onCheckedChange = null)
                 }
                 HorizontalDivider()
             }

@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -29,6 +30,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
@@ -49,17 +51,26 @@ fun RoutesShownSection(
             routes.forEach { route ->
                 val isShown = routeVisibility.isShown(substanceName, route)
                 val isShownGlobally = routeVisibility.isShownGlobally(route)
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                // the whole row is the switch, so screen readers read the route name with it
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .toggleable(value = isShown, role = Role.Switch, onValueChange = { onRouteShownChange(route, it) })
+                ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(route.displayText)
-                        if (isShown != isShownGlobally) {
-                            Text(
-                                if (isShownGlobally) "shown in app settings" else "hidden in app settings",
-                                style = MaterialTheme.typography.labelSmall
-                            )
+                        val note = when {
+                            isShown != isShownGlobally -> if (isShownGlobally) "shown in app settings" else "hidden in app settings"
+                            // an override that now matches the app settings, e.g. after they changed; Reset removes it
+                            routeVisibility.hasOverride(substanceName, route) -> "set for this substance"
+                            else -> null
+                        }
+                        if (note != null) {
+                            Text(note, style = MaterialTheme.typography.labelSmall)
                         }
                     }
-                    Switch(checked = isShown, onCheckedChange = { onRouteShownChange(route, it) })
+                    Switch(checked = isShown, onCheckedChange = null)
                 }
             }
             if (routeVisibility.hasOverrides(substanceName)) {

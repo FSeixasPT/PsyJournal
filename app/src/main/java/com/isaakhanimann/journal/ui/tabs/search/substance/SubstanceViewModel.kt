@@ -18,19 +18,19 @@
 
 package com.isaakhanimann.journal.ui.tabs.search.substance
 
-import com.isaakhanimann.journal.ui.tabs.settings.combinations.UserPreferences
-import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
-import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
+import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepository
 import com.isaakhanimann.journal.ui.main.navigation.graphs.SubstanceRoute
 import com.isaakhanimann.journal.ui.tabs.journal.experience.TimelineDisplayOption
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.DataForOneEffectLine
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.AllTimelinesModel
+import com.isaakhanimann.journal.ui.tabs.settings.combinations.UserPreferences
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import com.isaakhanimann.journal.ui.utils.getInstant
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -61,8 +61,9 @@ class SubstanceViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000)
     )
 
-    val routeVisibilityFlow = userPreferences.routeVisibilityFlow.stateIn(
-        initialValue = RouteVisibility(),
+    // null until loaded, so the switches don't flip on first open
+    val routeVisibilityFlow = userPreferences.routeVisibilityFlow.map<RouteVisibility, RouteVisibility?> { it }.stateIn(
+        initialValue = null,
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000)
     )

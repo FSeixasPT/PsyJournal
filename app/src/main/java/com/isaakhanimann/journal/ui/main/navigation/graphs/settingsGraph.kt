@@ -18,12 +18,11 @@
 
 package com.isaakhanimann.journal.ui.main.navigation.graphs
 
-import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibilityScreen
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.navigation
-import com.isaakhanimann.journal.ui.main.navigation.composableWithTransitions
 import com.isaakhanimann.journal.ui.main.navigation.SettingsTopLevelRoute
+import com.isaakhanimann.journal.ui.main.navigation.composableWithTransitions
 import com.isaakhanimann.journal.ui.tabs.settings.DonateScreen
 import com.isaakhanimann.journal.ui.tabs.settings.FAQScreen
 import com.isaakhanimann.journal.ui.tabs.settings.SettingsScreen
@@ -32,6 +31,7 @@ import com.isaakhanimann.journal.ui.tabs.settings.combinations.CombinationSettin
 import com.isaakhanimann.journal.ui.tabs.settings.customunits.CustomUnitsScreen
 import com.isaakhanimann.journal.ui.tabs.settings.customunits.archive.CustomUnitArchiveScreen
 import com.isaakhanimann.journal.ui.tabs.settings.customunits.edit.EditCustomUnitScreen
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibilityScreen
 import kotlinx.serialization.Serializable
 
 fun NavGraphBuilder.settingsGraph(navController: NavHostController) {

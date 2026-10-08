@@ -18,21 +18,6 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.route
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.collectAsState
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
-import com.isaakhanimann.journal.ui.tabs.settings.combinations.UserPreferences
-import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
-import com.isaakhanimann.journal.ui.tabs.settings.routes.splitRoutes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,40 +32,35 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
+import com.isaakhanimann.journal.ui.tabs.settings.routes.splitRoutes
 
 @Preview
 @Composable
 fun CustomChooseRouteScreenPreview() {
-    CustomSubstanceChooseRouteScreen(onRouteTap = {})
-}
-
-@HiltViewModel
-class CustomSubstanceChooseRouteViewModel @Inject constructor(
-    userPreferences: UserPreferences,
-) : ViewModel() {
-    val routeVisibilityFlow = userPreferences.routeVisibilityFlow.stateIn(
-        initialValue = RouteVisibility(),
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000)
-    )
+    CustomSubstanceChooseRouteScreen(routeVisibility = RouteVisibility(), onRouteTap = {})
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomSubstanceChooseRouteScreen(
+    // custom substances only use the global setting; pass RouteVisibility() to offer every route
+    routeVisibility: RouteVisibility,
     onRouteTap: (AdministrationRoute) -> Unit,
-    viewModel: CustomSubstanceChooseRouteViewModel? = null,
 ) {
-    // custom substances only use the global setting
-    val visibility = viewModel?.routeVisibilityFlow?.collectAsState()?.value ?: RouteVisibility()
-    val (shownRoutes, hiddenRoutes) = splitRoutes(null, AdministrationRoute.entries.toList(), visibility)
-    var isShowingHidden by remember { mutableStateOf(false) }
+    val (shownRoutes, hiddenRoutes) = splitRoutes(null, AdministrationRoute.entries.toList(), routeVisibility)
+    var isShowingHidden by rememberSaveable { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Route") })

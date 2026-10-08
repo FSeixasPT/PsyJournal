@@ -25,9 +25,10 @@ import androidx.navigation.toRoute
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.ui.main.navigation.composableWithTransitions
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.route.CustomSubstanceChooseRouteScreen
-import com.isaakhanimann.journal.ui.tabs.settings.customunits.add.ChooseRouteDuringAddCustomUnitScreen
 import com.isaakhanimann.journal.ui.tabs.settings.customunits.add.AddIngestionSearchScreen
+import com.isaakhanimann.journal.ui.tabs.settings.customunits.add.ChooseRouteDuringAddCustomUnitScreen
 import com.isaakhanimann.journal.ui.tabs.settings.customunits.add.FinishAddCustomUnitScreen
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import kotlinx.serialization.Serializable
 
 fun NavGraphBuilder.addCustomUnitGraph(navController: NavController) {
@@ -47,6 +48,8 @@ fun NavGraphBuilder.addCustomUnitGraph(navController: NavController) {
         composableWithTransitions<CustomSubstanceChooseRouteRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<CustomSubstanceChooseRouteRoute>()
             CustomSubstanceChooseRouteScreen(
+                // adding a custom unit offers every route
+                routeVisibility = RouteVisibility(),
                 onRouteTap = { administrationRoute ->
                     navController.navigate(
                         FinishAddCustomUnitRoute(

@@ -18,7 +18,6 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
-import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
 import com.isaakhanimann.journal.data.room.experiences.entities.CustomUnit
@@ -31,6 +30,7 @@ import com.isaakhanimann.journal.ui.tabs.journal.addingestion.interactions.Inter
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.DataForOneEffectLine
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.SavedTimeDisplayOption
 import com.isaakhanimann.journal.ui.tabs.settings.combinations.UserPreferences
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

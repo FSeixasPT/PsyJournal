@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.main.navigation.graphs
 
+import androidx.compose.runtime.collectAsState
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -31,6 +32,7 @@ import com.isaakhanimann.journal.ui.tabs.journal.addingestion.dose.customunit.Ch
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.interactions.CheckInteractionsScreen
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.route.ChooseRouteScreen
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.route.CustomSubstanceChooseRouteScreen
+import com.isaakhanimann.journal.ui.tabs.journal.addingestion.route.CustomSubstanceChooseRouteViewModel
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.saferuse.CheckSaferUseScreen
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.search.AddIngestionSearchScreen
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.time.FinishIngestionScreen
@@ -171,8 +173,11 @@ fun NavGraphBuilder.addIngestionGraph(navController: NavController) {
         }
         composableWithTransitions<CustomSubstanceChooseRouteRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<CustomSubstanceChooseRouteRoute>()
+            val customRouteViewModel: CustomSubstanceChooseRouteViewModel = hiltViewModel()
+            val routeVisibility = customRouteViewModel.routeVisibilityFlow.collectAsState().value
+                ?: return@composableWithTransitions
             CustomSubstanceChooseRouteScreen(
-                viewModel = hiltViewModel(),
+                routeVisibility = routeVisibility,
                 onRouteTap = { administrationRoute ->
                     navController.navigate(
                         ChooseCustomSubstanceDoseRoute(

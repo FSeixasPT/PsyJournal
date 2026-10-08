@@ -21,10 +21,10 @@ package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.data.substances.classes.roa.Roa
 import com.isaakhanimann.journal.data.substances.classes.roa.RoaDose
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import org.junit.Test
 
 class SubstancePickerTest {
@@ -153,5 +153,13 @@ class SubstancePickerTest {
     fun editorKeepsThePlannedRouteEvenIfHidden() {
         val visibility = RouteVisibility(hiddenRoutes = setOf(AdministrationRoute.INSUFFLATED))
         assertTrue(editorRoutes(ketamine, visibility, plannedRoute = AdministrationRoute.INSUFFLATED).any { it.route == AdministrationRoute.INSUFFLATED })
+    }
+
+    @Test
+    fun editorOnlyKeepsThePlannedRouteForThePlannedSubstance() {
+        val planned = PlannedIngestion("Ketamine", AdministrationRoute.INSUFFLATED, 40.0, "mg")
+        assertEquals(AdministrationRoute.INSUFFLATED, plannedRouteForEditor(planned, selectedSubstanceName = "Ketamine"))
+        assertNull(plannedRouteForEditor(planned, selectedSubstanceName = "Cocaine"))
+        assertNull(plannedRouteForEditor(null, selectedSubstanceName = "Cocaine"))
     }
 }
