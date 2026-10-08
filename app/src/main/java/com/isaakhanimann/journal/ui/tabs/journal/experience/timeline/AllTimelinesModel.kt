@@ -81,7 +81,8 @@ class AllTimelinesModel(
                                 startTime = it.startTime,
                                 endTime = it.endTime,
                                 horizontalWeight = it.horizontalWeight,
-                                height = it.height
+                                height = it.height,
+                                roaDuration = it.roaDuration
                             )
                         })
                 }

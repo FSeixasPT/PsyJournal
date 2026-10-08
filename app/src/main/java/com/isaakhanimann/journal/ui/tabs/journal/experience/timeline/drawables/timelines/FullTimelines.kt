@@ -37,10 +37,6 @@ import kotlin.math.min
 import kotlin.math.pow
 
 data class FullTimelines(
-    val onset: FullDurationRange,
-    val comeup: FullDurationRange,
-    val peak: FullDurationRange,
-    val offset: FullDurationRange,
     val weightedLines: List<WeightedLine>,
     val startTimeGraph: Instant,
 ) : TimelineDrawable {
@@ -48,7 +44,8 @@ data class FullTimelines(
     data class WeightedLineRelativeToFirst(
         val startTimeRelativeToGroupInSeconds: Float,
         val horizontalWeight: Float,
-        val height: Float
+        val height: Float,
+        val durations: FullDurations
     )
 
     data class LineSegment(
@@ -79,6 +76,10 @@ data class FullTimelines(
         val isIngestionPoint: Boolean = false
     )
 
+    // created through List<WeightedLine>.toFullTimelines which guarantees full durations for every line
+    private val durationsPerLine: List<FullDurations> =
+        weightedLines.map { requireNotNull(it.roaDuration?.toFullDurations()) }
+
     private val finalPoints: List<FinalPoint>
 
     override var referenceHeight: Float = 1f
@@ -88,29 +89,32 @@ data class FullTimelines(
     override val endOfLineRelativeToStartInSeconds: Float
 
     init {
-        val timeRangeLineSegments = weightedLines.flatMap {
-            return@flatMap getLineSegments(weightedLine = it)
+        val timeRangeLineSegments = weightedLines.zip(durationsPerLine).flatMap { (line, durations) ->
+            return@flatMap getLineSegments(weightedLine = line, durations = durations)
         }
-        val weightedRelatives = weightedLines.filter { it.endTime == null }.map {
-            WeightedLineRelativeToFirst(
-                startTimeRelativeToGroupInSeconds = Duration.between(
-                    startTimeGraph,
-                    it.startTime
-                ).seconds.toFloat(),
-                horizontalWeight = it.horizontalWeight,
-                height = it.height
-            )
-        }
+        val weightedRelatives = weightedLines.zip(durationsPerLine)
+            .filter { (line, _) -> line.endTime == null }
+            .map { (line, durations) ->
+                WeightedLineRelativeToFirst(
+                    startTimeRelativeToGroupInSeconds = Duration.between(
+                        startTimeGraph,
+                        line.startTime
+                    ).seconds.toFloat(),
+                    horizontalWeight = line.horizontalWeight,
+                    height = line.height,
+                    durations = durations
+                )
+            }
         val lineSegments = weightedRelatives.flatMap { relative ->
             val result = mutableListOf<LineSegment>()
             val onsetAndComeupWeight = 0.5f
             val onsetEndX =
-                relative.startTimeRelativeToGroupInSeconds + onset.interpolateAtValueInSeconds(
+                relative.startTimeRelativeToGroupInSeconds + relative.durations.onset.interpolateAtValueInSeconds(
                     onsetAndComeupWeight
                 )
             val comeupStartPoint = Point(x = onsetEndX, y = 0f)
             val comeupEndX =
-                onsetEndX + comeup.interpolateAtValueInSeconds(onsetAndComeupWeight)
+                onsetEndX + relative.durations.comeup.interpolateAtValueInSeconds(onsetAndComeupWeight)
             val peakStartPoint = Point(x = comeupEndX, y = relative.height)
             result.add(
                 LineSegment(
@@ -119,7 +123,7 @@ data class FullTimelines(
                 )
             )
             val peakEndX =
-                comeupEndX + (peak.interpolateAtValueInSeconds(relative.horizontalWeight))
+                comeupEndX + (relative.durations.peak.interpolateAtValueInSeconds(relative.horizontalWeight))
             val peakEndPoint = Point(x = peakEndX, y = relative.height)
             result.add(
                 LineSegment(
@@ -128,7 +132,7 @@ data class FullTimelines(
                 )
             )
             val offsetEndX =
-                peakEndX + offset.interpolateAtValueInSeconds(relative.horizontalWeight)
+                peakEndX + relative.durations.offset.interpolateAtValueInSeconds(relative.horizontalWeight)
             val offsetEndPoint = Point(x = offsetEndX, y = 0f)
             result.add(
                 LineSegment(
@@ -167,7 +171,9 @@ data class FullTimelines(
         val sortedPoints = pointsWithHeight.sortedBy { it.x }
         this.finalPoints = sortedPoints
         this.nonNormalisedHeight = sortedPoints.maxOfOrNull { it.y } ?: 0.01f
-        this.endOfLineRelativeToStartInSeconds = finalPoints.maxOfOrNull { it.x } ?: (onset.maxInSeconds + comeup.maxInSeconds + peak.maxInSeconds + offset.maxInSeconds)
+        this.endOfLineRelativeToStartInSeconds = finalPoints.maxOfOrNull { it.x }
+            ?: durationsPerLine.maxOfOrNull { it.onset.maxInSeconds + it.comeup.maxInSeconds + it.peak.maxInSeconds + it.offset.maxInSeconds }
+            ?: 0f
     }
 
     fun heightAt(secondsFromStart: Float): Float {
@@ -190,7 +196,7 @@ data class FullTimelines(
         return candidates.maxBy { it.y }
     }
 
-    private fun getLineSegments(weightedLine: WeightedLine): List<LineSegment> {
+    private fun getLineSegments(weightedLine: WeightedLine, durations: FullDurations): List<LineSegment> {
         if (weightedLine.endTime == null) {
             return emptyList()
         }
@@ -199,16 +205,16 @@ data class FullTimelines(
         val endX =
             Duration.between(startTimeGraph, weightedLine.endTime).seconds.toFloat()
         val rangeInSeconds = endX - startX
-        val onsetInSeconds = onset.interpolateAtValueInSeconds(0.5f)
-        val comeupInSeconds = comeup.interpolateAtValueInSeconds(0.5f)
+        val onsetInSeconds = durations.onset.interpolateAtValueInSeconds(0.5f)
+        val comeupInSeconds = durations.comeup.interpolateAtValueInSeconds(0.5f)
 
         var horizontalWeightToUse = 0.5f
-        if (rangeInSeconds < peak.minInSeconds) {
+        if (rangeInSeconds < durations.peak.minInSeconds) {
             // if the range is short enough we use the same duration as for point ingestion
             horizontalWeightToUse = weightedLine.horizontalWeight
         }
-        val peakInSeconds = peak.interpolateAtValueInSeconds(horizontalWeightToUse)
-        val offsetInSeconds = offset.interpolateAtValueInSeconds(horizontalWeightToUse)
+        val peakInSeconds = durations.peak.interpolateAtValueInSeconds(horizontalWeightToUse)
+        val offsetInSeconds = durations.offset.interpolateAtValueInSeconds(horizontalWeightToUse)
 
         val points = getSamplePoints(
             startX = startX,
@@ -381,25 +387,25 @@ data class FullTimelines(
     }
 }
 
-fun RoaDuration.toFullTimelines(
-    weightedLines: List<WeightedLine>,
-    startTimeGraph: Instant,
-): FullTimelines? {
-    val fullOnset = onset?.toFullDurationRange()
-    val fullComeup = comeup?.toFullDurationRange()
-    val fullPeak = peak?.toFullDurationRange()
-    val fullOffset = offset?.toFullDurationRange()
-    return if (fullOnset != null && fullComeup != null && fullPeak != null && fullOffset != null) {
-        FullTimelines(
-            onset = fullOnset,
-            comeup = fullComeup,
-            peak = fullPeak,
-            offset = fullOffset,
-            weightedLines = weightedLines,
-            startTimeGraph = startTimeGraph,
-        )
+data class FullDurations(
+    val onset: FullDurationRange,
+    val comeup: FullDurationRange,
+    val peak: FullDurationRange,
+    val offset: FullDurationRange,
+)
+
+fun RoaDuration.toFullDurations(): FullDurations? {
+    val fullOnset = onset?.toFullDurationRange() ?: return null
+    val fullComeup = comeup?.toFullDurationRange() ?: return null
+    val fullPeak = peak?.toFullDurationRange() ?: return null
+    val fullOffset = offset?.toFullDurationRange() ?: return null
+    return FullDurations(onset = fullOnset, comeup = fullComeup, peak = fullPeak, offset = fullOffset)
+}
+
+fun List<WeightedLine>.toFullTimelines(startTimeGraph: Instant): FullTimelines? {
+    return if (isNotEmpty() && all { it.roaDuration?.toFullDurations() != null }) {
+        FullTimelines(weightedLines = this, startTimeGraph = startTimeGraph)
     } else {
         null
     }
-
 }

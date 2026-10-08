@@ -18,11 +18,14 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
+import com.isaakhanimann.journal.data.substances.classes.roa.RoaDuration
 import java.time.Instant
 
 data class WeightedLine(
     val startTime: Instant,
     val endTime: Instant?,
     val horizontalWeight: Float,
-    val height: Float
+    val height: Float,
+    // timing of this ingestion's route, so ingestions of different routes can share one curve
+    val roaDuration: RoaDuration?
 )

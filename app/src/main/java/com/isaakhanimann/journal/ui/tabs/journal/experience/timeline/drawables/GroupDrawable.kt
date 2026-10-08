@@ -56,7 +56,7 @@ class GroupDrawable(
                 return@mapNotNull TimeRangeDrawable.IntermediateRepresentation(
                     startInSeconds = startInSeconds,
                     endInSeconds = endInSeconds,
-                    fullTimelineDurations = roaDuration?.toFullTimelineDurations(),
+                    fullTimelineDurations = it.roaDuration?.toFullTimelineDurations(),
                     height = it.height
                 )
             } else {
@@ -80,10 +80,7 @@ class GroupDrawable(
         this.timeRangeDrawables = timeRangeDrawables
 
         timelineDrawables = if (weightedLines.isNotEmpty()) {
-            val fulls = roaDuration?.toFullTimelines(
-                weightedLines = weightedLines,
-                startTimeGraph = startTimeGraph,
-            )
+            val fulls = weightedLines.toFullTimelines(startTimeGraph = startTimeGraph)
             if (fulls != null) {
                 listOf(fulls)
             } else if (weightedLinesForPointIngestions.isNotEmpty()) {
