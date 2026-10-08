@@ -86,7 +86,7 @@ fun TimelineQuantityDetails(
                     if (detail.doseEquivalents.size > 1) {
                         Text(
                             text = detail.doseEquivalents.joinToString(separator = " / ") {
-                                "≈ ${it.dose.toReadableString()} ${it.units} ${it.route.displayText.lowercase()}"
+                                "${it.dose.toReadableString()} ${it.units} ${it.route.displayText.lowercase()}"
                             } + " equivalent",
                             style = MaterialTheme.typography.bodyMedium
                         )
@@ -101,7 +101,7 @@ private fun TimelineQuantityDetail.toText(): String {
     val percent = (fractionOfPeak * 100).roundToInt()
     val singleEquivalent = doseEquivalents.singleOrNull()
     val dose = if (singleEquivalent != null) {
-        " · ≈ ${singleEquivalent.dose.toReadableString()} ${singleEquivalent.units} equivalent"
+        " · ${singleEquivalent.dose.toReadableString()} ${singleEquivalent.units} equivalent"
     } else {
         ""
     }
