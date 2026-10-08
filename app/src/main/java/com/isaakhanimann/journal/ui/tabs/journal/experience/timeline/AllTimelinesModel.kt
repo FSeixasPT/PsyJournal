@@ -24,6 +24,7 @@ import com.isaakhanimann.journal.data.substances.classes.roa.RoaDuration
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.DataForOneEffectLine
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.drawables.AxisDrawable
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.drawables.GroupDrawable
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.drawables.timelines.toFullDurations
 import java.time.Duration
 import java.time.Instant
 import kotlin.time.Duration.Companion.hours
@@ -34,6 +35,8 @@ class AllTimelinesModel(
     val dataForRatings: List<DataForOneRating>,
     val timedNotes: List<DataForOneTimedNote>,
     private val areSubstanceHeightsIndependent: Boolean,
+    // combine the routes of a substance into one line if their doses are comparable
+    private val areRoutesMerged: Boolean = false,
     // set if this model is a preview of a planned ingestion that is not logged
     private val plannedOption: RedoseOption? = null,
     val plannedIngestionTime: Instant? = null,
@@ -43,15 +46,27 @@ class AllTimelinesModel(
     val groupDrawables: List<GroupDrawable>
     val axisDrawable: AxisDrawable
 
-    data class RoaGroup(
-        val substanceName: String,
+    data class RouteInfo(
         val route: AdministrationRoute,
-        val color: AdaptiveColor,
-        val roaDuration: RoaDuration?,
-        val weightedLines: List<WeightedLine>,
         val referenceDose: Double?,
         val doseUnits: String?
     )
+
+    data class RoaGroup(
+        val substanceName: String,
+        // in the order they were first taken
+        val routes: List<RouteInfo>,
+        val color: AdaptiveColor,
+        // duration of the first route, used for partial timelines which are never merged
+        val roaDuration: RoaDuration?,
+        val weightedLines: List<WeightedLine>,
+        val isDoseEquivalentKnown: Boolean
+    ) {
+        val isMerged: Boolean get() = routes.size > 1
+
+        fun contains(substanceName: String, route: AdministrationRoute): Boolean =
+            this.substanceName == substanceName && routes.any { it.route == route }
+    }
 
     private val roaGroups: List<RoaGroup>
 
@@ -63,29 +78,22 @@ class AllTimelinesModel(
         startTime =
             allStartTimeCandidates.reduce { acc, date -> if (acc.isBefore(date)) acc else date }
         val roaGroups = dataForLines.groupBy { it.substanceName }
-            .flatMap { substanceGroup ->
-                val linesPerSubstance = substanceGroup.value
-                return@flatMap linesPerSubstance.groupBy { it.route }.map { routeGroup ->
-                    val linesPerRoute = routeGroup.value
-                    val isDoseEquivalentKnown = linesPerRoute.all { it.referenceDose != null } &&
-                            linesPerRoute.map { it.doseUnits }.distinct().size == 1
-                    return@map RoaGroup(
-                        substanceName = substanceGroup.key,
-                        route = routeGroup.key,
-                        referenceDose = if (isDoseEquivalentKnown) linesPerRoute.first().referenceDose else null,
-                        doseUnits = if (isDoseEquivalentKnown) linesPerRoute.first().doseUnits else null,
-                        color = linesPerRoute.first().color,
-                        roaDuration = linesPerRoute.first().roaDuration,
-                        weightedLines = linesPerRoute.map {
-                            WeightedLine(
-                                startTime = it.startTime,
-                                endTime = it.endTime,
-                                horizontalWeight = it.horizontalWeight,
-                                height = it.height,
-                                roaDuration = it.roaDuration
-                            )
-                        })
+            .flatMap { (substanceName, linesPerSubstance) ->
+                val routes = linesPerSubstance.groupBy { it.route }.entries
+                    .sortedBy { (_, lines) -> lines.minOf { it.startTime } }
+                val mergeableRoutes = if (areRoutesMerged) {
+                    routes.filter { (_, lines) ->
+                        lines.all { it.isReferenceDoseFromDoseRanges && it.roaDuration?.toFullDurations() != null }
+                    }
+                } else {
+                    emptyList()
                 }
+                val routesPerGroup = if (mergeableRoutes.size >= 2) {
+                    listOf(mergeableRoutes) + routes.filter { it !in mergeableRoutes }.map { listOf(it) }
+                } else {
+                    routes.map { listOf(it) }
+                }
+                routesPerGroup.map { createGroup(substanceName, it) }
             }
         this.roaGroups = roaGroups
         val groupDrawables = roaGroups.map { group ->
@@ -128,14 +136,14 @@ class AllTimelinesModel(
     val redoseOptions: List<RedoseOption> by lazy {
         roaGroups.zip(groupDrawables).mapNotNull { (group, drawable) ->
             if (drawable.fullTimelines == null) return@mapNotNull null
-            val referenceDose = group.referenceDose ?: return@mapNotNull null
-            val units = group.doseUnits ?: return@mapNotNull null
+            val referenceDose = group.routes.first().referenceDose ?: return@mapNotNull null
+            val units = group.routes.first().doseUnits ?: return@mapNotNull null
             val lastLine = dataForLines
-                .filter { it.substanceName == group.substanceName && it.route == group.route }
+                .filter { it.substanceName == group.substanceName && it.route == group.routes.first().route }
                 .maxBy { it.startTime }
             RedoseOption(
                 substanceName = group.substanceName,
-                route = group.route,
+                route = group.routes.first().route,
                 dose = lastLine.height * referenceDose,
                 units = units,
                 color = group.color
@@ -158,6 +166,7 @@ class AllTimelinesModel(
             dataForRatings = dataForRatings,
             timedNotes = timedNotes,
             areSubstanceHeightsIndependent = areSubstanceHeightsIndependent,
+            areRoutesMerged = areRoutesMerged,
             plannedOption = option,
             plannedIngestionTime = time
         )
@@ -167,9 +176,9 @@ class AllTimelinesModel(
     val plannedPeak: TimelinePeak? by lazy {
         val option = plannedOption ?: return@lazy null
         val time = plannedIngestionTime ?: return@lazy null
-        val index = roaGroups.indexOfFirst { it.substanceName == option.substanceName && it.route == option.route }
+        val index = roaGroups.indexOfFirst { it.contains(option.substanceName, option.route) }
         val group = roaGroups.getOrNull(index) ?: return@lazy null
-        val referenceDose = group.referenceDose ?: return@lazy null
+        val referenceDose = group.routes.first().referenceDose ?: return@lazy null
         val fullTimelines = groupDrawables[index].fullTimelines ?: return@lazy null
         val highestPoint = fullTimelines.highestPointFrom(Duration.between(startTime, time).seconds.toFloat())
         TimelinePeak(
@@ -183,7 +192,7 @@ class AllTimelinesModel(
     val plannedIngestionPoint: Pair<Float, Float>? by lazy {
         val option = plannedOption ?: return@lazy null
         val time = plannedIngestionTime ?: return@lazy null
-        val index = roaGroups.indexOfFirst { it.substanceName == option.substanceName && it.route == option.route }
+        val index = roaGroups.indexOfFirst { it.contains(option.substanceName, option.route) }
         val fullTimelines = groupDrawables.getOrNull(index)?.fullTimelines ?: return@lazy null
         val seconds = Duration.between(startTime, time).seconds.toFloat()
         Pair(seconds, fullTimelines.heightAt(seconds) / fullTimelines.referenceHeight)
@@ -198,11 +207,53 @@ class AllTimelinesModel(
             if (maxHeight <= 0f) return@mapNotNull null
             TimelineQuantityDetail(
                 substanceName = group.substanceName,
-                route = group.route,
                 color = group.color,
                 fractionOfPeak = height / maxHeight,
-                doseEquivalent = group.referenceDose?.let { it * height },
-                doseUnits = group.doseUnits
+                doseEquivalents = if (group.isDoseEquivalentKnown) {
+                    group.routes.map {
+                        RouteDoseEquivalent(
+                            route = it.route,
+                            dose = it.referenceDose!! * height,
+                            units = it.doseUnits!!
+                        )
+                    }
+                } else {
+                    emptyList()
+                }
+            )
+        }
+    }
+
+    private companion object {
+        fun createGroup(
+            substanceName: String,
+            routes: List<Map.Entry<AdministrationRoute, List<DataForOneEffectLine>>>
+        ): RoaGroup {
+            val routeInfos = routes.map { (route, linesOfRoute) ->
+                val isKnown = linesOfRoute.all { it.referenceDose != null } &&
+                        linesOfRoute.map { it.doseUnits }.distinct().size == 1
+                RouteInfo(
+                    route = route,
+                    referenceDose = if (isKnown) linesOfRoute.first().referenceDose else null,
+                    doseUnits = if (isKnown) linesOfRoute.first().doseUnits else null
+                )
+            }
+            val lines = routes.flatMap { it.value }
+            return RoaGroup(
+                substanceName = substanceName,
+                routes = routeInfos,
+                color = lines.first().color,
+                roaDuration = lines.first().roaDuration,
+                weightedLines = lines.map {
+                    WeightedLine(
+                        startTime = it.startTime,
+                        endTime = it.endTime,
+                        horizontalWeight = it.horizontalWeight,
+                        height = it.height,
+                        roaDuration = it.roaDuration
+                    )
+                },
+                isDoseEquivalentKnown = routeInfos.all { it.referenceDose != null }
             )
         }
     }

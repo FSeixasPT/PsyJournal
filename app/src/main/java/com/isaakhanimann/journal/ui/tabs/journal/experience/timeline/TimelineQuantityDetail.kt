@@ -23,11 +23,16 @@ import com.isaakhanimann.journal.data.substances.AdministrationRoute
 
 data class TimelineQuantityDetail(
     val substanceName: String,
-    val route: AdministrationRoute,
     val color: AdaptiveColor,
     // intensity at the selected time relative to the highest point of the curve, from 0 to 1
     val fractionOfPeak: Float,
-    // dose that would cause this intensity at its peak, null if not all doses are known in the same units
-    val doseEquivalent: Double?,
-    val doseUnits: String?
+    // for each route of the line: dose that would cause this intensity at its peak.
+    // Empty if not all doses are known in consistent units.
+    val doseEquivalents: List<RouteDoseEquivalent>
+)
+
+data class RouteDoseEquivalent(
+    val route: AdministrationRoute,
+    val dose: Double,
+    val units: String
 )

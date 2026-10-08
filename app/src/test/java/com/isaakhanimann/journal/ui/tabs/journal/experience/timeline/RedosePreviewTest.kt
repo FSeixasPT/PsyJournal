@@ -112,7 +112,7 @@ class RedosePreviewTest {
         val option = real.redoseOptions.single()
         val preview = real.withPlannedIngestion(option, dose = 50.0, time = at(120))
         val detail = preview.getQuantityDetails(at(180)).single()
-        assertEquals(50.0, detail.doseEquivalent!!, 0.01)
+        assertEquals(50.0, detail.doseEquivalents.single().dose, 0.01)
         assertEquals(at(120), preview.plannedIngestionTime)
     }
 
@@ -120,7 +120,7 @@ class RedosePreviewTest {
     fun plannedIngestionDoesNotChangeTheRealModel() {
         val real = model(line(0, dose = 100.0))
         real.withPlannedIngestion(real.redoseOptions.single(), dose = 50.0, time = at(120))
-        assertEquals(0.0, real.getQuantityDetails(at(180)).single().doseEquivalent!!, 0.01)
+        assertEquals(0.0, real.getQuantityDetails(at(180)).single().doseEquivalents.single().dose, 0.01)
         assertNull(real.plannedIngestionTime)
     }
 

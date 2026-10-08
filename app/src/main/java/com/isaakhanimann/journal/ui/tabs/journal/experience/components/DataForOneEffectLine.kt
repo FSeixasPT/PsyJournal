@@ -34,5 +34,8 @@ data class DataForOneEffectLine(
     val endTime: Instant?,
     // the dose that corresponds to a height of 1, null if the dose of this ingestion is unknown
     val referenceDose: Double? = null,
-    val doseUnits: String? = null
+    val doseUnits: String? = null,
+    // true if referenceDose comes from the dose ranges of this route; only then are routes comparable.
+    // Describes the route, so it is also set when this ingestion's dose is unknown.
+    val isReferenceDoseFromDoseRanges: Boolean = false
 )

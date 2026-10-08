@@ -25,7 +25,6 @@ import com.isaakhanimann.journal.data.substances.classes.roa.DurationUnits
 import com.isaakhanimann.journal.data.substances.classes.roa.RoaDuration
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.DataForOneEffectLine
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
@@ -78,15 +77,15 @@ class TimelineQuantityDetailsTest {
         val detail = model(line(0, dose = 100.0)).getQuantityDetails(at(90)).single()
         assertEquals("TestSubstance", detail.substanceName)
         assertEquals(1f, detail.fractionOfPeak, 0.001f)
-        assertEquals(100.0, detail.doseEquivalent!!, 0.01)
-        assertEquals("mg", detail.doseUnits)
+        assertEquals(100.0, detail.doseEquivalents.single().dose, 0.01)
+        assertEquals("mg", detail.doseEquivalents.single().units)
     }
 
     @Test
     fun singleDoseIsHalfwayThroughComeup() {
         val detail = model(line(0, dose = 100.0)).getQuantityDetails(at(45)).single()
         assertEquals(0.5f, detail.fractionOfPeak, 0.001f)
-        assertEquals(50.0, detail.doseEquivalent!!, 0.01)
+        assertEquals(50.0, detail.doseEquivalents.single().dose, 0.01)
     }
 
     @Test
@@ -102,7 +101,7 @@ class TimelineQuantityDetailsTest {
         // at 150 min: first dose is halfway down (50) and second dose is at peak (50) = 100 mg
         val detail = model(line(0, dose = 100.0), line(60, dose = 50.0))
             .getQuantityDetails(at(150)).single()
-        assertEquals(100.0, detail.doseEquivalent!!, 0.01)
+        assertEquals(100.0, detail.doseEquivalents.single().dose, 0.01)
         assertEquals(100f / 150f, detail.fractionOfPeak, 0.001f)
     }
 
@@ -110,8 +109,7 @@ class TimelineQuantityDetailsTest {
     fun unknownDoseShowsPercentageWithoutDoseEquivalent() {
         val detail = model(line(0, dose = 100.0), line(30, dose = null))
             .getQuantityDetails(at(90)).single()
-        assertNull(detail.doseEquivalent)
-        assertNull(detail.doseUnits)
+        assertTrue(detail.doseEquivalents.isEmpty())
         assertTrue(detail.fractionOfPeak > 0f)
     }
 
@@ -119,7 +117,7 @@ class TimelineQuantityDetailsTest {
     fun mixedUnitsShowPercentageWithoutDoseEquivalent() {
         val detail = model(line(0, dose = 100.0, units = "mg"), line(30, dose = 100.0, units = "µg"))
             .getQuantityDetails(at(90)).single()
-        assertNull(detail.doseEquivalent)
+        assertTrue(detail.doseEquivalents.isEmpty())
     }
 
     @Test

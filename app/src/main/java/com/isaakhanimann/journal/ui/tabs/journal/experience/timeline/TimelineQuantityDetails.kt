@@ -78,11 +78,20 @@ fun TimelineQuantityDetails(
                         .size(10.dp)
                         .background(detail.color.getComposeColor(isDarkTheme), CircleShape)
                 )
-                Text(
-                    text = detail.toText(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
+                Column(modifier = Modifier.padding(start = 8.dp)) {
+                    Text(
+                        text = detail.toText(),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    if (detail.doseEquivalents.size > 1) {
+                        Text(
+                            text = detail.doseEquivalents.joinToString(separator = " / ") {
+                                "≈ ${it.dose.toReadableString()} ${it.units} ${it.route.displayText.lowercase()}"
+                            } + " equivalent",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
             }
         }
     }
@@ -90,8 +99,9 @@ fun TimelineQuantityDetails(
 
 private fun TimelineQuantityDetail.toText(): String {
     val percent = (fractionOfPeak * 100).roundToInt()
-    val dose = if (doseEquivalent != null && doseUnits != null) {
-        " · ≈ ${doseEquivalent.toReadableString()} $doseUnits equivalent"
+    val singleEquivalent = doseEquivalents.singleOrNull()
+    val dose = if (singleEquivalent != null) {
+        " · ≈ ${singleEquivalent.dose.toReadableString()} ${singleEquivalent.units} equivalent"
     } else {
         ""
     }
