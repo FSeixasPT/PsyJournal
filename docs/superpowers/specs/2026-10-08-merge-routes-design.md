@@ -49,7 +49,7 @@ These alternatives were rejected:
   - It is wired through `SettingsViewModel`, `ExperienceViewModel` and `TimelineScreenViewModel`.
   - `SubstanceViewModel` (the substance info page) always passes `false`.
 - **New chart-model parameter:** `AllTimelinesModel` takes `areRoutesMerged: Boolean`.
-- **New effect-line field:** `DataForOneEffectLine` gains `isReferenceDoseFromDoseRanges: Boolean`. It is true when the reference dose came from `RoaDose.averageCommonDose`, and false when it fell back to the average of the logged doses.
+- **New effect-line field:** `DataForOneEffectLine` gains `isReferenceDoseFromDoseRanges: Boolean`. It is true when the reference dose came from `RoaDose.averageCommonDose`, and false when it fell back to the average of the logged doses. The flag describes the route, not the single ingestion: it is set from `averageCommonDose != null` even when this ingestion's dose is unknown.
 - **Grouping in `AllTimelinesModel` when merging is on:**
   1. Group the lines by substance.
   2. A route is *mergeable* when all of its lines have full timings and `isReferenceDoseFromDoseRanges == true`.
