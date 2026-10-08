@@ -54,6 +54,7 @@ import com.isaakhanimann.journal.ui.YOU
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.AllTimelines
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.PinnedRedose
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.RedoseOption
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.PlannedIngestion
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.rememberRedosePreviewState
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.RedosePreviewRow
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.TimelineQuantityDetails
@@ -67,8 +68,12 @@ fun TimelineScreen(
     TimelineScreen(
         title = viewModel.consumerName,
         isRedosePreviewAvailable = viewModel.consumerName == YOU,
-        pinnedRedose = viewModel.pinnedRedoseFlow.collectAsState().value,
-        onPinRedose = viewModel::pinRedose,
+        pinnedRedose = viewModel.plannedIngestionActions.pinnedRedoseFlow.collectAsState().value,
+        onPinRedose = { option: RedoseOption? ->
+            viewModel.plannedIngestionActions.pin(
+                option?.let { PlannedIngestion(it.substanceName, it.route, it.dose, it.units) }
+            )
+        },
         timelineDisplayOption = viewModel.timelineDisplayOptionFlow.collectAsState().value,
         timeDisplayOption = viewModel.timeDisplayOptionFlow.collectAsState().value,
     )

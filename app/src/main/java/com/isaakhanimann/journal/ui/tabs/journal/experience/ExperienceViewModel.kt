@@ -61,8 +61,8 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.RedoseOption
-import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.toPinnedRedose
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.PlannedIngestionActions
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.PlannedIngestionHelper
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
@@ -74,6 +74,7 @@ class ExperienceViewModel @Inject constructor(
     private val interactionChecker: InteractionChecker,
     private val userPreferences: UserPreferences,
     combinationSettingsStorage: CombinationSettingsStorage,
+    plannedIngestionHelper: PlannedIngestionHelper,
     state: SavedStateHandle
 ) : ViewModel() {
 
@@ -91,21 +92,6 @@ class ExperienceViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000)
         )
 
-
-    val pinnedRedoseFlow = userPreferences.pinnedRedoseFlow
-        .map { pin -> pin?.takeIf { it.experienceId == experienceId } }
-        .stateIn(
-            initialValue = null,
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000)
-        )
-
-    // pins the given redose preview of this experience, or unpins if null
-    fun pinRedose(option: RedoseOption?) = viewModelScope.launch {
-        userPreferences.savePinnedRedose(
-            option?.toPinnedRedose(experienceId = experienceId, currentPin = pinnedRedoseFlow.value, now = Instant.now())
-        )
-    }
 
     // both chart settings in one flow, because the timeline flow already combines six flows
     private val chartSettingsFlow =
@@ -163,6 +149,9 @@ class ExperienceViewModel @Inject constructor(
             localIsFavoriteFlow.emit(isFavorite)
         }
     }
+
+    val plannedIngestionActions: PlannedIngestionActions =
+        plannedIngestionHelper.actionsFor(experienceId, viewModelScope)
 
     fun saveIsFavorite(isFavorite: Boolean) {
         viewModelScope.launch {
