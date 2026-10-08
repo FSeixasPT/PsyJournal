@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.main.navigation.graphs
 
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.navigation
@@ -171,6 +172,7 @@ fun NavGraphBuilder.addIngestionGraph(navController: NavController) {
         composableWithTransitions<CustomSubstanceChooseRouteRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<CustomSubstanceChooseRouteRoute>()
             CustomSubstanceChooseRouteScreen(
+                viewModel = hiltViewModel(),
                 onRouteTap = { administrationRoute ->
                     navController.navigate(
                         ChooseCustomSubstanceDoseRoute(

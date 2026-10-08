@@ -18,6 +18,12 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.route
 
+import com.isaakhanimann.journal.ui.tabs.settings.combinations.UserPreferences
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
+import com.isaakhanimann.journal.ui.tabs.settings.routes.splitRoutes
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -33,6 +39,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ChooseRouteViewModel @Inject constructor(
     substanceRepo: SubstanceRepository,
+    userPreferences: UserPreferences,
     state: SavedStateHandle
 ) : ViewModel() {
     val route = state.toRoute<ChooseRouteOfAddIngestionRoute>()
@@ -40,11 +47,25 @@ class ChooseRouteViewModel @Inject constructor(
     val substance = substanceRepo.getSubstance(substanceName)
 
     var showOtherRoutes by mutableStateOf(false)
-    val pwRoutes = substance?.roas?.map { it.route } ?: emptyList()
-    private val otherRoutes = AdministrationRoute.entries.filter { route ->
-        !pwRoutes.contains(route)
+    private val allPwRoutes = substance?.roas?.map { it.route } ?: emptyList()
+    private val allOtherRoutes = AdministrationRoute.entries.filter { route -> !allPwRoutes.contains(route) }
+
+    // all routes, unfiltered, for adding a custom unit (hidden routes don't apply there)
+    val pwRoutes = allPwRoutes
+    val otherRoutesChunked = allOtherRoutes.chunked(2)
+
+    val routeVisibilityFlow = userPreferences.routeVisibilityFlow.stateIn(
+        initialValue = RouteVisibility(),
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000)
+    )
+
+    // the routes to offer: (substance routes, other routes, hidden routes), using the substance's overrides
+    fun routesFor(visibility: RouteVisibility): Triple<List<AdministrationRoute>, List<AdministrationRoute>, List<AdministrationRoute>> {
+        val (shownPw, hiddenPw) = splitRoutes(substanceName, allPwRoutes, visibility)
+        val (shownOther, hiddenOther) = splitRoutes(substanceName, allOtherRoutes, visibility)
+        return Triple(shownPw, shownOther, hiddenPw + hiddenOther)
     }
-    val otherRoutesChunked = otherRoutes.chunked(2)
 
     var isShowingInjectionDialog by mutableStateOf(false)
     var currentRoute by mutableStateOf(AdministrationRoute.INTRAVENOUS)

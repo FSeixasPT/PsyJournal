@@ -18,6 +18,11 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.route
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.TextButton
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -47,6 +52,8 @@ fun AdministrationRoutePicker(
     pwRoutes: List<AdministrationRoute>,
     otherRoutesChunked: List<List<AdministrationRoute>>,
     onRouteTapped: (route: AdministrationRoute) -> Unit,
+    // routes the user hid; they are offered behind "Show hidden routes" so they can still be logged
+    hiddenRoutes: List<AdministrationRoute> = emptyList(),
 ) {
     val spacing = 6
     Column(
@@ -86,6 +93,35 @@ fun AdministrationRoutePicker(
                         }
                         if (otherRouteChunk.size == 1) {
                             Box(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+                if (hiddenRoutes.isNotEmpty()) {
+                    var isShowingHidden by remember { mutableStateOf(false) }
+                    if (!isShowingHidden) {
+                        TextButton(onClick = { isShowingHidden = true }) {
+                            Text("Show hidden routes (${hiddenRoutes.size})")
+                        }
+                    } else {
+                        Text("Hidden routes", style = MaterialTheme.typography.titleSmall)
+                        hiddenRoutes.chunked(2).forEach { chunk ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(spacing.dp)
+                            ) {
+                                chunk.forEach { route ->
+                                    ElevatedCard(
+                                        modifier = Modifier
+                                            .clickable { onRouteTapped(route) }
+                                            .weight(1f)
+                                    ) {
+                                        RouteBox(route = route, titleStyle = MaterialTheme.typography.titleMedium)
+                                    }
+                                }
+                                if (chunk.size == 1) {
+                                    Box(modifier = Modifier.weight(1f))
+                                }
+                            }
                         }
                     }
                 }

@@ -18,6 +18,21 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.route
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import com.isaakhanimann.journal.ui.tabs.settings.combinations.UserPreferences
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
+import com.isaakhanimann.journal.ui.tabs.settings.routes.splitRoutes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,9 +60,27 @@ fun CustomChooseRouteScreenPreview() {
     CustomSubstanceChooseRouteScreen(onRouteTap = {})
 }
 
+@HiltViewModel
+class CustomSubstanceChooseRouteViewModel @Inject constructor(
+    userPreferences: UserPreferences,
+) : ViewModel() {
+    val routeVisibilityFlow = userPreferences.routeVisibilityFlow.stateIn(
+        initialValue = RouteVisibility(),
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000)
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CustomSubstanceChooseRouteScreen(onRouteTap: (AdministrationRoute) -> Unit) {
+fun CustomSubstanceChooseRouteScreen(
+    onRouteTap: (AdministrationRoute) -> Unit,
+    viewModel: CustomSubstanceChooseRouteViewModel? = null,
+) {
+    // custom substances only use the global setting
+    val visibility = viewModel?.routeVisibilityFlow?.collectAsState()?.value ?: RouteVisibility()
+    val (shownRoutes, hiddenRoutes) = splitRoutes(null, AdministrationRoute.entries.toList(), visibility)
+    var isShowingHidden by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Route") })
@@ -63,7 +96,7 @@ fun CustomSubstanceChooseRouteScreen(onRouteTap: (AdministrationRoute) -> Unit) 
                 modifier = Modifier.padding(10.dp),
                 verticalArrangement = Arrangement.spacedBy(spacing.dp)
             ) {
-                val routesChunked = AdministrationRoute.entries.toList().chunked(2)
+                val routesChunked = (if (isShowingHidden) shownRoutes + hiddenRoutes else shownRoutes).chunked(2)
                 routesChunked.forEach { chunk ->
                     Row(
                         modifier = Modifier
@@ -89,6 +122,11 @@ fun CustomSubstanceChooseRouteScreen(onRouteTap: (AdministrationRoute) -> Unit) 
                         if (chunk.size == 1) {
                             Box(modifier = Modifier.weight(1f))
                         }
+                    }
+                }
+                if (hiddenRoutes.isNotEmpty() && !isShowingHidden) {
+                    TextButton(onClick = { isShowingHidden = true }) {
+                        Text("Show hidden routes (${hiddenRoutes.size})")
                     }
                 }
             }

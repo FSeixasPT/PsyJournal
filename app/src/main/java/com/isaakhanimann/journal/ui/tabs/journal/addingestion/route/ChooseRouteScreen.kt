@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.route
 
+import androidx.compose.runtime.collectAsState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,13 +64,15 @@ fun ChooseRouteScreen(
     navigateToRouteExplanationScreen: () -> Unit,
     viewModel: ChooseRouteViewModel = hiltViewModel()
 ) {
+    val routes = viewModel.routesFor(viewModel.routeVisibilityFlow.collectAsState().value)
     ChooseRouteScreen(
         showOtherRoutes = viewModel.showOtherRoutes,
         onChangeOfShowOtherRoutes = {
             viewModel.showOtherRoutes = it
         },
-        pwRoutes = viewModel.pwRoutes,
-        otherRoutesChunked = viewModel.otherRoutesChunked,
+        pwRoutes = routes.first,
+        otherRoutesChunked = routes.second.chunked(2),
+        hiddenRoutes = routes.third,
         onRouteTapped = { route ->
             if (route.isInjectionMethod) {
                 viewModel.currentRoute = route
@@ -119,6 +122,7 @@ fun ChooseRouteScreen(
     onChangeOfShowOtherRoutes: (Boolean) -> Unit,
     pwRoutes: List<AdministrationRoute>,
     otherRoutesChunked: List<List<AdministrationRoute>>,
+    hiddenRoutes: List<AdministrationRoute> = emptyList(),
     onRouteTapped: (route: AdministrationRoute) -> Unit,
     navigateToRouteExplanationScreen: () -> Unit,
     isShowingInjectionDialog: Boolean,
@@ -167,7 +171,8 @@ fun ChooseRouteScreen(
                 onChangeOfShowOtherRoutes = onChangeOfShowOtherRoutes,
                 pwRoutes = pwRoutes,
                 otherRoutesChunked = otherRoutesChunked,
-                onRouteTapped = onRouteTapped
+                onRouteTapped = onRouteTapped,
+                hiddenRoutes = hiddenRoutes
             )
         }
     }
