@@ -36,6 +36,7 @@ import com.isaakhanimann.journal.ui.tabs.journal.experience.components.DataForOn
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.SavedTimeDisplayOption
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.TimeDisplayOption
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.getCommonDose
+import com.isaakhanimann.journal.ui.tabs.journal.experience.components.horizontalWeightFromDots
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.getStrengthRelativeToCommonDose
 import com.isaakhanimann.journal.ui.tabs.journal.experience.models.ConsumerWithIngestions
 import com.isaakhanimann.journal.ui.tabs.journal.experience.models.CumulativeDose
@@ -477,13 +478,7 @@ class ExperienceViewModel @Inject constructor(
             substances: List<Substance>
         ) =
             ingestionElements.map { oneElement ->
-                val horizontalWeight = if (oneElement.numDots == null) {
-                    0.5f
-                } else if (oneElement.numDots > 4) {
-                    1f
-                } else {
-                    oneElement.numDots.toFloat() / 4f
-                }
+                val horizontalWeight = horizontalWeightFromDots(oneElement.numDots)
                 val ingestionWithCompanion = oneElement.ingestionWithCompanionAndCustomUnit
                 val ingestion = ingestionWithCompanion.ingestion
                 val allIngestions = ingestionElements.map { it.ingestionWithCompanionAndCustomUnit }

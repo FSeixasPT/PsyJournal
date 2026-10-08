@@ -47,3 +47,14 @@ fun getCommonDose(
     val averageDose = sumDose / max(1.0, allKnownDoses.size.toDouble())
     return roaDose?.averageCommonDose ?: averageDose
 }
+
+// stronger doses last a bit longer: the dots of a dose (1 to 4) set where in the duration ranges the line ends
+fun horizontalWeightFromDots(numDots: Int?): Float {
+    return if (numDots == null) {
+        0.5f
+    } else if (numDots > 4) {
+        1f
+    } else {
+        numDots.toFloat() / 4f
+    }
+}
