@@ -102,6 +102,8 @@ fun SettingsPreview() {
         saveIsTimelineHidden = {},
         areSubstanceHeightsIndependent = false,
         saveAreSubstanceHeightsIndependent = {},
+        areRoutesMerged = true,
+        saveAreRoutesMerged = {},
     )
 }
 
@@ -130,6 +132,8 @@ fun SettingsScreen(
         saveIsTimelineHidden = viewModel::saveIsTimelineHidden,
         areSubstanceHeightsIndependent = viewModel.areSubstanceHeightsIndependentFlow.collectAsState().value,
         saveAreSubstanceHeightsIndependent = viewModel::saveAreSubstanceHeightsIndependent,
+        areRoutesMerged = viewModel.areRoutesMergedFlow.collectAsState().value,
+        saveAreRoutesMerged = viewModel::saveAreRoutesMerged,
     )
 }
 
@@ -151,6 +155,8 @@ fun SettingsScreen(
     saveIsTimelineHidden: (Boolean) -> Unit,
     areSubstanceHeightsIndependent: Boolean,
     saveAreSubstanceHeightsIndependent: (Boolean) -> Unit,
+    areRoutesMerged: Boolean,
+    saveAreRoutesMerged: (Boolean) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -263,6 +269,49 @@ fun SettingsScreen(
                     Switch(
                         checked = areSubstanceHeightsIndependent,
                         onCheckedChange = saveAreSubstanceHeightsIndependent
+                    )
+                }
+                HorizontalDivider()
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = horizontalPadding),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                    var showBottomSheet by remember { mutableStateOf(false) }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                        modifier = Modifier
+                            .clickable {
+                                showBottomSheet = true
+                            }
+                            .padding(end = ButtonDefaults.IconSpacing)
+                    ) {
+                        Text(text = "Merge routes of same substance")
+                        if (showBottomSheet) {
+                            ModalBottomSheet(
+                                onDismissRequest = {
+                                    showBottomSheet = false
+                                },
+                                sheetState = sheetState
+                            ) {
+                                Text(
+                                    text = "When enabled, ingestions of the same substance through different routes (e.g. insufflated and oral ketamine) are shown as one combined line. Each route keeps its own onset and duration, and doses are made comparable using each route's common dose range, so the line shows the combined effect rather than the combined amount. Routes without dose ranges in the database are always shown separately.",
+                                    modifier = Modifier
+                                        .padding(horizontal = horizontalPadding)
+                                        .padding(bottom = 15.dp)
+                                        .verticalScroll(state = rememberScrollState())
+                                )
+                            }
+                        }
+                        Icon(Icons.Outlined.Info, contentDescription = "Show more info")
+                    }
+                    Switch(
+                        checked = areRoutesMerged,
+                        onCheckedChange = saveAreRoutesMerged
                     )
                 }
             }

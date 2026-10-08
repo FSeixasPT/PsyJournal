@@ -68,6 +68,13 @@ class TimelineScreenViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000)
         )
 
+    private val areRoutesMergedFlow =
+        userPreferences.areRoutesMergedFlow.stateIn(
+            initialValue = true,
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000)
+        )
+
     private val timelineRoute = state.toRoute<TimelineScreenRoute>()
     private val experienceID = timelineRoute.experienceId
     val consumerName = timelineRoute.consumerName
@@ -161,8 +168,9 @@ class TimelineScreenViewModel @Inject constructor(
         dataForEffectLinesFlow,
         ratingsFlow,
         timedNotesFlow,
-        areSubstanceHeightsIndependentFlow
-    ) { dataForEffectLines, ratings, timedNotesSorted, areSubstanceHeightsIndependent ->
+        areSubstanceHeightsIndependentFlow,
+        areRoutesMergedFlow
+    ) { dataForEffectLines, ratings, timedNotesSorted, areSubstanceHeightsIndependent, areRoutesMerged ->
 
         val newRatings = if (consumerName == YOU) ratings else emptyList()
         val newTimedNotes = if (consumerName == YOU) timedNotesSorted else emptyList()
@@ -193,7 +201,8 @@ class TimelineScreenViewModel @Inject constructor(
                     dataForLines = dataForEffectLines,
                     dataForRatings = dataForRatings,
                     timedNotes = dataForTimedNotes,
-                    areSubstanceHeightsIndependent = areSubstanceHeightsIndependent
+                    areSubstanceHeightsIndependent = areSubstanceHeightsIndependent,
+                    areRoutesMerged = areRoutesMerged
                 )
                 return@combine TimelineDisplayOption.Shown(model)
             } else {

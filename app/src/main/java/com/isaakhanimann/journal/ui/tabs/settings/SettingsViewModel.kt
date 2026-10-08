@@ -49,6 +49,10 @@ class SettingsViewModel @Inject constructor(
         userPreferences.saveAreSubstanceHeightsIndependent(value)
     }
 
+    fun saveAreRoutesMerged(value: Boolean) = viewModelScope.launch {
+        userPreferences.saveAreRoutesMerged(value)
+    }
+
     fun saveIsTimelineHidden(value: Boolean) = viewModelScope.launch {
         userPreferences.saveIsTimelineHidden(value)
     }
@@ -61,6 +65,12 @@ class SettingsViewModel @Inject constructor(
 
     val areSubstanceHeightsIndependentFlow = userPreferences.areSubstanceHeightsIndependentFlow.stateIn(
         initialValue = false,
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000)
+    )
+
+    val areRoutesMergedFlow = userPreferences.areRoutesMergedFlow.stateIn(
+        initialValue = true,
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000)
     )
