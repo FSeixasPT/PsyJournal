@@ -38,10 +38,13 @@ class AllTimelinesModel(
     // combine the routes of a substance into one line if their doses are comparable
     private val areRoutesMerged: Boolean = false,
     // set if this model is a preview of a planned ingestion that is not logged
-    private val plannedOption: RedoseOption? = null,
     private val plannedLine: DataForOneEffectLine? = null,
-    val plannedIngestionTime: Instant? = null,
 ) {
+    val plannedIngestionTime: Instant? get() = plannedLine?.startTime
+
+    // the logged lines without the planned one
+    val realLines: List<DataForOneEffectLine> =
+        if (plannedLine == null) dataForLines else dataForLines - plannedLine
     val startTime: Instant
     val widthInSeconds: Float
     val groupDrawables: List<GroupDrawable>
@@ -149,6 +152,9 @@ class AllTimelinesModel(
         axisDrawable = AxisDrawable(startTime, widthInSeconds)
     }
 
+    val colors: List<AdaptiveColor> get() = roaGroups.map { it.color }.distinct()
+
+    // removed in Task 6
     val redoseOptions: List<RedoseOption> by lazy {
         dataForLines.groupBy { Pair(it.substanceName, it.route) }.mapNotNull { (key, lines) ->
             if (lines.any { it.referenceDose == null }) return@mapNotNull null
@@ -165,38 +171,49 @@ class AllTimelinesModel(
         }
     }
 
-    // the option to preview for a pin, or null if the pin no longer applies to this timeline
-    fun resolvePinnedRedose(pin: PinnedRedose, now: Instant): RedoseOption? {
-        val option = redoseOptions.firstOrNull { it.substanceName == pin.substanceName && it.route == pin.route }
-            ?: return null
-        val isLoggedSincePinning = dataForLines.any {
+    // the planned ingestion of a pin, or null if the pin no longer applies to this timeline
+    fun resolvePinnedPlan(pin: PinnedRedose, now: Instant): PlannedIngestion? {
+        val isLoggedSincePinning = realLines.any {
             it.substanceName == pin.substanceName && it.route == pin.route && it.startTime > pin.pinnedAt
         }
         if (isLoggedSincePinning) return null
         val endTime = startTime.plusSeconds(widthInSeconds.toLong())
         if (now > endTime) return null
-        return option.copy(dose = pin.dose)
+        return PlannedIngestion(
+            substanceName = pin.substanceName,
+            route = pin.route,
+            dose = pin.dose,
+            units = pin.units
+        )
     }
 
-    fun withPlannedIngestion(option: RedoseOption, dose: Double, time: Instant): AllTimelinesModel {
-        val lastLine = dataForLines
-            .filter { it.substanceName == option.substanceName && it.route == option.route }
-            .maxBy { it.startTime }
-        val referenceDose = lastLine.referenceDose ?: return this
-        val plannedLine = lastLine.copy(
-            height = (dose / referenceDose).toFloat(),
-            startTime = time,
-            endTime = null
-        )
+    fun withPlannedIngestion(line: DataForOneEffectLine): AllTimelinesModel {
         return AllTimelinesModel(
-            dataForLines = dataForLines + plannedLine,
+            dataForLines = realLines + line,
             dataForRatings = dataForRatings,
             timedNotes = timedNotes,
             areSubstanceHeightsIndependent = areSubstanceHeightsIndependent,
             areRoutesMerged = areRoutesMerged,
-            plannedOption = option,
-            plannedLine = plannedLine,
-            plannedIngestionTime = time
+            plannedLine = line
+        )
+    }
+
+    // removed in Task 6
+    fun resolvePinnedRedose(pin: PinnedRedose, now: Instant): RedoseOption? {
+        val plan = resolvePinnedPlan(pin, now) ?: return null
+        val option = redoseOptions.firstOrNull { it.substanceName == plan.substanceName && it.route == plan.route }
+            ?: return null
+        return option.copy(dose = plan.dose)
+    }
+
+    // removed in Task 6
+    fun withPlannedIngestion(option: RedoseOption, dose: Double, time: Instant): AllTimelinesModel {
+        val lastLine = realLines
+            .filter { it.substanceName == option.substanceName && it.route == option.route }
+            .maxBy { it.startTime }
+        val referenceDose = lastLine.referenceDose ?: return this
+        return withPlannedIngestion(
+            lastLine.copy(height = (dose / referenceDose).toFloat(), startTime = time, endTime = null)
         )
     }
 
@@ -204,26 +221,25 @@ class AllTimelinesModel(
 
     // highest combined intensity of the planned substance from the planned ingestion on
     val plannedPeak: TimelinePeak? by lazy {
-        val option = plannedOption ?: return@lazy null
-        val time = plannedIngestionTime ?: return@lazy null
+        val option = plannedLine ?: return@lazy null
         val index = roaGroups.indexOfFirst { it.contains(option.substanceName, option.route) }
         val group = roaGroups.getOrNull(index) ?: return@lazy null
         // a line with an assumed dose (unknown or in other units) can't be expressed as a dose
         if (!group.isDoseEquivalentKnown) return@lazy null
         val referenceDose = group.routes.first { it.route == option.route }.referenceDose ?: return@lazy null
         val fullTimelines = groupDrawables[index].fullTimelines ?: return@lazy null
-        val highestPoint = fullTimelines.highestPointFrom(Duration.between(startTime, time).seconds.toFloat())
+        val highestPoint = fullTimelines.highestPointFrom(Duration.between(startTime, option.startTime).seconds.toFloat())
         TimelinePeak(
             time = startTime.plusSeconds(highestPoint.x.toLong()),
             doseEquivalent = highestPoint.y * referenceDose,
-            units = option.units,
+            units = option.doseUnits ?: return@lazy null,
             route = if (group.isMerged) option.route else null
         )
     }
 
     // intensity of the planned substance's combined curve at the given time relative to its highest point
     fun plannedFractionOfPeakAt(time: Instant): Float? {
-        val option = plannedOption ?: return null
+        val option = plannedLine ?: return null
         val index = roaGroups.indexOfFirst { it.contains(option.substanceName, option.route) }
         val fullTimelines = groupDrawables.getOrNull(index)?.fullTimelines ?: return null
         val maxHeight = fullTimelines.nonNormalisedHeight
@@ -233,11 +249,10 @@ class AllTimelinesModel(
 
     // position of the planned ingestion on its curve: seconds from start and height from 0 to 1
     val plannedIngestionPoint: Pair<Float, Float>? by lazy {
-        val option = plannedOption ?: return@lazy null
-        val time = plannedIngestionTime ?: return@lazy null
+        val option = plannedLine ?: return@lazy null
         val index = roaGroups.indexOfFirst { it.contains(option.substanceName, option.route) }
         val fullTimelines = groupDrawables.getOrNull(index)?.fullTimelines ?: return@lazy null
-        val seconds = Duration.between(startTime, time).seconds.toFloat()
+        val seconds = Duration.between(startTime, option.startTime).seconds.toFloat()
         Pair(seconds, fullTimelines.heightAt(seconds) / fullTimelines.referenceHeight)
     }
 

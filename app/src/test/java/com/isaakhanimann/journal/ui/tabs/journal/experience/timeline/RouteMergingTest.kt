@@ -160,18 +160,9 @@ class RouteMergingTest {
     }
 
     @Test
-    fun mergedSubstanceHasOneRedoseChipPerRoute() {
-        val options = model(true, line(0, INSUFFLATED, 40.0), line(10, ORAL, 150.0)).redoseOptions
-        assertEquals(listOf(INSUFFLATED, ORAL), options.map { it.route })
-        assertEquals(40.0, options[0].dose, 0.01)
-        assertEquals(150.0, options[1].dose, 0.01)
-    }
-
-    @Test
     fun plannedDoseOfOneRouteMergesIntoTheSubstanceLine() {
         val real = model(true, line(0, INSUFFLATED, 52.5), line(10, ORAL, 200.0))
-        val oral = real.redoseOptions.first { it.route == ORAL }
-        val preview = real.withPlannedIngestion(oral, dose = 200.0, time = at(20))
+        val preview = real.withPlannedIngestion(line(20, ORAL, 200.0))
         assertEquals(1, preview.getQuantityDetails(at(30)).size)
     }
 
@@ -179,8 +170,7 @@ class RouteMergingTest {
     fun peakOfMergedLineIsExpressedInThePlannedRouteAndNamesIt() {
         // only insufflated taken so far, as 52.5 mg at 0; plan 52.5 mg insufflated at 0 as well: peak 2 x 52.5 = 105 mg
         val real = model(true, line(0, INSUFFLATED, 52.5), line(300, ORAL, 200.0))
-        val insufflated = real.redoseOptions.first { it.route == INSUFFLATED }
-        val peak = real.withPlannedIngestion(insufflated, dose = 52.5, time = at(0)).plannedPeak!!
+        val peak = real.withPlannedIngestion(line(0, INSUFFLATED, 52.5)).plannedPeak!!
         assertEquals(105.0, peak.doseEquivalent, 0.01)
         assertEquals("mg", peak.units)
         assertEquals(INSUFFLATED, peak.route)
@@ -189,16 +179,14 @@ class RouteMergingTest {
     @Test
     fun peakOfUnmergedLineDoesNotNameTheRoute() {
         val real = model(false, line(0, INSUFFLATED, 52.5), line(300, ORAL, 200.0))
-        val insufflated = real.redoseOptions.first { it.route == INSUFFLATED }
-        val peak = real.withPlannedIngestion(insufflated, dose = 52.5, time = at(0)).plannedPeak!!
+        val peak = real.withPlannedIngestion(line(0, INSUFFLATED, 52.5)).plannedPeak!!
         assertEquals(null, peak.route)
     }
 
     @Test
-    fun unknownDoseRouteHasNoChipButOtherRouteStillMerges() {
+    fun plannedDoseMergesWhenAnotherRouteHasAnUnknownDose() {
         val real = model(true, line(0, INSUFFLATED, 52.5), line(10, ORAL, null))
-        assertEquals(listOf(INSUFFLATED), real.redoseOptions.map { it.route })
-        val preview = real.withPlannedIngestion(real.redoseOptions.single(), dose = 52.5, time = at(20))
+        val preview = real.withPlannedIngestion(line(20, INSUFFLATED, 52.5))
         assertEquals(1, preview.getQuantityDetails(at(30)).size)
     }
 
@@ -206,15 +194,18 @@ class RouteMergingTest {
     fun noPeakWhenAnotherRouteOfTheLineHasAnUnknownDose() {
         // the oral dose is unknown, so the combined line contains an assumed dose and its peak can't be expressed as a dose
         val real = model(true, line(0, INSUFFLATED, 52.5), line(10, ORAL, null))
-        val preview = real.withPlannedIngestion(real.redoseOptions.single(), dose = 52.5, time = at(20))
+        val preview = real.withPlannedIngestion(line(20, INSUFFLATED, 52.5))
         assertEquals(null, preview.plannedPeak)
     }
 
     @Test
-    fun chipNamesTheRouteOnlyWhenTheSubstanceHasSeveralChips() {
-        val options = model(true, line(0, INSUFFLATED, 40.0), line(10, ORAL, 150.0)).redoseOptions
-        assertEquals("Ketamine · 40 mg insufflated", options[0].chipText(options))
-        val single = model(true, line(0, INSUFFLATED, 40.0)).redoseOptions
-        assertEquals("Ketamine · 40 mg", single[0].chipText(single))
+    fun plannedDifferentSubstanceGetsItsOwnLine() {
+        val real = model(true, line(0, INSUFFLATED, 52.5))
+        val mdma = line(30, ORAL, 200.0).copy(substanceName = "MDMA", color = AdaptiveColor.BLUE)
+        val preview = real.withPlannedIngestion(mdma)
+        assertEquals(2, preview.groupDrawables.size)
+        assertEquals(AdaptiveColor.BLUE, preview.plannedIngestionColor)
+        assertEquals(200.0, preview.plannedPeak!!.doseEquivalent, 0.01)
+        assertEquals(null, preview.plannedPeak!!.route)
     }
 }

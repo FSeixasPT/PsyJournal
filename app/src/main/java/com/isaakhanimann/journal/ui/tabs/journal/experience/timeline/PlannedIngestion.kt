@@ -23,9 +23,11 @@ import com.isaakhanimann.journal.data.room.experiences.entities.SubstanceCompani
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.data.substances.classes.Substance
 import com.isaakhanimann.journal.data.substances.classes.roa.Roa
+import com.isaakhanimann.journal.data.substances.classes.roa.RoaDose
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.DataForOneEffectLine
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.horizontalWeightFromDots
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.drawables.timelines.toFullDurations
+import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toReadableString
 import java.time.Instant
 
 // an ingestion that is previewed on the chart and can be logged, the dose is in the database unit of the route
@@ -80,3 +82,38 @@ fun choosePlannedColor(
     companions.firstOrNull { it.substanceName == substanceName }?.let { return it.color }
     return AdaptiveColor.entries.firstOrNull { it !in colorsOnChart } ?: AdaptiveColor.entries.first()
 }
+
+// the last dose of that substance and route if it was logged in the database unit, else the start of the common range
+fun suggestedDose(
+    substanceName: String,
+    route: AdministrationRoute,
+    realLines: List<DataForOneEffectLine>,
+    roaDose: RoaDose
+): Double? {
+    val lastLine = realLines
+        .filter { it.substanceName == substanceName && it.route == route && it.referenceDose != null }
+        .maxByOrNull { it.startTime }
+    if (lastLine != null && lastLine.doseUnits == roaDose.units) {
+        return lastLine.height * lastLine.referenceDose!!
+    }
+    return roaDose.commonMin
+}
+
+// the latest logged ingestion with a known dose whose substance and route can be previewed
+fun defaultPlannedIngestion(
+    realLines: List<DataForOneEffectLine>,
+    getSubstance: (String) -> Substance?
+): PlannedIngestion? {
+    for (line in realLines.sortedByDescending { it.startTime }) {
+        if (line.referenceDose == null) continue
+        val roa = getSubstance(line.substanceName)?.getRoa(line.route) ?: continue
+        if (roa.previewProblem() != null) continue
+        val roaDose = roa.roaDose ?: continue
+        val dose = suggestedDose(line.substanceName, line.route, realLines, roaDose) ?: continue
+        return PlannedIngestion(line.substanceName, line.route, dose, roaDose.units)
+    }
+    return null
+}
+
+fun PlannedIngestion.chipText(): String =
+    "$substanceName · ${dose.toReadableString()} $units ${route.displayText.lowercase()}"

@@ -75,42 +75,10 @@ class RedosePreviewTest {
     private fun at(minutes: Long) = start.plus(minutes, ChronoUnit.MINUTES)
 
     @Test
-    fun redoseOptionUsesLastDoseOfSubstanceAndRoute() {
-        val option = model(line(0, dose = 40.0), line(30, dose = 25.0)).redoseOptions.single()
-        assertEquals("Ketamine", option.substanceName)
-        assertEquals(AdministrationRoute.INSUFFLATED, option.route)
-        assertEquals(25.0, option.dose, 0.001)
-        assertEquals("mg", option.units)
-        assertEquals(AdaptiveColor.PINK, option.color)
-    }
-
-    @Test
-    fun thereIsOneRedoseOptionPerSubstanceAndRoute() {
-        val options = model(
-            line(0, dose = 40.0),
-            line(10, dose = 30.0, route = AdministrationRoute.ORAL),
-            line(20, dose = 80.0, substanceName = "MDMA", route = AdministrationRoute.ORAL),
-        ).redoseOptions
-        assertEquals(3, options.size)
-    }
-
-    @Test
-    fun noRedoseOptionWhenADoseIsUnknown() {
-        assertTrue(model(line(0, dose = 40.0), line(30, dose = null)).redoseOptions.isEmpty())
-    }
-
-    @Test
-    fun noRedoseOptionWhenDurationIsIncomplete() {
-        val incomplete = exactDuration.copy(offset = null)
-        assertTrue(model(line(0, dose = 40.0, roaDuration = incomplete)).redoseOptions.isEmpty())
-    }
-
-    @Test
     fun plannedIngestionIsAddedToTheCurve() {
         // 100 mg at 0 min is fully worn off at 180 min; 50 mg planned at 120 min is at its peak from 180 min
         val real = model(line(0, dose = 100.0))
-        val option = real.redoseOptions.single()
-        val preview = real.withPlannedIngestion(option, dose = 50.0, time = at(120))
+        val preview = real.withPlannedIngestion(line(120, dose = 50.0))
         val detail = preview.getQuantityDetails(at(180)).single()
         assertEquals(50.0, detail.doseEquivalents.single().dose, 0.01)
         assertEquals(at(120), preview.plannedIngestionTime)
@@ -119,7 +87,7 @@ class RedosePreviewTest {
     @Test
     fun plannedIngestionDoesNotChangeTheRealModel() {
         val real = model(line(0, dose = 100.0))
-        real.withPlannedIngestion(real.redoseOptions.single(), dose = 50.0, time = at(120))
+        real.withPlannedIngestion(line(120, dose = 50.0))
         assertEquals(0.0, real.getQuantityDetails(at(180)).single().doseEquivalents.single().dose, 0.01)
         assertNull(real.plannedIngestionTime)
     }
@@ -128,7 +96,7 @@ class RedosePreviewTest {
     fun plannedPeakIsTheHighestPointOfTheCombinedCurve() {
         // 100 mg at 0 min (peak 60-120 min) and 50 mg planned at 60 min (peak 120-180 min) add up to 150 mg at 120 min
         val real = model(line(0, dose = 100.0))
-        val peak = real.withPlannedIngestion(real.redoseOptions.single(), dose = 50.0, time = at(60)).plannedPeak!!
+        val peak = real.withPlannedIngestion(line(60, dose = 50.0)).plannedPeak!!
         assertEquals(150.0, peak.doseEquivalent, 0.01)
         assertEquals("mg", peak.units)
         assertEquals(at(120), peak.time)
@@ -138,7 +106,7 @@ class RedosePreviewTest {
     fun plannedPeakOnlyLooksAtTheTimeFromThePlannedIngestionOn() {
         // 100 mg at 0 min is at 50 mg equivalent at 150 min and wearing off; 10 mg planned at 150 min only reaches 10
         val real = model(line(0, dose = 100.0))
-        val peak = real.withPlannedIngestion(real.redoseOptions.single(), dose = 10.0, time = at(150)).plannedPeak!!
+        val peak = real.withPlannedIngestion(line(150, dose = 10.0)).plannedPeak!!
         assertEquals(50.0, peak.doseEquivalent, 0.01)
         assertEquals(at(150), peak.time)
     }
@@ -151,7 +119,7 @@ class RedosePreviewTest {
     @Test
     fun previewExtendsTheTimelineToShowTheWholePlannedCurve() {
         val real = model(line(0, dose = 100.0))
-        val preview = real.withPlannedIngestion(real.redoseOptions.single(), dose = 50.0, time = at(120))
+        val preview = real.withPlannedIngestion(line(120, dose = 50.0))
         // planned curve ends 120 + 180 = 300 minutes after start
         assertTrue(preview.widthInSeconds >= 300 * 60f)
     }
@@ -160,7 +128,7 @@ class RedosePreviewTest {
     fun previewKeepsTheRealCurveOfThePlannedSubstanceAsBaseline() {
         // 100 mg at 0 min and 50 mg planned at 120 min, which is at its peak from 180 min
         val real = model(line(0, dose = 100.0))
-        val preview = real.withPlannedIngestion(real.redoseOptions.single(), dose = 50.0, time = at(120))
+        val preview = real.withPlannedIngestion(line(120, dose = 50.0))
         val group = preview.groupDrawables.single()
         val baseline = group.previewBaseline!!
         val realCurve = real.groupDrawables.single().fullTimelines!!
@@ -172,7 +140,7 @@ class RedosePreviewTest {
     @Test
     fun baselineIsDrawnOnTheSameScaleAsThePreview() {
         val real = model(line(0, dose = 100.0))
-        val preview = real.withPlannedIngestion(real.redoseOptions.single(), dose = 100.0, time = at(60))
+        val preview = real.withPlannedIngestion(line(60, dose = 100.0))
         val group = preview.groupDrawables.single()
         assertEquals(group.fullTimelines!!.referenceHeight, group.previewBaseline!!.referenceHeight, 0.001f)
     }
@@ -185,7 +153,7 @@ class RedosePreviewTest {
     @Test
     fun plannedIngestionHasTheColorOfItsSubstance() {
         val real = model(line(0, dose = 100.0))
-        val preview = real.withPlannedIngestion(real.redoseOptions.single(), dose = 50.0, time = at(120))
+        val preview = real.withPlannedIngestion(line(120, dose = 50.0))
         assertEquals(AdaptiveColor.PINK, preview.plannedIngestionColor)
     }
 
@@ -194,7 +162,7 @@ class RedosePreviewTest {
         // 100 mg at 0 and 50 mg planned at 60 min: combined curve peaks at 150 mg equivalent at 120 min
         // at 150 min: 50 (first dose halfway down) + 50 (planned at peak) = 100 of 150
         val real = model(line(0, dose = 100.0))
-        val preview = real.withPlannedIngestion(real.redoseOptions.single(), dose = 50.0, time = at(60))
+        val preview = real.withPlannedIngestion(line(60, dose = 50.0))
         assertEquals(100f / 150f, preview.plannedFractionOfPeakAt(at(150))!!, 0.001f)
     }
 

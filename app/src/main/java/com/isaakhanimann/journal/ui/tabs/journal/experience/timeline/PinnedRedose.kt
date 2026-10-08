@@ -22,6 +22,21 @@ import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import java.time.Instant
 
 // keeps the original pin time if the same substance and route stays pinned, e.g. when only its dose changes
+fun PlannedIngestion.toPinnedRedose(experienceId: Int, currentPin: PinnedRedose?, now: Instant): PinnedRedose {
+    val isSamePlan = currentPin != null && currentPin.experienceId == experienceId &&
+            currentPin.substanceName == substanceName && currentPin.route == route
+    return PinnedRedose(
+        experienceId = experienceId,
+        substanceName = substanceName,
+        route = route,
+        dose = dose,
+        units = units,
+        pinnedAt = if (isSamePlan) currentPin!!.pinnedAt else now
+    )
+}
+
+// removed in Task 6
+// keeps the original pin time if the same substance and route stays pinned, e.g. when only its dose changes
 fun RedoseOption.toPinnedRedose(experienceId: Int, currentPin: PinnedRedose?, now: Instant): PinnedRedose {
     val isSameChip = currentPin != null && currentPin.experienceId == experienceId &&
             currentPin.substanceName == substanceName && currentPin.route == route

@@ -96,7 +96,7 @@ class PinnedRedoseTest {
 
     @Test
     fun validPinUsesThePinnedDose() {
-        val option = model(line(0, dose = 40.0)).resolvePinnedRedose(pin(dose = 30.0), now = at(20))!!
+        val option = model(line(0, dose = 40.0)).resolvePinnedPlan(pin(dose = 30.0), now = at(20))!!
         assertEquals(AdministrationRoute.INSUFFLATED, option.route)
         assertEquals(30.0, option.dose, 0.001)
     }
@@ -104,25 +104,37 @@ class PinnedRedoseTest {
     @Test
     fun pinEndsWhenTheSubstanceIsLoggedAfterPinning() {
         val model = model(line(0, dose = 40.0), line(30, dose = 30.0))
-        assertNull(model.resolvePinnedRedose(pin(pinnedAt = at(10)), now = at(40)))
+        assertNull(model.resolvePinnedPlan(pin(pinnedAt = at(10)), now = at(40)))
     }
 
     @Test
     fun ingestionOfAnotherRouteDoesNotEndThePin() {
         val model = model(line(0, dose = 40.0), line(30, dose = 150.0, route = AdministrationRoute.ORAL))
-        assertEquals(30.0, model.resolvePinnedRedose(pin(pinnedAt = at(10)), now = at(40))!!.dose, 0.001)
-    }
-
-    @Test
-    fun pinEndsWhenItsChipNoLongerExists() {
-        val model = model(line(0, dose = 40.0))
-        assertNull(model.resolvePinnedRedose(pin(route = AdministrationRoute.ORAL), now = at(20)))
+        assertEquals(30.0, model.resolvePinnedPlan(pin(pinnedAt = at(10)), now = at(40))!!.dose, 0.001)
     }
 
     @Test
     fun pinEndsWhenNowIsPastTheEndOfTheTimeline() {
         // the single dose ends after 180 min; the timeline ends 10 min later
         val model = model(line(0, dose = 40.0))
-        assertNull(model.resolvePinnedRedose(pin(), now = at(300)))
+        assertNull(model.resolvePinnedPlan(pin(), now = at(300)))
+    }
+
+    @Test
+    fun pinSavedByThePreviousVersionStillLoads() {
+        val saved = listOf("7", "Ketamine", "INSUFFLATED", "30.0", "mg", "2026-01-01T20:10:00Z").joinToString("\u001F")
+        assertEquals(pin(dose = 30.0, pinnedAt = at(10)), PinnedRedose.fromPreferenceString(saved))
+    }
+
+    @Test
+    fun pinOfAnotherSubstanceEndsOnlyWhenThatSubstanceIsLogged() {
+        val mdmaPin = pin(pinnedAt = at(10)).copy(substanceName = "MDMA", route = AdministrationRoute.ORAL, dose = 100.0)
+        val ketamineLater = model(line(0, dose = 40.0), line(30, dose = 30.0))
+        assertEquals("MDMA", ketamineLater.resolvePinnedPlan(mdmaPin, now = at(40))!!.substanceName)
+        val mdmaLater = model(
+            line(0, dose = 40.0),
+            line(30, dose = 100.0, route = AdministrationRoute.ORAL).copy(substanceName = "MDMA")
+        )
+        assertNull(mdmaLater.resolvePinnedPlan(mdmaPin, now = at(40)))
     }
 }
