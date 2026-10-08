@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.dose.customunit
 
+import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toPreservedString
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -61,7 +62,7 @@ class ChooseDoseCustomUnitViewModel @Inject constructor(
     }
 
     // editable fields
-    var doseText by mutableStateOf("")
+    var doseText by mutableStateOf(state.toRoute<ChooseDoseCustomUnitRoute>().initialCountText())
     var isEstimate by mutableStateOf(false)
     var estimatedDoseDeviationText by mutableStateOf("")
 
@@ -98,3 +99,5 @@ class ChooseDoseCustomUnitViewModel @Inject constructor(
             }
         }
 }
+
+fun ChooseDoseCustomUnitRoute.initialCountText(): String = count?.toPreservedString() ?: ""

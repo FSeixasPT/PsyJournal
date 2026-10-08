@@ -74,8 +74,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
+import com.isaakhanimann.journal.data.room.experiences.entities.CustomUnit
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.DataForOneEffectLine
+import com.isaakhanimann.journal.ui.tabs.search.substance.roa.roundToSignificantDigits
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toReadableString
 import com.isaakhanimann.journal.ui.utils.getShortTimeText
 import kotlinx.coroutines.delay
@@ -93,6 +95,7 @@ class PlannedIngestionState(
     val now: Instant,
     val experienceSubstanceNamesByRecency: List<String>,
     val experienceRoutesByRecency: (String) -> List<AdministrationRoute>,
+    val customUnits: List<CustomUnit>,
     val setHeld: (Boolean) -> Unit,
     val choose: (PlannedIngestion) -> Unit,
     val clearChoice: () -> Unit,
@@ -122,7 +125,8 @@ fun rememberPlannedIngestionState(realModel: AllTimelinesModel, actions: Planned
     val realLines = realModel.realLines
     val defaultPlan = remember(realLines) { actions.defaultPlan(realLines) }
     val pinnedPlan = pin?.let { realModel.resolvePinnedPlan(it, now) }
-    val planned = pinnedPlan ?: chosen ?: defaultPlan
+    val customUnits = actions.customUnitsFlow.collectAsState().value
+    val planned = (pinnedPlan ?: chosen ?: defaultPlan)?.withCurrentCustomUnit(customUnits)
     val plannedLine = remember(planned, now, realModel) { planned?.let { actions.buildLine(it, now, realModel.colors) } }
     val isPinInvalid = pin != null && (pinnedPlan == null || plannedLine == null)
     val currentActions by rememberUpdatedState(actions)
@@ -144,6 +148,7 @@ fun rememberPlannedIngestionState(realModel: AllTimelinesModel, actions: Planned
         now = now,
         experienceSubstanceNamesByRecency = linesByRecency.map { it.substanceName }.distinct(),
         experienceRoutesByRecency = { name -> linesByRecency.filter { it.substanceName == name }.map { it.route }.distinct() },
+        customUnits = customUnits,
         setHeld = { isHeld = it },
         choose = { newPlan ->
             actions.choose(newPlan)
@@ -321,7 +326,14 @@ private fun PlannedIngestionEditorSheet(
     val isDarkTheme = isSystemInDarkTheme()
     var substanceName by remember { mutableStateOf(initial?.substanceName) }
     var route by remember { mutableStateOf(initial?.route) }
-    var doseText by remember { mutableStateOf(initial?.dose?.let { doseFieldText(it) } ?: "") }
+    var customUnitId by remember { mutableStateOf(initial?.customUnit?.id) }
+    var doseText by remember { mutableStateOf(initial?.let { doseFieldText(it.customUnit?.count ?: it.dose) } ?: "") }
+    // puts a suggested plan into the fields, its custom unit only if it can still be used
+    fun applySuggestion(plan: PlannedIngestion?) {
+        val usableUnit = plan?.customUnit?.takeIf { unit -> state.customUnits.any { it.id == unit.id } }
+        customUnitId = usableUnit?.id
+        doseText = plan?.let { doseFieldText(usableUnit?.count ?: it.dose) } ?: ""
+    }
     var searchText by remember { mutableStateOf("") }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -350,11 +362,11 @@ private fun PlannedIngestionEditorSheet(
                     val others = entries.filter { !it.isInExperience }
                     if (inExperience.isNotEmpty()) {
                         item { Text("In this experience", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(vertical = 6.dp)) }
-                        items(inExperience) { entry -> PickerRow(entry, actions.companionColor(entry.substanceName), isDarkTheme) { pick(entry, actions, state) { name, newRoute, dose -> substanceName = name; route = newRoute; doseText = dose } } }
+                        items(inExperience) { entry -> PickerRow(entry, actions.companionColor(entry.substanceName), isDarkTheme) { pick(entry, actions, state) { name, newRoute, plan -> substanceName = name; route = newRoute; applySuggestion(plan) } } }
                     }
                     if (others.isNotEmpty()) {
                         item { Text("All substances", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(vertical = 6.dp)) }
-                        items(others) { entry -> PickerRow(entry, actions.companionColor(entry.substanceName), isDarkTheme) { pick(entry, actions, state) { name, newRoute, dose -> substanceName = name; route = newRoute; doseText = dose } } }
+                        items(others) { entry -> PickerRow(entry, actions.companionColor(entry.substanceName), isDarkTheme) { pick(entry, actions, state) { name, newRoute, plan -> substanceName = name; route = newRoute; applySuggestion(plan) } } }
                     }
                 }
             } else {
@@ -373,7 +385,7 @@ private fun PlannedIngestionEditorSheet(
                                 route = roa.route
                                 val roaDose = roa.roaDose
                                 if (roaDose != null) {
-                                    doseText = suggestedDose(selectedName, roa.route, state.realModel.realLines, roaDose)?.let { doseFieldText(it) } ?: ""
+                                    applySuggestion(suggestedPlan(selectedName, roa.route, state.realModel.realLines, roaDose))
                                 }
                             },
                             label = {
@@ -390,16 +402,59 @@ private fun PlannedIngestionEditorSheet(
                     }
                 }
                 val roaDose = route?.let { substance.getRoa(it)?.roaDose }
+                val selectedRouteForUnits = route
+                val offeredUnits = if (roaDose != null && selectedRouteForUnits != null) {
+                    offeredCustomUnits(selectedName, selectedRouteForUnits, roaDose.units, state.customUnits)
+                } else {
+                    emptyList()
+                }
+                val selectedUnit = offeredUnits.firstOrNull { it.id == customUnitId }
+                if (roaDose != null && offeredUnits.isNotEmpty()) {
+                    Text("Unit", style = MaterialTheme.typography.labelMedium)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(
+                            selected = selectedUnit == null,
+                            onClick = {
+                                // keep the same amount: the count of the custom unit becomes its pure dose
+                                val count = parseDose(doseText)
+                                if (selectedUnit != null && count != null) doseText = doseFieldText(count * selectedUnit.dose!!)
+                                customUnitId = null
+                            },
+                            label = { Text(roaDose.units) }
+                        )
+                        offeredUnits.forEach { unit ->
+                            FilterChip(
+                                selected = selectedUnit?.id == unit.id,
+                                onClick = {
+                                    val amount = parseDose(doseText)
+                                    if (amount != null) {
+                                        val pureDose = if (selectedUnit != null) amount * selectedUnit.dose!! else amount
+                                        doseText = doseFieldText(roundToSignificantDigits(pureDose / unit.dose!!, 3))
+                                    }
+                                    customUnitId = unit.id
+                                },
+                                label = { Text("${unit.name} (${unit.unit})") }
+                            )
+                        }
+                    }
+                }
                 OutlinedTextField(
                     value = doseText,
                     onValueChange = { doseText = it },
-                    label = { Text("Dose") },
-                    suffix = { Text(roaDose?.units ?: "") },
+                    label = { Text(if (selectedUnit != null) "Amount" else "Dose") },
+                    suffix = { Text(selectedUnit?.getPluralizableUnit()?.plural ?: roaDose?.units ?: "") },
                     isError = parseDose(doseText) == null,
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth()
                 )
+                val count = parseDose(doseText)
+                if (selectedUnit != null && count != null && roaDose != null) {
+                    Text(
+                        "= ${roundToSignificantDigits(count * selectedUnit.dose!!, 6).toReadableString()} ${roaDose.units}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
                 if (roaDose != null) {
                     Text(roaDose.rangesText(), style = MaterialTheme.typography.bodySmall)
                 }
@@ -412,7 +467,20 @@ private fun PlannedIngestionEditorSheet(
                         enabled = dose != null && selectedRoute != null && roaDose != null,
                         onClick = {
                             if (dose != null && selectedRoute != null && roaDose != null) {
-                                onDone(PlannedIngestion(selectedName, selectedRoute, dose, roaDose.units))
+                                val unit = selectedUnit
+                                onDone(
+                                    if (unit != null) {
+                                        PlannedIngestion(
+                                            substanceName = selectedName,
+                                            route = selectedRoute,
+                                            dose = roundToSignificantDigits(dose * unit.dose!!, 6),
+                                            units = roaDose.units,
+                                            customUnit = PlannedCustomUnit(unit.id, dose, unit.unit, unit.getPluralizableUnit().plural)
+                                        )
+                                    } else {
+                                        PlannedIngestion(selectedName, selectedRoute, dose, roaDose.units)
+                                    }
+                                )
                             }
                         }
                     ) { Text("Done") }
@@ -427,13 +495,12 @@ private fun pick(
     entry: PickerEntry,
     actions: PlannedIngestionActions,
     state: PlannedIngestionState,
-    apply: (String, AdministrationRoute?, String) -> Unit,
+    apply: (String, AdministrationRoute?, PlannedIngestion?) -> Unit,
 ) {
     val substance = actions.getSubstance(entry.substanceName) ?: return
     val route = preselectedRoute(substance, state.experienceRoutesByRecency(entry.substanceName))
     val roaDose = route?.let { substance.getRoa(it)?.roaDose }
-    val dose = roaDose?.let { suggestedDose(entry.substanceName, route, state.realModel.realLines, it) }
-    apply(entry.substanceName, route, dose?.let { doseFieldText(it) } ?: "")
+    apply(entry.substanceName, route, roaDose?.let { suggestedPlan(entry.substanceName, route, state.realModel.realLines, it) })
 }
 
 @Composable

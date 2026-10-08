@@ -162,12 +162,7 @@ class AllTimelinesModel(
         if (isLoggedSincePinning) return null
         val endTime = startTime.plusSeconds(widthInSeconds.toLong())
         if (now > endTime) return null
-        return PlannedIngestion(
-            substanceName = pin.substanceName,
-            route = pin.route,
-            dose = pin.dose,
-            units = pin.units
-        )
+        return pin.toPlannedIngestion()
     }
 
     fun withPlannedIngestion(line: DataForOneEffectLine): AllTimelinesModel {

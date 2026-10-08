@@ -20,6 +20,7 @@ package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
+import com.isaakhanimann.journal.data.room.experiences.entities.CustomUnit
 import com.isaakhanimann.journal.data.room.experiences.entities.SubstanceCompanion
 import com.isaakhanimann.journal.data.substances.classes.Substance
 import com.isaakhanimann.journal.data.substances.repositories.SearchRepository
@@ -44,6 +45,8 @@ interface PlannedIngestionActions {
     val pinnedRedoseFlow: StateFlow<PinnedRedose?>
     // the chip's choice when it is not pinned, null means the default
     val chosenPlanFlow: StateFlow<PlannedIngestion?>
+    // custom units that are not archived, to use doses like "5 sprays"
+    val customUnitsFlow: StateFlow<List<CustomUnit>>
     fun choose(planned: PlannedIngestion?)
     // lets the normal add-ingestion flow propose this experience
     fun prepareChangeDetails(lastIngestionTime: Instant?)
@@ -82,13 +85,17 @@ class PlannedIngestionHelper @Inject constructor(
         // saved, so the choice survives rotation, leaving the experience and closing the app
         val chosenFlow: StateFlow<PlannedIngestion?> = userPreferences.chosenPlanFlow
             .combine(experienceCreatedAt) { saved, createdAt ->
-                saved?.takeIf { createdAt != null && it.belongsTo(experienceId, createdAt) }
-                    ?.let { PlannedIngestion(it.substanceName, it.route, it.dose, it.units) }
+                saved?.takeIf { createdAt != null && it.belongsTo(experienceId, createdAt) }?.toPlannedIngestion()
             }
             .stateIn(scope, SharingStarted.Eagerly, null)
 
+        val customUnits: StateFlow<List<CustomUnit>> =
+            experienceRepo.getCustomUnitsFlow(false).stateIn(scope, SharingStarted.Eagerly, emptyList())
+
         return object : PlannedIngestionActions {
             override val pinnedRedoseFlow = pinFlow
+
+            override val customUnitsFlow: StateFlow<List<CustomUnit>> = customUnits
 
             override val chosenPlanFlow: StateFlow<PlannedIngestion?> = chosenFlow
 

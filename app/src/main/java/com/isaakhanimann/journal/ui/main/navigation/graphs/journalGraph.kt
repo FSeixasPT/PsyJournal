@@ -73,8 +73,13 @@ fun NavGraphBuilder.journalGraph(navController: NavHostController) {
         }
         composableWithTransitions<TimelineScreenRoute> {
             TimelineScreen(
-                navigateToChooseDose = { substanceName, route, dose ->
-                        navController.navigate(ChooseDoseRoute(substanceName = substanceName, administrationRoute = route, dose = dose))
+                navigateToChooseDose = { planned ->
+                        val customUnit = planned.customUnit
+                        if (customUnit != null) {
+                            navController.navigate(ChooseDoseCustomUnitRoute(customUnitId = customUnit.id, count = customUnit.count))
+                        } else {
+                            navController.navigate(ChooseDoseRoute(substanceName = planned.substanceName, administrationRoute = planned.route, dose = planned.dose))
+                        }
                     }
             )
         }
@@ -88,8 +93,13 @@ fun NavGraphBuilder.journalGraph(navController: NavHostController) {
                 navigateToAddIngestionSearch = {
                     navController.navigate(AddIngestionRoute)
                 },
-                navigateToChooseDose = { substanceName, route, dose ->
-                    navController.navigate(ChooseDoseRoute(substanceName = substanceName, administrationRoute = route, dose = dose))
+                navigateToChooseDose = { planned ->
+                    val customUnit = planned.customUnit
+                    if (customUnit != null) {
+                        navController.navigate(ChooseDoseCustomUnitRoute(customUnitId = customUnit.id, count = customUnit.count))
+                    } else {
+                        navController.navigate(ChooseDoseRoute(substanceName = planned.substanceName, administrationRoute = planned.route, dose = planned.dose))
+                    }
                 },
                 navigateToExplainTimeline = {
                     navController.navigate(ExplainTimelineOnJournalTabRoute)

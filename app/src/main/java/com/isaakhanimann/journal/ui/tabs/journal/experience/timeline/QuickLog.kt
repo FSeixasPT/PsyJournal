@@ -25,22 +25,26 @@ import com.isaakhanimann.journal.ui.tabs.journal.addingestion.interactions.Inter
 import java.time.Instant
 
 // the planned ingestion as a real ingestion taken now by you in this experience
-fun PlannedIngestion.toIngestion(experienceId: Int, now: Instant) = Ingestion(
-    substanceName = substanceName,
-    time = now,
-    endTime = null,
-    creationDate = now,
-    administrationRoute = route,
-    dose = dose,
-    isDoseAnEstimate = false,
-    estimatedDoseStandardDeviation = null,
-    units = units,
-    experienceId = experienceId,
-    notes = null,
-    stomachFullness = null,
-    consumerName = null,
-    customUnitId = null
-)
+// with a custom unit the count and the unit name are saved, like the normal add-ingestion flow does
+fun PlannedIngestion.toIngestion(experienceId: Int, now: Instant): Ingestion {
+    val unit = customUnit?.takeIf { it.unit.isNotEmpty() }
+    return Ingestion(
+        substanceName = substanceName,
+        time = now,
+        endTime = null,
+        creationDate = now,
+        administrationRoute = route,
+        dose = unit?.count ?: dose,
+        isDoseAnEstimate = false,
+        estimatedDoseStandardDeviation = null,
+        units = unit?.unit ?: units,
+        experienceId = experienceId,
+        notes = null,
+        stomachFullness = null,
+        consumerName = null,
+        customUnitId = unit?.id
+    )
+}
 
 fun companionToSave(substanceName: String, existing: SubstanceCompanion?, color: AdaptiveColor): SubstanceCompanion =
     existing ?: SubstanceCompanion(substanceName = substanceName, color = color)

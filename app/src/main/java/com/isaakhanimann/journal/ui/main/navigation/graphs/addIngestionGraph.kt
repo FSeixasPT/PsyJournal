@@ -277,7 +277,11 @@ data class CheckInteractionsRoute(val substanceName: String)
 data class CheckSaferUseRoute(val substanceName: String)
 
 @Serializable
-data class ChooseDoseCustomUnitRoute(val customUnitId: Int)
+data class ChooseDoseCustomUnitRoute(
+    val customUnitId: Int,
+    // set when coming from the planned-ingestion chip, so the count is already filled in
+    val count: Double? = null
+)
 
 @Serializable
 data class ChooseRouteOfAddIngestionRoute(val substanceName: String)

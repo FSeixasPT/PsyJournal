@@ -19,6 +19,7 @@
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
+import com.isaakhanimann.journal.data.room.experiences.entities.CustomUnit
 import com.isaakhanimann.journal.data.room.experiences.entities.SubstanceCompanion
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.data.substances.classes.Substance
@@ -35,9 +36,42 @@ import java.time.Instant
 data class PlannedIngestion(
     val substanceName: String,
     val route: AdministrationRoute,
+    // the pure dose in the database unit, also when a custom unit is used
     val dose: Double,
-    val units: String
+    val units: String,
+    val customUnit: PlannedCustomUnit? = null
 )
+
+// a count of a custom unit, e.g. 5 sprays; unit and unitPlural are filled in from the current custom unit
+data class PlannedCustomUnit(
+    val id: Int,
+    val count: Double,
+    val unit: String = "",
+    val unitPlural: String = ""
+)
+
+// takes the dose of a custom unit from its current definition, or falls back to the plain dose if it can't be used
+fun PlannedIngestion.withCurrentCustomUnit(customUnits: List<CustomUnit>): PlannedIngestion {
+    val planned = customUnit ?: return this
+    val unit = customUnits.firstOrNull {
+        it.id == planned.id && !it.isArchived && it.dose != null && it.originalUnit == units
+    } ?: return copy(customUnit = null)
+    return copy(
+        dose = roundToSignificantDigits(planned.count * unit.dose!!, 6),
+        customUnit = planned.copy(unit = unit.unit, unitPlural = unit.getPluralizableUnit().plural)
+    )
+}
+
+// the custom units that can be used for a planned ingestion of that substance and route
+fun offeredCustomUnits(
+    substanceName: String,
+    route: AdministrationRoute,
+    databaseUnits: String,
+    customUnits: List<CustomUnit>
+): List<CustomUnit> = customUnits.filter {
+    it.substanceName == substanceName && it.administrationRoute == route && !it.isArchived &&
+            it.dose != null && it.originalUnit == databaseUnits
+}
 
 enum class PreviewProblem { NO_FULL_DURATION, NO_DOSE_RANGES }
 
@@ -84,22 +118,39 @@ fun choosePlannedColor(
     return AdaptiveColor.entries.firstOrNull { it !in colorsOnChart } ?: AdaptiveColor.entries.first()
 }
 
-// the first dose of that substance and route if it was logged in the database unit, else the start of the common range
+// the first dose of that substance and route (with its custom unit) if it was logged in the database unit,
+// else the start of the common range
+fun suggestedPlan(
+    substanceName: String,
+    route: AdministrationRoute,
+    realLines: List<DataForOneEffectLine>,
+    roaDose: RoaDose
+): PlannedIngestion? {
+    val firstLine = realLines
+        .filter { it.substanceName == substanceName && it.route == route && it.referenceDose != null }
+        .minByOrNull { it.startTime }
+    if (firstLine != null && firstLine.doseUnits == roaDose.units) {
+        val customUnitId = firstLine.customUnitId
+        val customUnitCount = firstLine.customUnitCount
+        return PlannedIngestion(
+            substanceName = substanceName,
+            route = route,
+            // the height is a Float, rounding removes the noise that adds to the logged dose
+            dose = roundToSignificantDigits(firstLine.height * firstLine.referenceDose!!, 6),
+            units = roaDose.units,
+            customUnit = if (customUnitId != null && customUnitCount != null) PlannedCustomUnit(customUnitId, customUnitCount) else null
+        )
+    }
+    val commonMin = roaDose.commonMin ?: return null
+    return PlannedIngestion(substanceName, route, commonMin, roaDose.units)
+}
+
 fun suggestedDose(
     substanceName: String,
     route: AdministrationRoute,
     realLines: List<DataForOneEffectLine>,
     roaDose: RoaDose
-): Double? {
-    val firstLine = realLines
-        .filter { it.substanceName == substanceName && it.route == route && it.referenceDose != null }
-        .minByOrNull { it.startTime }
-    if (firstLine != null && firstLine.doseUnits == roaDose.units) {
-        // the height is a Float, rounding removes the noise that adds to the logged dose
-        return roundToSignificantDigits(firstLine.height * firstLine.referenceDose!!, 6)
-    }
-    return roaDose.commonMin
-}
+): Double? = suggestedPlan(substanceName, route, realLines, roaDose)?.dose
 
 // the first logged ingestion with a known dose whose substance and route can be previewed
 fun defaultPlannedIngestion(
@@ -111,11 +162,18 @@ fun defaultPlannedIngestion(
         val roa = getSubstance(line.substanceName)?.getRoa(line.route) ?: continue
         if (roa.previewProblem() != null) continue
         val roaDose = roa.roaDose ?: continue
-        val dose = suggestedDose(line.substanceName, line.route, realLines, roaDose) ?: continue
-        return PlannedIngestion(line.substanceName, line.route, dose, roaDose.units)
+        return suggestedPlan(line.substanceName, line.route, realLines, roaDose) ?: continue
     }
     return null
 }
 
-fun PlannedIngestion.chipText(): String =
-    "$substanceName · ${dose.toReadableString()} $units ${route.displayText.lowercase()}"
+fun PlannedIngestion.chipText(): String {
+    val routeText = route.displayText.lowercase()
+    val unit = customUnit
+    return if (unit != null && unit.unit.isNotEmpty()) {
+        val unitName = if (unit.count == 1.0) unit.unit else unit.unitPlural
+        "$substanceName · ${unit.count.toReadableString()} $unitName (${dose.toReadableString()} $units) $routeText"
+    } else {
+        "$substanceName · ${dose.toReadableString()} $units $routeText"
+    }
+}

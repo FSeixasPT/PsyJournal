@@ -486,6 +486,8 @@ class ExperienceViewModel @Inject constructor(
                     referenceDose = if (isDoseKnown) getCommonDose(ingestionWithCompanion, allIngestions, roaDose) else null,
                     doseUnits = if (isDoseKnown) ingestionWithCompanion.originalUnit else null,
                     isReferenceDoseFromDoseRanges = roaDose?.averageCommonDose != null,
+                    customUnitId = ingestionWithCompanion.customUnit?.id,
+                    customUnitCount = if (ingestionWithCompanion.customUnit != null) ingestion.dose else null,
                     horizontalWeight = horizontalWeight,
                     color = oneElement.ingestionWithCompanionAndCustomUnit.substanceCompanion?.color
                         ?: AdaptiveColor.RED,

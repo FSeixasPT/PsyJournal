@@ -53,6 +53,7 @@ import com.isaakhanimann.journal.ui.tabs.journal.experience.components.TimeDispl
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.ui.YOU
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.AllTimelines
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.PlannedIngestion
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.PlannedIngestionActions
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.PlannedIngestionSection
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.TimelineQuantityDetails
@@ -63,7 +64,7 @@ import java.time.Instant
 @Composable
 fun TimelineScreen(
     viewModel: TimelineScreenViewModel = hiltViewModel(),
-    navigateToChooseDose: (substanceName: String, route: AdministrationRoute, dose: Double) -> Unit = { _, _, _ -> },
+    navigateToChooseDose: (PlannedIngestion) -> Unit = {},
 ) {
     TimelineScreen(
         title = viewModel.consumerName,
@@ -79,7 +80,7 @@ fun TimelineScreen(
 fun TimelineScreen(
      title: String,
      plannedIngestionActions: PlannedIngestionActions? = null,
-     navigateToChooseDose: (substanceName: String, route: AdministrationRoute, dose: Double) -> Unit = { _, _, _ -> },
+     navigateToChooseDose: (PlannedIngestion) -> Unit = {},
      timelineDisplayOption: TimelineDisplayOption,
      timeDisplayOption: TimeDisplayOption,
 ) {
@@ -146,7 +147,7 @@ fun TimelineScreen(
                         state = planState,
                         actions = plannedIngestionActions,
                         selectedTime = selectedTime,
-                        onChangeDetails = { navigateToChooseDose(it.substanceName, it.route, it.dose) },
+                        onChangeDetails = { navigateToChooseDose(it) },
                         modifier = Modifier.padding(horizontal = horizontalPadding)
                     )
                 }

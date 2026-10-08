@@ -37,5 +37,8 @@ data class DataForOneEffectLine(
     val doseUnits: String? = null,
     // true if referenceDose comes from the dose ranges of this route; only then are routes comparable.
     // Describes the route, so it is also set when this ingestion's dose is unknown.
-    val isReferenceDoseFromDoseRanges: Boolean = false
+    val isReferenceDoseFromDoseRanges: Boolean = false,
+    // set if the ingestion was logged with a custom unit, e.g. 3 sprays
+    val customUnitId: Int? = null,
+    val customUnitCount: Double? = null
 )

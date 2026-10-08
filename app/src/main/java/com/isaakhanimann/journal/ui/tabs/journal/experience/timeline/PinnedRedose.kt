@@ -36,7 +36,9 @@ fun PlannedIngestion.toPinnedRedose(experienceId: Int, currentPin: PinnedRedose?
         route = route,
         dose = dose,
         units = units,
-        pinnedAt = if (isSamePlan) currentPin!!.pinnedAt else now
+        pinnedAt = if (isSamePlan) currentPin!!.pinnedAt else now,
+        customUnitId = customUnit?.id,
+        customUnitCount = customUnit?.count
     )
 }
 
@@ -47,8 +49,18 @@ data class PinnedRedose(
     val route: AdministrationRoute,
     val dose: Double,
     val units: String,
-    val pinnedAt: Instant
+    val pinnedAt: Instant,
+    val customUnitId: Int? = null,
+    val customUnitCount: Double? = null
 ) {
+    fun toPlannedIngestion() = PlannedIngestion(
+        substanceName = substanceName,
+        route = route,
+        dose = dose,
+        units = units,
+        customUnit = if (customUnitId != null && customUnitCount != null) PlannedCustomUnit(customUnitId, customUnitCount) else null
+    )
+
     fun toPreferenceString(): String = listOf(
         experienceId.toString(),
         substanceName,
@@ -56,6 +68,8 @@ data class PinnedRedose(
         dose.toString(),
         units,
         pinnedAt.toString()
+    ).plus(
+        if (customUnitId != null && customUnitCount != null) listOf(customUnitId.toString(), customUnitCount.toString()) else emptyList()
     ).joinToString(SEPARATOR)
 
     companion object {
@@ -64,7 +78,8 @@ data class PinnedRedose(
 
         fun fromPreferenceString(value: String?): PinnedRedose? {
             val parts = value?.split(SEPARATOR) ?: return null
-            if (parts.size != 6) return null
+            // 6 parts without a custom unit (also the previous format), 8 with one
+            if (parts.size != 6 && parts.size != 8) return null
             return try {
                 PinnedRedose(
                     experienceId = parts[0].toInt(),
@@ -72,7 +87,9 @@ data class PinnedRedose(
                     route = AdministrationRoute.valueOf(parts[2]),
                     dose = parts[3].toDouble(),
                     units = parts[4],
-                    pinnedAt = Instant.parse(parts[5])
+                    pinnedAt = Instant.parse(parts[5]),
+                    customUnitId = parts.getOrNull(6)?.toInt(),
+                    customUnitCount = parts.getOrNull(7)?.toDouble()
                 )
             } catch (e: IllegalArgumentException) {
                 null
