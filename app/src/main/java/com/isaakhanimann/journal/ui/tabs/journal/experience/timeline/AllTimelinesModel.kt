@@ -154,23 +154,6 @@ class AllTimelinesModel(
 
     val colors: List<AdaptiveColor> get() = roaGroups.map { it.color }.distinct()
 
-    // removed in Task 6
-    val redoseOptions: List<RedoseOption> by lazy {
-        dataForLines.groupBy { Pair(it.substanceName, it.route) }.mapNotNull { (key, lines) ->
-            if (lines.any { it.referenceDose == null }) return@mapNotNull null
-            if (lines.map { it.doseUnits }.distinct().size != 1) return@mapNotNull null
-            if (lines.any { it.roaDuration?.toFullDurations() == null }) return@mapNotNull null
-            val lastLine = lines.maxBy { it.startTime }
-            RedoseOption(
-                substanceName = key.first,
-                route = key.second,
-                dose = lastLine.height * lastLine.referenceDose!!,
-                units = lastLine.doseUnits!!,
-                color = lastLine.color
-            )
-        }
-    }
-
     // the planned ingestion of a pin, or null if the pin no longer applies to this timeline
     fun resolvePinnedPlan(pin: PinnedRedose, now: Instant): PlannedIngestion? {
         val isLoggedSincePinning = realLines.any {
@@ -195,25 +178,6 @@ class AllTimelinesModel(
             areSubstanceHeightsIndependent = areSubstanceHeightsIndependent,
             areRoutesMerged = areRoutesMerged,
             plannedLine = line
-        )
-    }
-
-    // removed in Task 6
-    fun resolvePinnedRedose(pin: PinnedRedose, now: Instant): RedoseOption? {
-        val plan = resolvePinnedPlan(pin, now) ?: return null
-        val option = redoseOptions.firstOrNull { it.substanceName == plan.substanceName && it.route == plan.route }
-            ?: return null
-        return option.copy(dose = plan.dose)
-    }
-
-    // removed in Task 6
-    fun withPlannedIngestion(option: RedoseOption, dose: Double, time: Instant): AllTimelinesModel {
-        val lastLine = realLines
-            .filter { it.substanceName == option.substanceName && it.route == option.route }
-            .maxBy { it.startTime }
-        val referenceDose = lastLine.referenceDose ?: return this
-        return withPlannedIngestion(
-            lastLine.copy(height = (dose / referenceDose).toFloat(), startTime = time, endTime = null)
         )
     }
 

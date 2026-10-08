@@ -35,21 +35,6 @@ fun PlannedIngestion.toPinnedRedose(experienceId: Int, currentPin: PinnedRedose?
     )
 }
 
-// removed in Task 6
-// keeps the original pin time if the same substance and route stays pinned, e.g. when only its dose changes
-fun RedoseOption.toPinnedRedose(experienceId: Int, currentPin: PinnedRedose?, now: Instant): PinnedRedose {
-    val isSameChip = currentPin != null && currentPin.experienceId == experienceId &&
-            currentPin.substanceName == substanceName && currentPin.route == route
-    return PinnedRedose(
-        experienceId = experienceId,
-        substanceName = substanceName,
-        route = route,
-        dose = dose,
-        units = units,
-        pinnedAt = if (isSameChip) currentPin!!.pinnedAt else now
-    )
-}
-
 // a redose preview that stays visible until it is unpinned or no longer applies
 data class PinnedRedose(
     val experienceId: Int,

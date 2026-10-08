@@ -100,11 +100,9 @@ import com.isaakhanimann.journal.ui.tabs.journal.experience.models.ConsumerWithI
 import com.isaakhanimann.journal.ui.tabs.journal.experience.models.CumulativeDose
 import com.isaakhanimann.journal.ui.tabs.journal.experience.models.OneExperienceScreenModel
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.AllTimelines
-import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.RedoseOption
-import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.PlannedIngestion
-import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.PinnedRedose
-import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.RedosePreviewRow
-import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.rememberRedosePreviewState
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.PlannedIngestionActions
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.PlannedIngestionSection
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.rememberPlannedIngestionState
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.TimelineQuantityDetails
 import com.isaakhanimann.journal.ui.theme.JournalTheme
 import com.isaakhanimann.journal.ui.theme.horizontalPadding
@@ -172,12 +170,7 @@ fun ExperienceScreen(
         navigateToTimelineScreen = navigateToTimelineScreen,
         areDosageDotsHidden = viewModel.areDosageDotsHiddenFlow.collectAsState().value,
         isTimelineHidden = viewModel.isTimelineHiddenFlow.collectAsState().value,
-        pinnedRedose = viewModel.plannedIngestionActions.pinnedRedoseFlow.collectAsState().value,
-        onPinRedose = { option: RedoseOption? ->
-            viewModel.plannedIngestionActions.pin(
-                option?.let { PlannedIngestion(it.substanceName, it.route, it.dose, it.units) }
-            )
-        }
+        plannedIngestionActions = viewModel.plannedIngestionActions
     )
 }
 
@@ -239,8 +232,7 @@ fun ExperienceScreen(
     navigateToTimelineScreen: (consumerName: String) -> Unit,
     areDosageDotsHidden: Boolean,
     isTimelineHidden: Boolean,
-    pinnedRedose: PinnedRedose? = null,
-    onPinRedose: (RedoseOption?) -> Unit = {},
+    plannedIngestionActions: PlannedIngestionActions? = null,
 ) {
     Scaffold(
         topBar = {
@@ -277,8 +269,7 @@ fun ExperienceScreen(
                 timeDisplayOption = timeDisplayOption,
                 isOralDisclaimerHidden = isOralDisclaimerHidden,
                 onChangeIsOralDisclaimerHidden = onChangeIsOralDisclaimerHidden,
-                pinnedRedose = pinnedRedose,
-                onPinRedose = onPinRedose,
+                plannedIngestionActions = plannedIngestionActions,
             )
             if (oneExperienceScreenModel.ingestionElements.isNotEmpty()) {
                 MyIngestionList(
@@ -675,8 +666,7 @@ private fun MyTimelineSection(
     timeDisplayOption: TimeDisplayOption,
     isOralDisclaimerHidden: Boolean,
     onChangeIsOralDisclaimerHidden: (Boolean) -> Unit,
-    pinnedRedose: PinnedRedose?,
-    onPinRedose: (RedoseOption?) -> Unit,
+    plannedIngestionActions: PlannedIngestionActions?,
 ) {
     when (timelineDisplayOption) {
         TimelineDisplayOption.Hidden -> {}
@@ -709,14 +699,8 @@ private fun MyTimelineSection(
                     verticalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
                     var selectedTime by remember { mutableStateOf<Instant?>(null) }
-                    var previewedOption by remember { mutableStateOf<RedoseOption?>(null) }
-                    val previewState = rememberRedosePreviewState(
-                        realModel = timelineModel,
-                        heldOption = previewedOption,
-                        pin = pinnedRedose,
-                        onPinNoLongerApplies = { onPinRedose(null) }
-                    )
-                    val displayedModel = previewState.displayedModel
+                    val planState = plannedIngestionActions?.let { rememberPlannedIngestionState(timelineModel, it) }
+                    val displayedModel = planState?.displayedModel ?: timelineModel
                     AllTimelines(
                         model = displayedModel,
                         timeDisplayOption = timeDisplayOption,
@@ -726,17 +710,13 @@ private fun MyTimelineSection(
                             .height(200.dp),
                         onSelectedTimeChange = { selectedTime = it }
                     )
-                    // the details always describe the real ingestions, the redose is described below the chips
+                    // the details always describe the real ingestions, the planned one is described below the chip
                     TimelineQuantityDetails(model = timelineModel, selectedTime = selectedTime)
-                    if (previewState.isRedosePossibleNow) {
-                        RedosePreviewRow(
-                            options = timelineModel.redoseOptions,
-                            peak = displayedModel.plannedPeak,
-                            fractionOfPeakWithRedose = displayedModel.plannedFractionOfPeakAt(selectedTime ?: previewState.now),
+                    if (planState != null && plannedIngestionActions != null && planState.isPossibleNow) {
+                        PlannedIngestionSection(
+                            state = planState,
+                            actions = plannedIngestionActions,
                             selectedTime = selectedTime,
-                            pinnedOption = previewState.pinnedOption,
-                            onPreviewChange = { previewedOption = it },
-                            onPinChange = onPinRedose,
                             modifier = Modifier.padding(top = 4.dp)
                         )
                     }
