@@ -18,7 +18,6 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
-import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import java.time.Instant
 
 data class PlannedEffectTimes(
@@ -30,8 +29,7 @@ data class PlannedEffectTimes(
 
 data class TimelinePeak(
     val time: Instant,
-    val doseEquivalent: Double,
-    val units: String,
-    // route the dose equivalent is expressed in, only set if the line combines several routes
-    val route: AdministrationRoute? = null
+    // the peak expressed in every route of the line, in the order the routes were first taken;
+    // a single route if the line doesn't combine several routes
+    val doseEquivalents: List<RouteDoseEquivalent>
 )

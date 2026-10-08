@@ -171,16 +171,18 @@ class RouteMergingTest {
         // only insufflated taken so far, as 52.5 mg at 0; plan 52.5 mg insufflated at 0 as well: peak 2 x 52.5 = 105 mg
         val real = model(true, line(0, INSUFFLATED, 52.5), line(300, ORAL, 200.0))
         val peak = real.withPlannedIngestion(line(0, INSUFFLATED, 52.5)).plannedPeak!!
-        assertEquals(105.0, peak.doseEquivalent, 0.01)
-        assertEquals("mg", peak.units)
-        assertEquals(INSUFFLATED, peak.route)
+        // the line merges insufflated and oral, so the peak is given in both routes
+        assertEquals(listOf(INSUFFLATED, ORAL), peak.doseEquivalents.map { it.route })
+        assertEquals(105.0, peak.doseEquivalents[0].dose, 0.01)
+        assertEquals("mg", peak.doseEquivalents[0].units)
+        assertEquals(400.0, peak.doseEquivalents[1].dose, 0.01)
     }
 
     @Test
     fun peakOfUnmergedLineDoesNotNameTheRoute() {
         val real = model(false, line(0, INSUFFLATED, 52.5), line(300, ORAL, 200.0))
         val peak = real.withPlannedIngestion(line(0, INSUFFLATED, 52.5)).plannedPeak!!
-        assertEquals(null, peak.route)
+        assertEquals(listOf(INSUFFLATED), peak.doseEquivalents.map { it.route })
     }
 
     @Test
@@ -205,8 +207,8 @@ class RouteMergingTest {
         val preview = real.withPlannedIngestion(mdma)
         assertEquals(2, preview.groupDrawables.size)
         assertEquals(AdaptiveColor.BLUE, preview.plannedIngestionColor)
-        assertEquals(200.0, preview.plannedPeak!!.doseEquivalent, 0.01)
-        assertEquals(null, preview.plannedPeak!!.route)
+        assertEquals(200.0, preview.plannedPeak!!.doseEquivalents.single().dose, 0.01)
+        assertEquals(listOf(ORAL), preview.plannedPeak!!.doseEquivalents.map { it.route })
     }
 
     @Test
@@ -231,5 +233,15 @@ class RouteMergingTest {
         )
         assertEquals(null, model.groupDrawables[0].fullTimelines)
         assertEquals(true, model.groupDrawables[1].fullTimelines != null)
+    }
+
+    @Test
+    fun peakOfANewRouteIsGivenInEveryRouteOfTheSession() {
+        // oral taken first; insufflated planned later, when the oral dose has worn off: peak of one reference dose
+        val real = model(true, line(0, ORAL, 200.0))
+        val peak = real.withPlannedIngestion(line(300, INSUFFLATED, 52.5)).plannedPeak!!
+        assertEquals(listOf(ORAL, INSUFFLATED), peak.doseEquivalents.map { it.route })
+        assertEquals(200.0, peak.doseEquivalents[0].dose, 0.01)
+        assertEquals(52.5, peak.doseEquivalents[1].dose, 0.01)
     }
 }

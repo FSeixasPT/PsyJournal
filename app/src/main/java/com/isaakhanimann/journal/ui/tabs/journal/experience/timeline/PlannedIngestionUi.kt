@@ -202,9 +202,14 @@ fun PlannedIngestionSection(
                 val time = selectedTime?.let { time -> timeText(time) } ?: "now"
                 "With redose: ${(it * 100).roundToInt()}% of peak $time"
             }
-            val peakLine = model.plannedPeak?.let {
-                val route = it.route?.let { route -> " ${route.displayText.lowercase()}" } ?: ""
-                "Peak after redose: ≈ ${it.doseEquivalent.toReadableString()} ${it.units}$route equivalent ${timeText(it.time)}"
+            val peakLine = model.plannedPeak?.let { peak ->
+                val isMerged = peak.doseEquivalents.size > 1
+                // e.g. "≈ 20 mg oral / ≈ 8 mg insufflated"; the route is only named if there are several
+                val equivalents = peak.doseEquivalents.joinToString(" / ") {
+                    val route = if (isMerged) " ${it.route.displayText.lowercase()}" else ""
+                    "≈ ${it.dose.toReadableString()} ${it.units}$route"
+                }
+                "Peak after redose: $equivalents equivalent ${timeText(peak.time)}"
             }
             listOfNotNull(fractionLine, peakLine)
         } else {

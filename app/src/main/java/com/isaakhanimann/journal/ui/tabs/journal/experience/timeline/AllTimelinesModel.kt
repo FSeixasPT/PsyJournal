@@ -203,14 +203,14 @@ class AllTimelinesModel(
         val group = roaGroups.getOrNull(index) ?: return@lazy null
         // a line with an assumed dose (unknown or in other units) can't be expressed as a dose
         if (!group.isDoseEquivalentKnown) return@lazy null
-        val referenceDose = group.routes.first { it.route == option.route }.referenceDose ?: return@lazy null
         val fullTimelines = groupDrawables[index].fullTimelines ?: return@lazy null
         val highestPoint = fullTimelines.highestPointFrom(Duration.between(startTime, option.startTime).seconds.toFloat())
         TimelinePeak(
             time = startTime.plusSeconds(highestPoint.x.toLong()),
-            doseEquivalent = highestPoint.y * referenceDose,
-            units = option.doseUnits ?: return@lazy null,
-            route = if (group.isMerged) option.route else null
+            // a merged line has one equivalent per route; known for every route because isDoseEquivalentKnown
+            doseEquivalents = group.routes.map {
+                RouteDoseEquivalent(route = it.route, dose = highestPoint.y * it.referenceDose!!, units = it.doseUnits!!)
+            }
         )
     }
 

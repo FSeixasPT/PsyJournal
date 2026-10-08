@@ -97,8 +97,8 @@ class RedosePreviewTest {
         // 100 mg at 0 min (peak 60-120 min) and 50 mg planned at 60 min (peak 120-180 min) add up to 150 mg at 120 min
         val real = model(line(0, dose = 100.0))
         val peak = real.withPlannedIngestion(line(60, dose = 50.0)).plannedPeak!!
-        assertEquals(150.0, peak.doseEquivalent, 0.01)
-        assertEquals("mg", peak.units)
+        assertEquals(150.0, peak.doseEquivalents.single().dose, 0.01)
+        assertEquals("mg", peak.doseEquivalents.single().units)
         assertEquals(at(120), peak.time)
     }
 
@@ -107,7 +107,7 @@ class RedosePreviewTest {
         // 100 mg at 0 min is at 50 mg equivalent at 150 min and wearing off; 10 mg planned at 150 min only reaches 10
         val real = model(line(0, dose = 100.0))
         val peak = real.withPlannedIngestion(line(150, dose = 10.0)).plannedPeak!!
-        assertEquals(50.0, peak.doseEquivalent, 0.01)
+        assertEquals(50.0, peak.doseEquivalents.single().dose, 0.01)
         assertEquals(at(150), peak.time)
     }
 
