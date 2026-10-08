@@ -18,6 +18,9 @@
 
 package com.isaakhanimann.journal.ui.tabs.search.substance
 
+import com.isaakhanimann.journal.ui.tabs.settings.combinations.UserPreferences
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
+import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -44,6 +47,7 @@ import javax.inject.Inject
 class SubstanceViewModel @Inject constructor(
     substanceRepo: SubstanceRepository,
     experienceRepo: ExperienceRepository,
+    private val userPreferences: UserPreferences,
     state: SavedStateHandle,
 ) : ViewModel() {
 
@@ -56,6 +60,20 @@ class SubstanceViewModel @Inject constructor(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000)
     )
+
+    val routeVisibilityFlow = userPreferences.routeVisibilityFlow.stateIn(
+        initialValue = RouteVisibility(),
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000)
+    )
+
+    fun setRouteShown(route: AdministrationRoute, isShown: Boolean) = viewModelScope.launch {
+        userPreferences.updateRouteVisibility { it.withSubstanceRoute(substanceName, route, isShown) }
+    }
+
+    fun resetRoutes() = viewModelScope.launch {
+        userPreferences.updateRouteVisibility { it.withoutOverridesOf(substanceName) }
+    }
 
     val ingestionTimeFlow = MutableStateFlow(LocalDateTime.now())
 

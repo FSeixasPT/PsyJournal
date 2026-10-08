@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.search.substance
 
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -112,6 +113,9 @@ fun SubstanceScreen(
         navigateToExplainTimeline = navigateToExplainTimeline,
         substanceWithCategories = viewModel.substanceWithCategories,
         customUnits = viewModel.customUnitsFlow.collectAsState().value,
+        routeVisibility = viewModel.routeVisibilityFlow.collectAsState().value,
+        onRouteShownChange = viewModel::setRouteShown,
+        onResetRoutes = viewModel::resetRoutes,
     )
 }
 
@@ -152,7 +156,10 @@ fun SubstanceScreen(
     navigateToExplainTimeline: () -> Unit,
     navigateToCategoryScreen: (categoryName: String) -> Unit,
     substanceWithCategories: SubstanceWithCategories,
-    customUnits: List<CustomUnit>
+    customUnits: List<CustomUnit>,
+    routeVisibility: RouteVisibility = RouteVisibility(),
+    onRouteShownChange: (AdministrationRoute, Boolean) -> Unit = { _, _ -> },
+    onResetRoutes: () -> Unit = {},
 ) {
     val substance = substanceWithCategories.substance
     val uriHandler = LocalUriHandler.current
@@ -532,6 +539,13 @@ fun SubstanceScreen(
                     }
                 }
             }
+            RoutesShownSection(
+                substanceName = substance.name,
+                routes = substance.roas.map { it.route },
+                routeVisibility = routeVisibility,
+                onRouteShownChange = onRouteShownChange,
+                onReset = onResetRoutes
+            )
             Spacer(modifier = Modifier.height(70.dp))
         }
     }
