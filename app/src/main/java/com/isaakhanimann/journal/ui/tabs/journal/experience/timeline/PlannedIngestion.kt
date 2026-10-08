@@ -84,29 +84,29 @@ fun choosePlannedColor(
     return AdaptiveColor.entries.firstOrNull { it !in colorsOnChart } ?: AdaptiveColor.entries.first()
 }
 
-// the last dose of that substance and route if it was logged in the database unit, else the start of the common range
+// the first dose of that substance and route if it was logged in the database unit, else the start of the common range
 fun suggestedDose(
     substanceName: String,
     route: AdministrationRoute,
     realLines: List<DataForOneEffectLine>,
     roaDose: RoaDose
 ): Double? {
-    val lastLine = realLines
+    val firstLine = realLines
         .filter { it.substanceName == substanceName && it.route == route && it.referenceDose != null }
-        .maxByOrNull { it.startTime }
-    if (lastLine != null && lastLine.doseUnits == roaDose.units) {
+        .minByOrNull { it.startTime }
+    if (firstLine != null && firstLine.doseUnits == roaDose.units) {
         // the height is a Float, rounding removes the noise that adds to the logged dose
-        return roundToSignificantDigits(lastLine.height * lastLine.referenceDose!!, 6)
+        return roundToSignificantDigits(firstLine.height * firstLine.referenceDose!!, 6)
     }
     return roaDose.commonMin
 }
 
-// the latest logged ingestion with a known dose whose substance and route can be previewed
+// the first logged ingestion with a known dose whose substance and route can be previewed
 fun defaultPlannedIngestion(
     realLines: List<DataForOneEffectLine>,
     getSubstance: (String) -> Substance?
 ): PlannedIngestion? {
-    for (line in realLines.sortedByDescending { it.startTime }) {
+    for (line in realLines.sortedBy { it.startTime }) {
         if (line.referenceDose == null) continue
         val roa = getSubstance(line.substanceName)?.getRoa(line.route) ?: continue
         if (roa.previewProblem() != null) continue

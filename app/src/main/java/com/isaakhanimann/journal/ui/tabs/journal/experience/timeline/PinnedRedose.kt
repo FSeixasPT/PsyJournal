@@ -21,6 +21,11 @@ package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import java.time.Instant
 
+// experience ids can be reused after deleting an experience, so a plan saved before the experience was created
+// belongs to an older experience with the same id
+fun PinnedRedose.belongsTo(experienceId: Int, experienceCreatedAt: Instant): Boolean =
+    this.experienceId == experienceId && !pinnedAt.isBefore(experienceCreatedAt)
+
 // keeps the original pin time if the same substance and route stays pinned, e.g. when only its dose changes
 fun PlannedIngestion.toPinnedRedose(experienceId: Int, currentPin: PinnedRedose?, now: Instant): PinnedRedose {
     val isSamePlan = currentPin != null && currentPin.experienceId == experienceId &&

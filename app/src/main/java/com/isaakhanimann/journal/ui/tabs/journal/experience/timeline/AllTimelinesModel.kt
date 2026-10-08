@@ -183,6 +183,21 @@ class AllTimelinesModel(
 
     val plannedIngestionColor: AdaptiveColor? get() = plannedLine?.color
 
+    // true if the planned substance was already taken in this experience, so the planned ingestion is a redose
+    val isPlannedRedose: Boolean
+        get() = plannedLine != null && realLines.any { it.substanceName == plannedLine.substanceName }
+
+    // when the planned ingestion would start, peak and end, using the same durations as its curve
+    val plannedEffectTimes: PlannedEffectTimes? by lazy {
+        val line = plannedLine ?: return@lazy null
+        val durations = line.roaDuration?.toFullDurations() ?: return@lazy null
+        val start = line.startTime.plusSeconds(durations.onset.interpolateAtValueInSeconds(0.5f).toLong())
+        val peakStart = start.plusSeconds(durations.comeup.interpolateAtValueInSeconds(0.5f).toLong())
+        val peakEnd = peakStart.plusSeconds(durations.peak.interpolateAtValueInSeconds(line.horizontalWeight).toLong())
+        val end = peakEnd.plusSeconds(durations.offset.interpolateAtValueInSeconds(line.horizontalWeight).toLong())
+        PlannedEffectTimes(start = start, peakStart = peakStart, peakEnd = peakEnd, end = end)
+    }
+
     // highest combined intensity of the planned substance from the planned ingestion on
     val plannedPeak: TimelinePeak? by lazy {
         val option = plannedLine ?: return@lazy null

@@ -31,6 +31,7 @@ import com.isaakhanimann.journal.ui.tabs.settings.combinations.UserPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -70,14 +71,18 @@ class PlannedIngestionHelper @Inject constructor(
             experienceRepo.getAllSubstanceCompanionsFlow().stateIn(scope, SharingStarted.Eagerly, emptyList())
         val recentNames: StateFlow<List<String>> =
             experienceRepo.getSortedLastUsedSubstanceNamesFlow(limit = 200).stateIn(scope, SharingStarted.Eagerly, emptyList())
+        // ids of deleted experiences are reused, so saved plans are also checked against the creation time
+        val experienceCreatedAt = experienceRepo.getExperienceFlow(experienceId).map { it?.creationDate }
         val pinFlow: StateFlow<PinnedRedose?> = userPreferences.pinnedRedoseFlow
-            .map { pin -> pin?.takeIf { it.experienceId == experienceId } }
+            .combine(experienceCreatedAt) { pin, createdAt ->
+                pin?.takeIf { createdAt != null && it.belongsTo(experienceId, createdAt) }
+            }
             .stateIn(scope, started, null)
 
         // saved, so the choice survives rotation, leaving the experience and closing the app
         val chosenFlow: StateFlow<PlannedIngestion?> = userPreferences.chosenPlanFlow
-            .map { saved ->
-                saved?.takeIf { it.experienceId == experienceId }
+            .combine(experienceCreatedAt) { saved, createdAt ->
+                saved?.takeIf { createdAt != null && it.belongsTo(experienceId, createdAt) }
                     ?.let { PlannedIngestion(it.substanceName, it.route, it.dose, it.units) }
             }
             .stateIn(scope, SharingStarted.Eagerly, null)

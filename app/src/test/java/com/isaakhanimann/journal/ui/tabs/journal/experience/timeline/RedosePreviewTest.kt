@@ -170,4 +170,23 @@ class RedosePreviewTest {
     fun realModelHasNoFractionWithRedose() {
         assertNull(model(line(0, dose = 100.0)).plannedFractionOfPeakAt(at(90)))
     }
+
+    @Test
+    fun plannedSubstanceOfTheExperienceIsARedose() {
+        val real = model(line(0, dose = 100.0))
+        assertEquals(true, real.withPlannedIngestion(line(120, dose = 50.0)).isPlannedRedose)
+        val other = line(120, dose = 50.0).copy(substanceName = "MDMA")
+        assertEquals(false, real.withPlannedIngestion(other).isPlannedRedose)
+        assertEquals(false, real.isPlannedRedose)
+    }
+
+    @Test
+    fun effectTimesOfThePlannedIngestion() {
+        // planned at 60 min: onset 30, comeup 30, peak 60, offset 60 minutes
+        val times = model(line(0, dose = 100.0)).withPlannedIngestion(line(60, dose = 50.0)).plannedEffectTimes!!
+        assertEquals(at(90), times.start)
+        assertEquals(at(120), times.peakStart)
+        assertEquals(at(180), times.peakEnd)
+        assertEquals(at(240), times.end)
+    }
 }

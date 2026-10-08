@@ -62,7 +62,7 @@ class PlannedIngestionDefaultsTest {
     )
 
     @Test
-    fun defaultIsTheLatestPreviewableIngestion() {
+    fun defaultIsTheFirstPreviewableIngestion() {
         val lines = listOf(
             line("Ketamine", AdministrationRoute.INSUFFLATED, 0, dose = 40.0),
             line("MDMA", AdministrationRoute.ORAL, 30, dose = 100.0)
@@ -96,12 +96,12 @@ class PlannedIngestionDefaultsTest {
     }
 
     @Test
-    fun suggestedDoseIsTheLastDoseInTheDatabaseUnit() {
+    fun suggestedDoseIsTheFirstDoseInTheDatabaseUnit() {
         val lines = listOf(
             line("Ketamine", AdministrationRoute.INSUFFLATED, 0, dose = 40.0),
             line("Ketamine", AdministrationRoute.INSUFFLATED, 30, dose = 25.0)
         )
-        assertEquals(25.0, suggestedDose("Ketamine", AdministrationRoute.INSUFFLATED, lines, ketamineInsufflatedDose)!!, 0.01)
+        assertEquals(40.0, suggestedDose("Ketamine", AdministrationRoute.INSUFFLATED, lines, ketamineInsufflatedDose)!!, 0.01)
         assertEquals(30.0, suggestedDose("Ketamine", AdministrationRoute.INSUFFLATED, emptyList(), ketamineInsufflatedDose)!!, 0.01)
     }
 
@@ -129,5 +129,14 @@ class PlannedIngestionDefaultsTest {
         // 40 mg with a reference dose of 50 mg is stored as the float height 0.8
         val lines = listOf(line("Ketamine", AdministrationRoute.INSUFFLATED, 0, dose = 40.0, referenceDose = 50.0))
         assertEquals(40.0, suggestedDose("Ketamine", AdministrationRoute.INSUFFLATED, lines, ketamineInsufflatedDose)!!, 0.0)
+    }
+
+    @Test
+    fun defaultUsesTheFirstIngestionEvenIfALaterOneIsPreviewable() {
+        val lines = listOf(
+            line("Ketamine", AdministrationRoute.INSUFFLATED, 0, dose = 40.0),
+            line("Ketamine", AdministrationRoute.INSUFFLATED, 30, dose = 25.0)
+        )
+        assertEquals(40.0, defaultPlannedIngestion(lines) { substances[it] }!!.dose, 0.0)
     }
 }

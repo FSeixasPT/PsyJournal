@@ -137,4 +137,17 @@ class PinnedRedoseTest {
         )
         assertNull(mdmaLater.resolvePinnedPlan(mdmaPin, now = at(40)))
     }
+
+    @Test
+    fun savedPlanBelongsToTheExperienceItWasSavedIn() {
+        val saved = pin(pinnedAt = at(10))
+        assertEquals(true, saved.belongsTo(experienceId = 7, experienceCreatedAt = at(0)))
+        assertEquals(false, saved.belongsTo(experienceId = 8, experienceCreatedAt = at(0)))
+    }
+
+    @Test
+    fun savedPlanDoesNotBelongToANewExperienceThatReusesTheId() {
+        // experience 7 was deleted and a new experience 7 was created after the plan was saved
+        assertEquals(false, pin(pinnedAt = at(10)).belongsTo(experienceId = 7, experienceCreatedAt = at(20)))
+    }
 }

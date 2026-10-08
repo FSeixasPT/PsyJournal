@@ -182,16 +182,24 @@ fun PlannedIngestionSection(
         )
         // both lines are always laid out so that nothing moves when they appear
         val model = state.displayedModel
-        val fractionLine = model.plannedFractionOfPeakAt(selectedTime ?: state.now)?.let {
-            val time = selectedTime?.let { time -> "at ${time.getShortTimeText()}" } ?: "now"
-            "With redose: ${(it * 100).roundToInt()}% of peak $time"
-        }
-        val peakLine = model.plannedPeak?.let {
-            val route = it.route?.let { route -> " ${route.displayText.lowercase()}" } ?: ""
-            "Peak after redose: ≈ ${it.doseEquivalent.toReadableString()} ${it.units}$route equivalent at ${it.time.getShortTimeText()}"
+        val lines = if (model.isPlannedRedose) {
+            val fractionLine = model.plannedFractionOfPeakAt(selectedTime ?: state.now)?.let {
+                val time = selectedTime?.let { time -> "at ${time.getShortTimeText()}" } ?: "now"
+                "With redose: ${(it * 100).roundToInt()}% of peak $time"
+            }
+            val peakLine = model.plannedPeak?.let {
+                val route = it.route?.let { route -> " ${route.displayText.lowercase()}" } ?: ""
+                "Peak after redose: ≈ ${it.doseEquivalent.toReadableString()} ${it.units}$route equivalent at ${it.time.getShortTimeText()}"
+            }
+            listOfNotNull(fractionLine, peakLine)
+        } else {
+            // a substance not taken yet in this experience: when its effects would happen, to plan the overlap
+            listOfNotNull(model.plannedEffectTimes?.let {
+                "If taken now: starts ≈ ${it.start.getShortTimeText()} · peaks ${it.peakStart.getShortTimeText()}–${it.peakEnd.getShortTimeText()} · ends ≈ ${it.end.getShortTimeText()}"
+            })
         }
         Text(
-            text = listOfNotNull(fractionLine, peakLine).joinToString("\n"),
+            text = lines.joinToString("\n"),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
             minLines = 2

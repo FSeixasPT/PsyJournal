@@ -21,6 +21,13 @@ package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import java.time.Instant
 
+data class PlannedEffectTimes(
+    val start: Instant,
+    val peakStart: Instant,
+    val peakEnd: Instant,
+    val end: Instant
+)
+
 data class TimelinePeak(
     val time: Instant,
     val doseEquivalent: Double,
