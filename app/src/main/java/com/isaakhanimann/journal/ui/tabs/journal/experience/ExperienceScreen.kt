@@ -124,6 +124,7 @@ fun ExperienceScreen(
     navigateToEditTimedNoteScreen: (timedNoteId: Int) -> Unit,
     navigateToTimelineScreen: (consumerName: String) -> Unit,
     navigateBack: () -> Unit,
+    navigateToChooseDose: (substanceName: String, route: AdministrationRoute, dose: Double) -> Unit = { _, _, _ -> },
 ) {
     val ingestionsWithCompanions = viewModel.ingestionsWithCompanionsFlow.collectAsState().value
     val experience = viewModel.experienceFlow.collectAsState().value
@@ -170,7 +171,8 @@ fun ExperienceScreen(
         navigateToTimelineScreen = navigateToTimelineScreen,
         areDosageDotsHidden = viewModel.areDosageDotsHiddenFlow.collectAsState().value,
         isTimelineHidden = viewModel.isTimelineHiddenFlow.collectAsState().value,
-        plannedIngestionActions = viewModel.plannedIngestionActions
+        plannedIngestionActions = viewModel.plannedIngestionActions,
+        navigateToChooseDose = navigateToChooseDose
     )
 }
 
@@ -233,6 +235,7 @@ fun ExperienceScreen(
     areDosageDotsHidden: Boolean,
     isTimelineHidden: Boolean,
     plannedIngestionActions: PlannedIngestionActions? = null,
+    navigateToChooseDose: (substanceName: String, route: AdministrationRoute, dose: Double) -> Unit = { _, _, _ -> },
 ) {
     Scaffold(
         topBar = {
@@ -270,6 +273,7 @@ fun ExperienceScreen(
                 isOralDisclaimerHidden = isOralDisclaimerHidden,
                 onChangeIsOralDisclaimerHidden = onChangeIsOralDisclaimerHidden,
                 plannedIngestionActions = plannedIngestionActions,
+                navigateToChooseDose = navigateToChooseDose,
             )
             if (oneExperienceScreenModel.ingestionElements.isNotEmpty()) {
                 MyIngestionList(
@@ -667,6 +671,7 @@ private fun MyTimelineSection(
     isOralDisclaimerHidden: Boolean,
     onChangeIsOralDisclaimerHidden: (Boolean) -> Unit,
     plannedIngestionActions: PlannedIngestionActions?,
+    navigateToChooseDose: (substanceName: String, route: AdministrationRoute, dose: Double) -> Unit,
 ) {
     when (timelineDisplayOption) {
         TimelineDisplayOption.Hidden -> {}
@@ -717,6 +722,7 @@ private fun MyTimelineSection(
                             state = planState,
                             actions = plannedIngestionActions,
                             selectedTime = selectedTime,
+                            onChangeDetails = { navigateToChooseDose(it.substanceName, it.route, it.dose) },
                             modifier = Modifier.padding(top = 4.dp)
                         )
                     }

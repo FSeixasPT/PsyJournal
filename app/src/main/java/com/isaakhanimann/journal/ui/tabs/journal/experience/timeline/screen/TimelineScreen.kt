@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.isaakhanimann.journal.ui.tabs.journal.experience.TimelineDisplayOption
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.TimeDisplayOption
+import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.ui.YOU
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.AllTimelines
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.PlannedIngestionActions
@@ -61,11 +62,13 @@ import java.time.Instant
 
 @Composable
 fun TimelineScreen(
-    viewModel: TimelineScreenViewModel = hiltViewModel()
+    viewModel: TimelineScreenViewModel = hiltViewModel(),
+    navigateToChooseDose: (substanceName: String, route: AdministrationRoute, dose: Double) -> Unit = { _, _, _ -> },
 ) {
     TimelineScreen(
         title = viewModel.consumerName,
         plannedIngestionActions = if (viewModel.consumerName == YOU) viewModel.plannedIngestionActions else null,
+        navigateToChooseDose = navigateToChooseDose,
         timelineDisplayOption = viewModel.timelineDisplayOptionFlow.collectAsState().value,
         timeDisplayOption = viewModel.timeDisplayOptionFlow.collectAsState().value,
     )
@@ -76,6 +79,7 @@ fun TimelineScreen(
 fun TimelineScreen(
      title: String,
      plannedIngestionActions: PlannedIngestionActions? = null,
+     navigateToChooseDose: (substanceName: String, route: AdministrationRoute, dose: Double) -> Unit = { _, _, _ -> },
      timelineDisplayOption: TimelineDisplayOption,
      timeDisplayOption: TimeDisplayOption,
 ) {
@@ -142,6 +146,7 @@ fun TimelineScreen(
                         state = planState,
                         actions = plannedIngestionActions,
                         selectedTime = selectedTime,
+                        onChangeDetails = { navigateToChooseDose(it.substanceName, it.route, it.dose) },
                         modifier = Modifier.padding(horizontal = horizontalPadding)
                     )
                 }

@@ -294,7 +294,9 @@ data class ChooseCustomSubstanceDoseRoute(
 @Serializable
 data class ChooseDoseRoute(
     val substanceName: String,
-    val administrationRoute: AdministrationRoute
+    val administrationRoute: AdministrationRoute,
+    // set when coming from the planned-ingestion chip, so the dose is already filled in
+    val dose: Double? = null
 )
 
 @Serializable

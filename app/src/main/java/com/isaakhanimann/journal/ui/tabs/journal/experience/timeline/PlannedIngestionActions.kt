@@ -41,6 +41,11 @@ import javax.inject.Inject
 // everything the planned-ingestion chip needs from outside the chart
 interface PlannedIngestionActions {
     val pinnedRedoseFlow: StateFlow<PinnedRedose?>
+    // the chip's choice when it is not pinned, null means the default
+    val chosenPlanFlow: StateFlow<PlannedIngestion?>
+    fun choose(planned: PlannedIngestion?)
+    // lets the normal add-ingestion flow propose this experience
+    fun prepareChangeDetails(lastIngestionTime: Instant?)
     fun pin(planned: PlannedIngestion?)
     fun getSubstance(substanceName: String): Substance?
     fun buildLine(planned: PlannedIngestion, time: Instant, colorsOnChart: List<AdaptiveColor>): DataForOneEffectLine?
@@ -69,8 +74,34 @@ class PlannedIngestionHelper @Inject constructor(
             .map { pin -> pin?.takeIf { it.experienceId == experienceId } }
             .stateIn(scope, started, null)
 
+        // saved, so the choice survives rotation, leaving the experience and closing the app
+        val chosenFlow: StateFlow<PlannedIngestion?> = userPreferences.chosenPlanFlow
+            .map { saved ->
+                saved?.takeIf { it.experienceId == experienceId }
+                    ?.let { PlannedIngestion(it.substanceName, it.route, it.dose, it.units) }
+            }
+            .stateIn(scope, SharingStarted.Eagerly, null)
+
         return object : PlannedIngestionActions {
             override val pinnedRedoseFlow = pinFlow
+
+            override val chosenPlanFlow: StateFlow<PlannedIngestion?> = chosenFlow
+
+            override fun choose(planned: PlannedIngestion?) {
+                scope.launch {
+                    userPreferences.saveChosenPlan(
+                        planned?.toPinnedRedose(experienceId, currentPin = null, now = Instant.now())
+                    )
+                }
+            }
+
+            override fun prepareChangeDetails(lastIngestionTime: Instant?) {
+                if (lastIngestionTime == null) return
+                scope.launch {
+                    userPreferences.saveLastIngestionTimeOfExperience(lastIngestionTime)
+                    userPreferences.saveClonedIngestionTime(null)
+                }
+            }
 
             override fun pin(planned: PlannedIngestion?) {
                 scope.launch {

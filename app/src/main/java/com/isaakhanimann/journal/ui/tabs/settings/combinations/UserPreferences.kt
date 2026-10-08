@@ -48,6 +48,7 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
         val KEY_ARE_SUBSTANCE_HEIGHTS_INDEPENDENT = booleanPreferencesKey("KEY_ARE_SUBSTANCE_HEIGHTS_INDEPENDENT")
         val KEY_ARE_ROUTES_MERGED = booleanPreferencesKey("KEY_ARE_ROUTES_MERGED")
         val KEY_PINNED_REDOSE = stringPreferencesKey("KEY_PINNED_REDOSE")
+        val KEY_CHOSEN_PLAN = stringPreferencesKey("KEY_CHOSEN_PLAN")
         val KEY_IS_TIMELINE_HIDDEN = booleanPreferencesKey("KEY_IS_TIMELINE_HIDDEN")
     }
 
@@ -149,6 +150,22 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
             }
         }
     }
+
+    // the planned-ingestion chip's choice when it is not pinned, saved in the same format as a pin
+    suspend fun saveChosenPlan(value: PinnedRedose?) {
+        dataStore.edit { preferences ->
+            if (value == null) {
+                preferences.remove(PreferencesKeys.KEY_CHOSEN_PLAN)
+            } else {
+                preferences[PreferencesKeys.KEY_CHOSEN_PLAN] = value.toPreferenceString()
+            }
+        }
+    }
+
+    val chosenPlanFlow: Flow<PinnedRedose?> = dataStore.data
+        .map { preferences ->
+            PinnedRedose.fromPreferenceString(preferences[PreferencesKeys.KEY_CHOSEN_PLAN])
+        }
 
     val pinnedRedoseFlow: Flow<PinnedRedose?> = dataStore.data
         .map { preferences ->

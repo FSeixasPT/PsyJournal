@@ -72,7 +72,11 @@ fun NavGraphBuilder.journalGraph(navController: NavHostController) {
             EditTimedNoteScreen(navigateBack = navController::popBackStack)
         }
         composableWithTransitions<TimelineScreenRoute> {
-            TimelineScreen()
+            TimelineScreen(
+                navigateToChooseDose = { substanceName, route, dose ->
+                        navController.navigate(ChooseDoseRoute(substanceName = substanceName, administrationRoute = route, dose = dose))
+                    }
+            )
         }
         composableWithTransitions<VolumetricDosingOnJournalTabRoute> {
             VolumetricDosingScreen()
@@ -83,6 +87,9 @@ fun NavGraphBuilder.journalGraph(navController: NavHostController) {
             ExperienceScreen(
                 navigateToAddIngestionSearch = {
                     navController.navigate(AddIngestionRoute)
+                },
+                navigateToChooseDose = { substanceName, route, dose ->
+                    navController.navigate(ChooseDoseRoute(substanceName = substanceName, administrationRoute = route, dose = dose))
                 },
                 navigateToExplainTimeline = {
                     navController.navigate(ExplainTimelineOnJournalTabRoute)

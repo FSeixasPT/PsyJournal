@@ -175,7 +175,8 @@ class GroupDrawable(
         } else {
             emptyList()
         }
-        if (previewBaseline != null) {
+        // the planned curve is dashed, also when the substance has no real curve below it
+        if (previewBaselineLines != null) {
             fullTimelines?.isDrawnAsPreview = true
         }
         val pointHeights = timelineDrawables.map { it.nonNormalisedHeight }

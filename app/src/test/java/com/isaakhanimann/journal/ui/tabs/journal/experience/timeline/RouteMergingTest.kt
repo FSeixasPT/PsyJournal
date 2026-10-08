@@ -208,4 +208,14 @@ class RouteMergingTest {
         assertEquals(200.0, preview.plannedPeak!!.doseEquivalent, 0.01)
         assertEquals(null, preview.plannedPeak!!.route)
     }
+
+    @Test
+    fun plannedSubstanceWithoutRealIngestionsIsDrawnAsPreview() {
+        // MDMA was not taken in this experience, so there is no real curve below the dashed one
+        val real = model(true, line(0, INSUFFLATED, 52.5))
+        val mdma = line(30, ORAL, 200.0).copy(substanceName = "MDMA", color = AdaptiveColor.BLUE)
+        val mdmaGroup = real.withPlannedIngestion(mdma).groupDrawables.single { it.color == AdaptiveColor.BLUE }
+        assertEquals(true, mdmaGroup.fullTimelines!!.isDrawnAsPreview)
+        assertEquals(null, mdmaGroup.previewBaseline)
+    }
 }

@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.dose
 
+import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toPreservedString
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -84,6 +85,9 @@ class ChooseDoseViewModel @Inject constructor(
 
     init {
         units = roaDose?.units ?: ""
+        doseText = chooseDoseRoute.initialDoseText()
     }
 
 }
+
+fun ChooseDoseRoute.initialDoseText(): String = dose?.toPreservedString() ?: ""

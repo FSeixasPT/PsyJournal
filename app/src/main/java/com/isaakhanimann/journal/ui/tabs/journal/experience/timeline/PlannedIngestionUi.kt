@@ -117,7 +117,7 @@ fun rememberCurrentTime(): Instant {
 fun rememberPlannedIngestionState(realModel: AllTimelinesModel, actions: PlannedIngestionActions): PlannedIngestionState {
     val now = rememberCurrentTime()
     val pin = actions.pinnedRedoseFlow.collectAsState().value
-    var chosen by remember { mutableStateOf<PlannedIngestion?>(null) }
+    val chosen = actions.chosenPlanFlow.collectAsState().value
     var isHeld by remember { mutableStateOf(false) }
     val realLines = realModel.realLines
     val defaultPlan = remember(realLines) { actions.defaultPlan(realLines) }
@@ -146,10 +146,10 @@ fun rememberPlannedIngestionState(realModel: AllTimelinesModel, actions: Planned
         experienceRoutesByRecency = { name -> linesByRecency.filter { it.substanceName == name }.map { it.route }.distinct() },
         setHeld = { isHeld = it },
         choose = { newPlan ->
-            chosen = newPlan
+            actions.choose(newPlan)
             if (pinnedPlan != null) actions.pin(newPlan)
         },
-        clearChoice = { chosen = null },
+        clearChoice = { actions.choose(null) },
     )
 }
 
@@ -158,6 +158,8 @@ fun PlannedIngestionSection(
     state: PlannedIngestionState,
     actions: PlannedIngestionActions,
     selectedTime: Instant?,
+    // opens the normal add-ingestion flow with the planned ingestion filled in
+    onChangeDetails: (PlannedIngestion) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var isEditing by remember { mutableStateOf(false) }
@@ -167,7 +169,15 @@ fun PlannedIngestionSection(
         PlannedIngestionChip(
             state = state,
             onEdit = { isEditing = true },
-            onTogglePin = { actions.pin(if (state.isPinned) null else state.planned) },
+            onTogglePin = {
+                if (state.isPinned) {
+                    // keep showing the unpinned plan instead of falling back to the default
+                    actions.choose(state.planned)
+                    actions.pin(null)
+                } else {
+                    actions.pin(state.planned)
+                }
+            },
             onTookIt = { isConfirmingLog = true }
         )
         // both lines are always laid out so that nothing moves when they appear
@@ -207,6 +217,11 @@ fun PlannedIngestionSection(
             now = state.now,
             interactions = actions.interactions(planned, state.experienceSubstanceNamesByRecency),
             onDismiss = { isConfirmingLog = false },
+            onChangeDetails = {
+                actions.prepareChangeDetails(state.realModel.realLines.maxOfOrNull { it.startTime })
+                isConfirmingLog = false
+                onChangeDetails(planned)
+            },
             onLog = {
                 actions.log(planned, state.plannedLine?.color ?: AdaptiveColor.entries.first())
                 state.clearChoice()
@@ -447,6 +462,7 @@ private fun QuickLogDialog(
     now: Instant,
     interactions: List<com.isaakhanimann.journal.ui.tabs.journal.addingestion.interactions.Interaction>,
     onDismiss: () -> Unit,
+    onChangeDetails: () -> Unit,
     onLog: () -> Unit,
 ) {
     val isDarkTheme = isSystemInDarkTheme()
@@ -459,7 +475,7 @@ private fun QuickLogDialog(
                     Box(modifier = Modifier.size(10.dp).background(color.getComposeColor(isDarkTheme), CircleShape))
                     Text(planned.chipText(), modifier = Modifier.padding(start = 6.dp))
                 }
-                Text("now (${now.getShortTimeText()}) · this experience · you", style = MaterialTheme.typography.bodySmall)
+                Text("at ${now.getShortTimeText()}", style = MaterialTheme.typography.bodySmall)
                 interactions.forEach { interaction ->
                     Text(
                         "⚠ ${interaction.interactionType.name.lowercase().replaceFirstChar { it.uppercase() }} interaction with ${interaction.bName}",
@@ -469,6 +485,11 @@ private fun QuickLogDialog(
             }
         },
         confirmButton = { TextButton(onClick = onLog) { Text("Log") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = {
+            Row {
+                TextButton(onClick = onChangeDetails) { Text("Change details") }
+                TextButton(onClick = onDismiss) { Text("Cancel") }
+            }
+        }
     )
 }
