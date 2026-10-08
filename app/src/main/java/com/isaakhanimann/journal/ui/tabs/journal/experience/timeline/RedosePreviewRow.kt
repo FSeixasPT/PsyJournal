@@ -98,7 +98,8 @@ fun RedosePreviewRow(
         // the line is always laid out so that nothing moves when it appears
         Text(
             text = peak?.let {
-                "Peak after redose: ≈ ${it.doseEquivalent.toReadableString()} ${it.units} equivalent at ${it.time.getShortTimeText()}"
+                val route = it.route?.let { route -> " ${route.displayText.lowercase()}" } ?: ""
+                "Peak after redose: ≈ ${it.doseEquivalent.toReadableString()} ${it.units}$route equivalent at ${it.time.getShortTimeText()}"
             } ?: "",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,

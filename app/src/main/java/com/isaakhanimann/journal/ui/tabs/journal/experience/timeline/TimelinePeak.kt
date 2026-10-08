@@ -18,10 +18,13 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
+import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import java.time.Instant
 
 data class TimelinePeak(
     val time: Instant,
     val doseEquivalent: Double,
-    val units: String
+    val units: String,
+    // route the dose equivalent is expressed in, only set if the line combines several routes
+    val route: AdministrationRoute? = null
 )

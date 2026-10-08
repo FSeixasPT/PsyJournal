@@ -158,4 +158,47 @@ class RouteMergingTest {
         ).getQuantityDetails(at(30)).single()
         assertTrue(detail.doseEquivalents.isEmpty())
     }
+
+    @Test
+    fun mergedSubstanceHasOneRedoseChipPerRoute() {
+        val options = model(true, line(0, INSUFFLATED, 40.0), line(10, ORAL, 150.0)).redoseOptions
+        assertEquals(listOf(INSUFFLATED, ORAL), options.map { it.route })
+        assertEquals(40.0, options[0].dose, 0.01)
+        assertEquals(150.0, options[1].dose, 0.01)
+    }
+
+    @Test
+    fun plannedDoseOfOneRouteMergesIntoTheSubstanceLine() {
+        val real = model(true, line(0, INSUFFLATED, 52.5), line(10, ORAL, 200.0))
+        val oral = real.redoseOptions.first { it.route == ORAL }
+        val preview = real.withPlannedIngestion(oral, dose = 200.0, time = at(20))
+        assertEquals(1, preview.getQuantityDetails(at(30)).size)
+    }
+
+    @Test
+    fun peakOfMergedLineIsExpressedInThePlannedRouteAndNamesIt() {
+        // only insufflated taken so far, as 52.5 mg at 0; plan 52.5 mg insufflated at 0 as well: peak 2 x 52.5 = 105 mg
+        val real = model(true, line(0, INSUFFLATED, 52.5), line(300, ORAL, 200.0))
+        val insufflated = real.redoseOptions.first { it.route == INSUFFLATED }
+        val peak = real.withPlannedIngestion(insufflated, dose = 52.5, time = at(0)).plannedPeak!!
+        assertEquals(105.0, peak.doseEquivalent, 0.01)
+        assertEquals("mg", peak.units)
+        assertEquals(INSUFFLATED, peak.route)
+    }
+
+    @Test
+    fun peakOfUnmergedLineDoesNotNameTheRoute() {
+        val real = model(false, line(0, INSUFFLATED, 52.5), line(300, ORAL, 200.0))
+        val insufflated = real.redoseOptions.first { it.route == INSUFFLATED }
+        val peak = real.withPlannedIngestion(insufflated, dose = 52.5, time = at(0)).plannedPeak!!
+        assertEquals(null, peak.route)
+    }
+
+    @Test
+    fun unknownDoseRouteHasNoChipButOtherRouteStillMerges() {
+        val real = model(true, line(0, INSUFFLATED, 52.5), line(10, ORAL, null))
+        assertEquals(listOf(INSUFFLATED), real.redoseOptions.map { it.route })
+        val preview = real.withPlannedIngestion(real.redoseOptions.single(), dose = 52.5, time = at(20))
+        assertEquals(1, preview.getQuantityDetails(at(30)).size)
+    }
 }

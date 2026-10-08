@@ -134,19 +134,17 @@ class AllTimelinesModel(
     }
 
     val redoseOptions: List<RedoseOption> by lazy {
-        roaGroups.zip(groupDrawables).mapNotNull { (group, drawable) ->
-            if (drawable.fullTimelines == null) return@mapNotNull null
-            val referenceDose = group.routes.first().referenceDose ?: return@mapNotNull null
-            val units = group.routes.first().doseUnits ?: return@mapNotNull null
-            val lastLine = dataForLines
-                .filter { it.substanceName == group.substanceName && it.route == group.routes.first().route }
-                .maxBy { it.startTime }
+        dataForLines.groupBy { Pair(it.substanceName, it.route) }.mapNotNull { (key, lines) ->
+            if (lines.any { it.referenceDose == null }) return@mapNotNull null
+            if (lines.map { it.doseUnits }.distinct().size != 1) return@mapNotNull null
+            if (lines.any { it.roaDuration?.toFullDurations() == null }) return@mapNotNull null
+            val lastLine = lines.maxBy { it.startTime }
             RedoseOption(
-                substanceName = group.substanceName,
-                route = group.routes.first().route,
-                dose = lastLine.height * referenceDose,
-                units = units,
-                color = group.color
+                substanceName = key.first,
+                route = key.second,
+                dose = lastLine.height * lastLine.referenceDose!!,
+                units = lastLine.doseUnits!!,
+                color = lastLine.color
             )
         }
     }
@@ -178,13 +176,14 @@ class AllTimelinesModel(
         val time = plannedIngestionTime ?: return@lazy null
         val index = roaGroups.indexOfFirst { it.contains(option.substanceName, option.route) }
         val group = roaGroups.getOrNull(index) ?: return@lazy null
-        val referenceDose = group.routes.first().referenceDose ?: return@lazy null
+        val referenceDose = group.routes.first { it.route == option.route }.referenceDose ?: return@lazy null
         val fullTimelines = groupDrawables[index].fullTimelines ?: return@lazy null
         val highestPoint = fullTimelines.highestPointFrom(Duration.between(startTime, time).seconds.toFloat())
         TimelinePeak(
             time = startTime.plusSeconds(highestPoint.x.toLong()),
             doseEquivalent = highestPoint.y * referenceDose,
-            units = option.units
+            units = option.units,
+            route = if (group.isMerged) option.route else null
         )
     }
 
