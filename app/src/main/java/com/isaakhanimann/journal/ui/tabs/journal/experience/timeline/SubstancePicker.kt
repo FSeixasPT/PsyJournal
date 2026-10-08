@@ -21,6 +21,7 @@ package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.data.substances.classes.Substance
 import com.isaakhanimann.journal.data.substances.classes.roa.RoaDose
+import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toPreservedString
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toReadableString
 
 data class PickerEntry(
@@ -68,3 +69,6 @@ fun RoaDose.rangesText(): String {
     )
     return parts.joinToString(" · ") + " $units"
 }
+
+// every digit of the dose, so that confirming the editor without changes keeps the dose
+fun doseFieldText(dose: Double): String = dose.toPreservedString()

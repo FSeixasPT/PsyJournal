@@ -25,6 +25,7 @@ import com.isaakhanimann.journal.data.substances.classes.InteractionType
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.interactions.Interaction
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.time.Instant
 
@@ -73,5 +74,21 @@ class QuickLogTest {
         }
         assertEquals(listOf(Pair("Ketamine", "MDMA"), Pair("Ketamine", "Cannabis")), lookups)
         assertEquals(listOf(Interaction("Ketamine", "MDMA", InteractionType.DANGEROUS)), interactions)
+    }
+
+    @Test
+    fun loggingKeepsTheColorTheSubstanceAlreadyHas() {
+        var saved: SubstanceCompanion? = null
+        runBlocking {
+            logPlannedIngestion(
+                planned = planned,
+                experienceId = 7,
+                previewColor = AdaptiveColor.RED,
+                now = now,
+                loadCompanions = { listOf(SubstanceCompanion("Ketamine", AdaptiveColor.BLUE)) },
+                save = { _, companion -> saved = companion }
+            )
+        }
+        assertEquals(SubstanceCompanion("Ketamine", AdaptiveColor.BLUE), saved)
     }
 }

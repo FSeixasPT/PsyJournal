@@ -93,4 +93,11 @@ class SubstancePickerTest {
         assertEquals("light 5–30 · common 30–75 · strong 75–175 · heavy 175+ mg", dose.rangesText())
         assertEquals("common 30–75 · strong 75–175 · heavy 175+ mg", dose.copy(lightMin = null).rangesText())
     }
+
+    @Test
+    fun doseFieldKeepsEveryDigitSoDoneWithoutChangesKeepsTheDose() {
+        assertEquals("1234", doseFieldText(1234.0))
+        assertEquals(1234.0, parseDose(doseFieldText(1234.0))!!, 0.0)
+        assertEquals(0.25, parseDose(doseFieldText(0.25))!!, 0.0)
+    }
 }

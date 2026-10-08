@@ -123,4 +123,11 @@ class PlannedIngestionDefaultsTest {
             .toPinnedRedose(experienceId = 7, currentPin = first, now = at(20))
         assertEquals(at(20), other.pinnedAt)
     }
+
+    @Test
+    fun suggestedDoseHasNoFloatNoise() {
+        // 40 mg with a reference dose of 50 mg is stored as the float height 0.8
+        val lines = listOf(line("Ketamine", AdministrationRoute.INSUFFLATED, 0, dose = 40.0, referenceDose = 50.0))
+        assertEquals(40.0, suggestedDose("Ketamine", AdministrationRoute.INSUFFLATED, lines, ketamineInsufflatedDose)!!, 0.0)
+    }
 }

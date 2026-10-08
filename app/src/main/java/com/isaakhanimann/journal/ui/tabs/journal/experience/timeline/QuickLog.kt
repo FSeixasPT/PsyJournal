@@ -53,3 +53,16 @@ fun interactionsWith(
     .distinct()
     .filter { it != plannedSubstanceName }
     .mapNotNull { lookup(plannedSubstanceName, it) }
+
+// saves the planned ingestion, keeping the color the substance already has in the journal
+suspend fun logPlannedIngestion(
+    planned: PlannedIngestion,
+    experienceId: Int,
+    previewColor: AdaptiveColor,
+    now: Instant,
+    loadCompanions: suspend () -> List<SubstanceCompanion>,
+    save: suspend (Ingestion, SubstanceCompanion) -> Unit,
+) {
+    val existing = loadCompanions().firstOrNull { it.substanceName == planned.substanceName }
+    save(planned.toIngestion(experienceId, now), companionToSave(planned.substanceName, existing, previewColor))
+}

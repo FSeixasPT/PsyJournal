@@ -123,14 +123,16 @@ fun rememberPlannedIngestionState(realModel: AllTimelinesModel, actions: Planned
     val defaultPlan = remember(realLines) { actions.defaultPlan(realLines) }
     val pinnedPlan = pin?.let { realModel.resolvePinnedPlan(it, now) }
     val planned = pinnedPlan ?: chosen ?: defaultPlan
-    val plannedLine = planned?.let { actions.buildLine(it, now, realModel.colors) }
+    val plannedLine = remember(planned, now, realModel) { planned?.let { actions.buildLine(it, now, realModel.colors) } }
     val isPinInvalid = pin != null && (pinnedPlan == null || plannedLine == null)
     val currentActions by rememberUpdatedState(actions)
     LaunchedEffect(isPinInvalid) {
         if (isPinInvalid) currentActions.pin(null)
     }
     val isPreviewing = (isHeld || pinnedPlan != null) && plannedLine != null
-    val displayedModel = if (isPreviewing) realModel.withPlannedIngestion(plannedLine!!) else realModel
+    val displayedModel = remember(realModel, plannedLine, isPreviewing) {
+        if (isPreviewing) realModel.withPlannedIngestion(plannedLine!!) else realModel
+    }
     val linesByRecency = realLines.sortedByDescending { it.startTime }
     return PlannedIngestionState(
         displayedModel = displayedModel,
@@ -296,7 +298,7 @@ private fun PlannedIngestionEditorSheet(
     val isDarkTheme = isSystemInDarkTheme()
     var substanceName by remember { mutableStateOf(initial?.substanceName) }
     var route by remember { mutableStateOf(initial?.route) }
-    var doseText by remember { mutableStateOf(initial?.dose?.toReadableString() ?: "") }
+    var doseText by remember { mutableStateOf(initial?.dose?.let { doseFieldText(it) } ?: "") }
     var searchText by remember { mutableStateOf("") }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -348,7 +350,7 @@ private fun PlannedIngestionEditorSheet(
                                 route = roa.route
                                 val roaDose = roa.roaDose
                                 if (roaDose != null) {
-                                    doseText = suggestedDose(selectedName, roa.route, state.realModel.realLines, roaDose)?.toReadableString() ?: ""
+                                    doseText = suggestedDose(selectedName, roa.route, state.realModel.realLines, roaDose)?.let { doseFieldText(it) } ?: ""
                                 }
                             },
                             label = {
@@ -408,7 +410,7 @@ private fun pick(
     val route = preselectedRoute(substance, state.experienceRoutesByRecency(entry.substanceName))
     val roaDose = route?.let { substance.getRoa(it)?.roaDose }
     val dose = roaDose?.let { suggestedDose(entry.substanceName, route, state.realModel.realLines, it) }
-    apply(entry.substanceName, route, dose?.toReadableString() ?: "")
+    apply(entry.substanceName, route, dose?.let { doseFieldText(it) } ?: "")
 }
 
 @Composable

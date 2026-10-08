@@ -27,6 +27,7 @@ import com.isaakhanimann.journal.data.substances.classes.roa.RoaDose
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.DataForOneEffectLine
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.horizontalWeightFromDots
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.drawables.timelines.toFullDurations
+import com.isaakhanimann.journal.ui.tabs.search.substance.roa.roundToSignificantDigits
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toReadableString
 import java.time.Instant
 
@@ -94,7 +95,8 @@ fun suggestedDose(
         .filter { it.substanceName == substanceName && it.route == route && it.referenceDose != null }
         .maxByOrNull { it.startTime }
     if (lastLine != null && lastLine.doseUnits == roaDose.units) {
-        return lastLine.height * lastLine.referenceDose!!
+        // the height is a Float, rounding removes the noise that adds to the logged dose
+        return roundToSignificantDigits(lastLine.height * lastLine.referenceDose!!, 6)
     }
     return roaDose.commonMin
 }

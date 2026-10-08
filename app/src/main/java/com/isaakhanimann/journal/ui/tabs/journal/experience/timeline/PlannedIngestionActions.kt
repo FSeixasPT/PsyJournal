@@ -31,6 +31,7 @@ import com.isaakhanimann.journal.ui.tabs.settings.combinations.UserPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -59,10 +60,11 @@ class PlannedIngestionHelper @Inject constructor(
 ) {
     fun actionsFor(experienceId: Int, scope: CoroutineScope): PlannedIngestionActions {
         val started = SharingStarted.WhileSubscribed(5000)
+        // read with .value and never collected by the UI, so they have to be collected eagerly
         val companions: StateFlow<List<SubstanceCompanion>> =
-            experienceRepo.getAllSubstanceCompanionsFlow().stateIn(scope, started, emptyList())
+            experienceRepo.getAllSubstanceCompanionsFlow().stateIn(scope, SharingStarted.Eagerly, emptyList())
         val recentNames: StateFlow<List<String>> =
-            experienceRepo.getSortedLastUsedSubstanceNamesFlow(limit = 200).stateIn(scope, started, emptyList())
+            experienceRepo.getSortedLastUsedSubstanceNamesFlow(limit = 200).stateIn(scope, SharingStarted.Eagerly, emptyList())
         val pinFlow: StateFlow<PinnedRedose?> = userPreferences.pinnedRedoseFlow
             .map { pin -> pin?.takeIf { it.experienceId == experienceId } }
             .stateIn(scope, started, null)
@@ -106,10 +108,14 @@ class PlannedIngestionHelper @Inject constructor(
 
             override fun log(planned: PlannedIngestion, color: AdaptiveColor) {
                 scope.launch {
-                    val existing = companions.value.firstOrNull { it.substanceName == planned.substanceName }
-                    experienceRepo.insertIngestionAndCompanion(
-                        ingestion = planned.toIngestion(experienceId, Instant.now()),
-                        substanceCompanion = companionToSave(planned.substanceName, existing, color)
+                    logPlannedIngestion(
+                        planned = planned,
+                        experienceId = experienceId,
+                        previewColor = color,
+                        now = Instant.now(),
+                        // read from the database, so an existing color is never replaced
+                        loadCompanions = { experienceRepo.getAllSubstanceCompanionsFlow().first() },
+                        save = { ingestion, companion -> experienceRepo.insertIngestionAndCompanion(ingestion, companion) }
                     )
                 }
             }
