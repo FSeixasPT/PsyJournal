@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.main.navigation.graphs
 
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibilityScreen
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.navigation
@@ -54,12 +55,16 @@ fun NavGraphBuilder.settingsGraph(navController: NavHostController) {
                 navigateToDonate = {
                     navController.navigate(DonateRoute)
                 },
+                navigateToRouteVisibility = {
+                    navController.navigate(RouteVisibilityRoute)
+                },
             )
         }
         composableWithTransitions<FAQRoute> { FAQScreen() }
         composableWithTransitions<DonateRoute> { DonateScreen() }
         composableWithTransitions<CombinationSettingsRoute> { CombinationSettingsScreen() }
         composableWithTransitions<SubstanceColorsRoute> { SubstanceColorsScreen() }
+        composableWithTransitions<RouteVisibilityRoute> { RouteVisibilityScreen() }
         composableWithTransitions<CustomUnitArchiveRoute> {
             CustomUnitArchiveScreen(navigateToEditCustomUnit = { customUnitId ->
                 navController.navigate(EditCustomUnitRoute(customUnitId))
@@ -108,3 +113,6 @@ object CustomUnitsRoute
 
 @Serializable
 data class EditCustomUnitRoute(val customUnitId: Int)
+
+@Serializable
+object RouteVisibilityRoute

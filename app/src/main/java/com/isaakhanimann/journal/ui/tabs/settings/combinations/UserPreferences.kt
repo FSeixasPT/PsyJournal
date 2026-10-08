@@ -24,8 +24,12 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
+import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.SavedTimeDisplayOption
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.PinnedRedose
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteOverride
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.Instant
@@ -49,6 +53,8 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
         val KEY_ARE_ROUTES_MERGED = booleanPreferencesKey("KEY_ARE_ROUTES_MERGED")
         val KEY_PINNED_REDOSE = stringPreferencesKey("KEY_PINNED_REDOSE")
         val KEY_CHOSEN_PLAN = stringPreferencesKey("KEY_CHOSEN_PLAN")
+        val KEY_HIDDEN_ROUTES = stringSetPreferencesKey("KEY_HIDDEN_ROUTES")
+        val KEY_ROUTE_OVERRIDES = stringSetPreferencesKey("KEY_ROUTE_OVERRIDES")
         val KEY_IS_TIMELINE_HIDDEN = booleanPreferencesKey("KEY_IS_TIMELINE_HIDDEN")
     }
 
@@ -148,6 +154,26 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
             } else {
                 preferences[PreferencesKeys.KEY_PINNED_REDOSE] = value.toPreferenceString()
             }
+        }
+    }
+
+    private fun routeVisibilityOf(preferences: Preferences) = RouteVisibility(
+        hiddenRoutes = (preferences[PreferencesKeys.KEY_HIDDEN_ROUTES] ?: emptySet())
+            .mapNotNull { name -> AdministrationRoute.entries.firstOrNull { it.name == name } }
+            .toSet(),
+        overrides = (preferences[PreferencesKeys.KEY_ROUTE_OVERRIDES] ?: emptySet())
+            .mapNotNull { RouteOverride.fromPreferenceString(it) }
+            .toSet()
+    )
+
+    val routeVisibilityFlow: Flow<RouteVisibility> = dataStore.data.map { routeVisibilityOf(it) }
+
+    // reads and writes in one transaction, so concurrent changes are not lost
+    suspend fun updateRouteVisibility(change: (RouteVisibility) -> RouteVisibility) {
+        dataStore.edit { preferences ->
+            val updated = change(routeVisibilityOf(preferences))
+            preferences[PreferencesKeys.KEY_HIDDEN_ROUTES] = updated.hiddenRoutes.map { it.name }.toSet()
+            preferences[PreferencesKeys.KEY_ROUTE_OVERRIDES] = updated.overrides.map { it.toPreferenceString() }.toSet()
         }
     }
 

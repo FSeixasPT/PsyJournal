@@ -42,6 +42,7 @@ import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Medication
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Route
 import androidx.compose.material.icons.outlined.QuestionAnswer
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.WarningAmber
@@ -93,6 +94,7 @@ fun SettingsPreview() {
         navigateToSubstanceColors = {},
         navigateToCustomUnits = {},
         navigateToDonate = {},
+        navigateToRouteVisibility = {},
         importFile = {},
         exportFile = {},
         snackbarHostState = remember { SnackbarHostState() },
@@ -115,6 +117,7 @@ fun SettingsScreen(
     navigateToSubstanceColors: () -> Unit,
     navigateToCustomUnits: () -> Unit,
     navigateToDonate: () -> Unit,
+    navigateToRouteVisibility: () -> Unit,
 ) {
     SettingsScreen(
         navigateToFAQ = navigateToFAQ,
@@ -122,6 +125,7 @@ fun SettingsScreen(
         navigateToSubstanceColors = navigateToSubstanceColors,
         navigateToCustomUnits = navigateToCustomUnits,
         navigateToDonate = navigateToDonate,
+        navigateToRouteVisibility = navigateToRouteVisibility,
         deleteEverything = viewModel::deleteEverything,
         importFile = viewModel::importFile,
         exportFile = viewModel::exportFile,
@@ -145,6 +149,7 @@ fun SettingsScreen(
     navigateToSubstanceColors: () -> Unit,
     navigateToCustomUnits: () -> Unit,
     navigateToDonate: () -> Unit,
+    navigateToRouteVisibility: () -> Unit,
     deleteEverything: () -> Unit,
     importFile: (uri: Uri) -> Unit,
     exportFile: (uri: Uri) -> Unit,
@@ -186,6 +191,13 @@ fun SettingsScreen(
                     text = "Substance colors"
                 ) {
                     navigateToSubstanceColors()
+                }
+                HorizontalDivider()
+                SettingsButton(
+                    imageVector = Icons.Outlined.Route,
+                    text = "Routes of administration"
+                ) {
+                    navigateToRouteVisibility()
                 }
                 HorizontalDivider()
                 SettingsButton(
