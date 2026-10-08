@@ -24,6 +24,7 @@ import com.isaakhanimann.journal.data.substances.classes.roa.RoaDose
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import org.junit.Test
 
 class SubstancePickerTest {
@@ -111,5 +112,46 @@ class SubstancePickerTest {
         assertEquals(12.5, parseDose("12.5")!!, 0.0)
         assertEquals(3.0, parseDose("3.")!!, 0.0)
         assertEquals(0.5, parseDose(".5")!!, 0.0)
+    }
+
+    @Test
+    fun substanceWhosePreviewableRoutesAreHiddenGetsItsOwnReason() {
+        val visibility = RouteVisibility(hiddenRoutes = setOf(AdministrationRoute.INSUFFLATED))
+        assertEquals(PreviewProblem.ROUTES_HIDDEN, cocaine.substancePreviewProblem(visibility))
+        assertEquals(PreviewProblem.ROUTES_HIDDEN, buildPickerEntries(listOf(cocaine), emptyList(), visibility).single().problem)
+    }
+
+    @Test
+    fun hiddenRoutesWithoutDataKeepTheExistingReason() {
+        val visibility = RouteVisibility(hiddenRoutes = setOf(AdministrationRoute.ORAL))
+        assertEquals(PreviewProblem.NO_FULL_DURATION, mdma.substancePreviewProblem(visibility))
+    }
+
+    @Test
+    fun overrideShowingAHiddenRouteMakesTheSubstancePreviewableAgain() {
+        val visibility = RouteVisibility(hiddenRoutes = setOf(AdministrationRoute.INSUFFLATED))
+            .withSubstanceRoute("Cocaine", AdministrationRoute.INSUFFLATED, isShown = true)
+        assertEquals(null, cocaine.substancePreviewProblem(visibility))
+    }
+
+    @Test
+    fun preselectedRouteSkipsHiddenRoutes() {
+        val visibility = RouteVisibility(hiddenRoutes = setOf(AdministrationRoute.INSUFFLATED))
+        assertNull(preselectedRoute(ketamine, listOf(AdministrationRoute.INSUFFLATED), visibility))
+    }
+
+    @Test
+    fun editorListsOnlyShownRoutes() {
+        val visibility = RouteVisibility(hiddenRoutes = setOf(AdministrationRoute.SUBLINGUAL))
+        assertEquals(
+            listOf(AdministrationRoute.INSUFFLATED, AdministrationRoute.ORAL),
+            editorRoutes(ketamine, visibility, plannedRoute = null).map { it.route }
+        )
+    }
+
+    @Test
+    fun editorKeepsThePlannedRouteEvenIfHidden() {
+        val visibility = RouteVisibility(hiddenRoutes = setOf(AdministrationRoute.INSUFFLATED))
+        assertTrue(editorRoutes(ketamine, visibility, plannedRoute = AdministrationRoute.INSUFFLATED).any { it.route == AdministrationRoute.INSUFFLATED })
     }
 }

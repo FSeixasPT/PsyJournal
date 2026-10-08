@@ -73,7 +73,7 @@ fun offeredCustomUnits(
             it.dose != null && it.originalUnit == databaseUnits
 }
 
-enum class PreviewProblem { NO_FULL_DURATION, NO_DOSE_RANGES }
+enum class PreviewProblem { NO_FULL_DURATION, NO_DOSE_RANGES, ROUTES_HIDDEN }
 
 // null if a planned ingestion of this route can be drawn and compared with other ingestions
 fun Roa.previewProblem(): PreviewProblem? = when {

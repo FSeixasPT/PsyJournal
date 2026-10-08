@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
 import com.isaakhanimann.journal.data.room.experiences.entities.CustomUnit
@@ -50,6 +51,8 @@ interface PlannedIngestionActions {
     val customUnitsFlow: StateFlow<List<CustomUnit>>
     // the time display option chosen with the stopwatch, before "Auto" is resolved
     val savedTimeDisplayOptionFlow: StateFlow<SavedTimeDisplayOption>
+    // which routes are offered in the editor and count for previewability
+    val routeVisibilityFlow: StateFlow<RouteVisibility>
     fun choose(planned: PlannedIngestion?)
     // lets the normal add-ingestion flow propose this experience
     fun prepareChangeDetails(lastIngestionTime: Instant?)
@@ -95,7 +98,12 @@ class PlannedIngestionHelper @Inject constructor(
         val customUnits: StateFlow<List<CustomUnit>> =
             experienceRepo.getCustomUnitsFlow(false).stateIn(scope, SharingStarted.Eagerly, emptyList())
 
+        val routeVisibility: StateFlow<RouteVisibility> =
+            userPreferences.routeVisibilityFlow.stateIn(scope, SharingStarted.Eagerly, RouteVisibility())
+
         return object : PlannedIngestionActions {
+            override val routeVisibilityFlow: StateFlow<RouteVisibility> = routeVisibility
+
             override val pinnedRedoseFlow = pinFlow
 
             override val customUnitsFlow: StateFlow<List<CustomUnit>> = customUnits
@@ -146,7 +154,7 @@ class PlannedIngestionHelper @Inject constructor(
                     filterCategories = emptyList(),
                     recentlyUsedSubstanceNamesSorted = recentNames.value
                 ).map { it.substance }
-                return buildPickerEntries(matching, experienceSubstanceNamesByRecency)
+                return buildPickerEntries(matching, experienceSubstanceNamesByRecency, routeVisibility.value)
             }
 
             override fun companionColor(substanceName: String) =

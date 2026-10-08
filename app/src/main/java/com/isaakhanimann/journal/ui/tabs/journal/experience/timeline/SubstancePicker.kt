@@ -18,8 +18,10 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.data.substances.classes.Substance
+import com.isaakhanimann.journal.data.substances.classes.roa.Roa
 import com.isaakhanimann.journal.data.substances.classes.roa.RoaDose
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toPreservedString
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toReadableString
@@ -34,29 +36,42 @@ data class PickerEntry(
 // the substances of the experience first (most recent first), then the other matches in their given order
 fun buildPickerEntries(
     matchingSubstances: List<Substance>,
-    experienceSubstanceNamesByRecency: List<String>
+    experienceSubstanceNamesByRecency: List<String>,
+    visibility: RouteVisibility = RouteVisibility()
 ): List<PickerEntry> {
     val byName = matchingSubstances.associateBy { it.name }
     val inExperience = experienceSubstanceNamesByRecency.distinct().mapNotNull { byName[it] }
     val others = matchingSubstances.filter { it.name !in experienceSubstanceNamesByRecency }
-    return inExperience.map { PickerEntry(it.name, isInExperience = true, problem = it.substancePreviewProblem()) } +
-            others.map { PickerEntry(it.name, isInExperience = false, problem = it.substancePreviewProblem()) }
+    return inExperience.map { PickerEntry(it.name, isInExperience = true, problem = it.substancePreviewProblem(visibility)) } +
+            others.map { PickerEntry(it.name, isInExperience = false, problem = it.substancePreviewProblem(visibility)) }
 }
 
-// the reason why no route of the substance can be previewed, missing durations win over missing dose ranges
-fun Substance.substancePreviewProblem(): PreviewProblem? {
+// why no shown route of the substance can be previewed; hidden routes only matter if they could be previewed
+fun Substance.substancePreviewProblem(visibility: RouteVisibility = RouteVisibility()): PreviewProblem? {
+    val shownRoas = roas.filter { visibility.isShown(name, it.route) }
+    if (shownRoas.any { it.previewProblem() == null }) return null
+    if (roas.any { !visibility.isShown(name, it.route) && it.previewProblem() == null }) return PreviewProblem.ROUTES_HIDDEN
     val problems = roas.map { it.previewProblem() }
     return when {
-        problems.any { it == null } -> null
         problems.isNotEmpty() && problems.all { it == PreviewProblem.NO_DOSE_RANGES } -> PreviewProblem.NO_DOSE_RANGES
         else -> PreviewProblem.NO_FULL_DURATION
     }
 }
 
-fun preselectedRoute(substance: Substance, experienceRoutesByRecency: List<AdministrationRoute>): AdministrationRoute? {
-    val previewableRoutes = substance.roas.filter { it.previewProblem() == null }.map { it.route }
+fun preselectedRoute(
+    substance: Substance,
+    experienceRoutesByRecency: List<AdministrationRoute>,
+    visibility: RouteVisibility = RouteVisibility()
+): AdministrationRoute? {
+    val previewableRoutes = substance.roas
+        .filter { it.previewProblem() == null && visibility.isShown(substance.name, it.route) }
+        .map { it.route }
     return experienceRoutesByRecency.firstOrNull { it in previewableRoutes } ?: previewableRoutes.firstOrNull()
 }
+
+// the routes offered in the editor: the shown ones, and the route being edited so a selection never disappears
+fun editorRoutes(substance: Substance, visibility: RouteVisibility, plannedRoute: AdministrationRoute?): List<Roa> =
+    substance.roas.filter { visibility.isShown(substance.name, it.route) || it.route == plannedRoute }
 
 // only plain decimal numbers, so text like "Infinity", "1e400" or "0x1p3" is not accepted as a dose
 private val plainDecimal = Regex("""\d+(\.\d*)?|\.\d+""")

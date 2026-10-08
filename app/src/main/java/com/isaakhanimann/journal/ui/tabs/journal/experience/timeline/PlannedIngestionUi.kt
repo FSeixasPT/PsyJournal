@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
+import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -97,6 +98,7 @@ class PlannedIngestionState(
     val experienceSubstanceNamesByRecency: List<String>,
     val experienceRoutesByRecency: (String) -> List<AdministrationRoute>,
     val customUnits: List<CustomUnit>,
+    val routeVisibility: RouteVisibility,
     val setHeld: (Boolean) -> Unit,
     val choose: (PlannedIngestion) -> Unit,
     val clearChoice: () -> Unit,
@@ -127,6 +129,7 @@ fun rememberPlannedIngestionState(realModel: AllTimelinesModel, actions: Planned
     val defaultPlan = remember(realLines) { actions.defaultPlan(realLines) }
     val pinnedPlan = pin?.let { realModel.resolvePinnedPlan(it, now) }
     val customUnits = actions.customUnitsFlow.collectAsState().value
+    val routeVisibility = actions.routeVisibilityFlow.collectAsState().value
     val planned = (pinnedPlan ?: chosen ?: defaultPlan)?.withCurrentCustomUnit(customUnits)
     val plannedLine = remember(planned, now, realModel) { planned?.let { actions.buildLine(it, now, realModel.colors) } }
     val isPinInvalid = pin != null && (pinnedPlan == null || plannedLine == null)
@@ -150,6 +153,7 @@ fun rememberPlannedIngestionState(realModel: AllTimelinesModel, actions: Planned
         experienceSubstanceNamesByRecency = linesByRecency.map { it.substanceName }.distinct(),
         experienceRoutesByRecency = { name -> linesByRecency.filter { it.substanceName == name }.map { it.route }.distinct() },
         customUnits = customUnits,
+        routeVisibility = routeVisibility,
         setHeld = { isHeld = it },
         choose = { newPlan ->
             actions.choose(newPlan)
@@ -401,7 +405,7 @@ private fun PlannedIngestionEditorSheet(
                 }
                 Text("Route", style = MaterialTheme.typography.labelMedium)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    substance.roas.forEach { roa ->
+                    editorRoutes(substance, state.routeVisibility, plannedRoute = initial?.route).forEach { roa ->
                         val problem = roa.previewProblem()
                         FilterChip(
                             selected = route == roa.route,
@@ -419,6 +423,7 @@ private fun PlannedIngestionEditorSheet(
                                     when (problem) {
                                         PreviewProblem.NO_FULL_DURATION -> Text("no full duration data", style = MaterialTheme.typography.labelSmall)
                                         PreviewProblem.NO_DOSE_RANGES -> Text("no dose ranges", style = MaterialTheme.typography.labelSmall)
+                                        PreviewProblem.ROUTES_HIDDEN -> {}
                                         null -> {}
                                     }
                                 }
@@ -523,7 +528,7 @@ private fun pick(
     apply: (String, AdministrationRoute?, PlannedIngestion?) -> Unit,
 ) {
     val substance = actions.getSubstance(entry.substanceName) ?: return
-    val route = preselectedRoute(substance, state.experienceRoutesByRecency(entry.substanceName))
+    val route = preselectedRoute(substance, state.experienceRoutesByRecency(entry.substanceName), state.routeVisibility)
     val roaDose = route?.let { substance.getRoa(it)?.roaDose }
     apply(entry.substanceName, route, roaDose?.let { suggestedPlan(entry.substanceName, route, state.realModel.realLines, it) })
 }
@@ -549,6 +554,7 @@ private fun PickerRow(entry: PickerEntry, color: AdaptiveColor?, isDarkTheme: Bo
             when (entry.problem) {
                 PreviewProblem.NO_FULL_DURATION -> Text("Can't be previewed: no full duration data for any route", style = MaterialTheme.typography.labelSmall, color = textColor)
                 PreviewProblem.NO_DOSE_RANGES -> Text("Can't be previewed: no dose ranges for any route", style = MaterialTheme.typography.labelSmall, color = textColor)
+                PreviewProblem.ROUTES_HIDDEN -> Text("Can't be previewed: its previewable routes are hidden", style = MaterialTheme.typography.labelSmall, color = textColor)
                 null -> {}
             }
         }
