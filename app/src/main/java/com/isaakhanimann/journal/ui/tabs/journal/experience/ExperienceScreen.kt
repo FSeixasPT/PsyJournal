@@ -707,6 +707,7 @@ private fun MyTimelineSection(
             ElevatedCard(modifier = Modifier.padding(vertical = verticalCardPadding)) {
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     CardTitle(title = "Effect timeline")
