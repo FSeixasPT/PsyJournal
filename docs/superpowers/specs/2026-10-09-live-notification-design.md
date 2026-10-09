@@ -49,7 +49,7 @@ All new code goes in the package `ui/tabs/journal/experience/livenotification/`.
 data class LiveNotificationContent(
     val title: String,                 // the experience title
     val lines: List<SubstanceLine>,    // sorted by ingestion time of the first ingestion of the substance
-    val plannedLine: String?,          // "Planned: 2C-B 10 mg insufflated at 22:30", null without a plan
+    val plannedLine: String?,          // "Planned: 2C-B 10 mg insufflated in 25 min", null without a plan
     val endsAt: Instant?,              // when the last estimated effect ends, null if no line has a known end
     val nextRefreshAt: Instant?,       // see "Refreshing"
 )
@@ -59,10 +59,13 @@ data class SubstanceLine(
     val color: AdaptiveColor,
     val phase: Phase,
     val percentOfPeak: Int?,           // 0..100, null if the substance has no full timeline
-    val phaseEndsAt: Instant?,         // end of the current phase if known
+    val hint: TimeHint?,               // what happens next and when, null if unknown
 )
 
-enum class Phase { WAITING_FOR_ONSET, COMING_UP, PEAKING, COMING_DOWN, ENDED, NO_TIMELINE }
+enum class Phase { WAITING_FOR_ONSET, COMING_UP, PEAKING, STEADY, COMING_DOWN, ENDED, NO_TIMELINE }
+
+data class TimeHint(val kind: HintKind, val time: Instant)
+enum class HintKind { STARTS, PEAKS, COMES_DOWN, RISES_AGAIN, ENDS }
 ```
 
 `buildLiveNotificationContent(...)` takes these inputs:
@@ -71,31 +74,61 @@ enum class Phase { WAITING_FOR_ONSET, COMING_UP, PEAKING, COMING_DOWN, ENDED, NO
 - the experience's `DataForOneEffectLine`s, built with the existing `getDataForEffectTimelines`;
 - the `AllTimelinesModel` built from them, for its `getQuantityDetails(now)`;
 - the pinned plan, if it `belongsTo` this experience;
+- the time display option (see "Times");
 - `now`.
 
 It returns the content above.
 
-**Phase of a substance:**
+**Phase of a substance, from its summed line:**
 
-- Take the substance's most recent ingestion whose estimated effect hasn't ended, or its last ingestion if all have ended.
-- The phase follows from that ingestion's start time and its `RoaDuration`:
-  - The boundaries are the midpoints of the onset, come-up, peak and offset ranges. These are the same 0.5 weights the chart uses.
-  - Before the end of the onset, the phase is `WAITING_FOR_ONSET`. Then it is `COMING_UP` until the end of the come-up, `PEAKING` until the end of the peak, `COMING_DOWN` until the end of the offset, and `ENDED` after that.
-  - If a phase's duration is missing, that phase and every later one are unknown. The line shows the last phase it can work out and has `phaseEndsAt = null`.
-- A time-range ingestion (one with an `endTime`) is treated as starting at its start time. Its peak lasts until its end time plus the peak duration.
+The phase comes from the substance's line as drawn on the chart: the sum of all its ingestions, or of its merged routes. It doesn't come from a single ingestion. So a small top-up during the come-down doesn't make the notification say "coming up" while the chart goes down.
+
+Let *h(t)* be the height of the substance's line, from the existing `heightAt` of its full timelines, and *M* its highest point over the whole line.
+
+- **Direction:** *d* = *h*(now + 5 min) − *h*(now − 5 min).
+  - *h*(now) = 0 and the line rises later: `WAITING_FOR_ONSET`.
+  - *h*(now) = 0 and the line stays at 0: `ENDED`.
+  - *d* > 0.05·*M*: `COMING_UP`.
+  - *d* < −0.05·*M*: `COMING_DOWN`.
+  - Otherwise, flat: `PEAKING` if *h*(now) ≥ 0.5·*M*, else `STEADY`. `STEADY` is the rare case where one dose's come-down balances another's come-up at a low level.
+- **Time hint:** found by stepping the line forward in 1-minute steps from now, up to its end:
+  - `WAITING_FOR_ONSET`: `STARTS`, when *h* first becomes > 0.
+  - `COMING_UP`: `PEAKS`, when the line stops rising, i.e. the first step where it's no longer `COMING_UP`.
+  - `PEAKING` / `STEADY`: `COMES_DOWN`, when it starts falling. If it rises first, `PEAKS` at the end of that rise.
+  - `COMING_DOWN`: `RISES_AGAIN` if a later dose makes it rise before it reaches 0, otherwise `ENDS`, when *h* reaches 0.
+  - `ENDED`: no hint.
+
+  These moments are also the "phase changes" the refresh scheduling uses.
+
+**Fallback without a summed line:** a substance whose duration data is too incomplete for a full timeline (no peak or no offset) has no summed line. Only for those, the phase comes from its most recent ingestion that hasn't ended:
+
+- The boundaries are the midpoints of its onset, come-up, peak and offset ranges, the same 0.5 weights the chart uses.
+- If a duration is missing, that phase and every later one are unknown. The line shows the last phase it can work out, with no hint.
+- A time-range ingestion (one with an `endTime`) counts as starting at its start time, and its peak lasts until its end time plus the peak duration.
 - A substance with no duration data for any route gets `NO_TIMELINE`.
 
 **Percent of peak:** `fractionOfPeak` from `getQuantityDetails(now)` for that substance, rounded. When routes are merged, the merged group counts as one substance.
 
-**End of the experience:** `endsAt` is the latest end of an offset over all lines. If that time is in the past, i.e. every line is `ENDED` or `NO_TIMELINE`, the notification is removed.
+**End of the experience:** `endsAt` is the latest time at which a substance line reaches 0, using the fallback offset end for substances without a summed line. When every line is `ENDED` or `NO_TIMELINE`, the notification is removed.
 
 **Text of a line:**
 
-- `"<substance> · <phase> · <percent>% · <time hint>"`, for example:
-  - `2C-B · peaking · 90% · comes down ~22:40`
-  - `Caffeine · coming up · 40% · peaks ~21:15`
-- The phase words are: `waiting for onset`, `coming up`, `peaking`, `coming down`, `ended`, `no timeline`.
-- The time hint names when the next phase starts, using the app's time format. It's left out when unknown.
+- `"<substance> · <phase> · <percent>% · <hint>"`.
+- The phase words are: `waiting for onset`, `coming up`, `peaking`, `steady`, `coming down`, `ended`, `no timeline`.
+- The hint words are `starts`, `peaks`, `comes down`, `rises again` and `ends`, followed by the time (see "Times"). The hint is left out when unknown.
+- Examples, with "Auto" or "Time relative to now":
+  - `2C-B · peaking · 90% · comes down in 40 min`
+  - `Caffeine · coming up · 40% · peaks in 15 min`
+  - `2C-B · coming down · 55% · rises again in 20 min`
+- The same examples with "Regular time": `… · comes down at 22:40`.
+
+**Times:** every time in the notification follows the app's time display setting, which is the stopwatch option on the experience screen. This covers the hints and the planned line. The notification uses the existing `plannedTimeText` together with `chipTimeDisplayOption`, as the redose chip does, so the notification always matches the chip:
+
+- **Auto** and **Time relative to now:** relative to now, e.g. "in 25 min", or "10 min ago" for a planned time that's past. The notification is about the ongoing experience, so Auto always means relative to now.
+- **Time relative to start:** e.g. "2.5 hr in".
+- **Regular time** and **Time between:** the clock time in the device's 12/24-hour format, e.g. "at 22:40".
+
+Relative times are only as current as the last refresh, which is at most about 5 minutes old, or longer if Android delays an alarm in doze. The countdown described in the notifier section stays live between refreshes.
 
 ### 2. `LiveNotificationChart`
 
@@ -156,7 +189,7 @@ The single entry point for everything else:
 
 ### 7. Refreshing
 
-- **Next alarm:** `nextRefreshAt` is the earlier of `now + 5 min` and the next phase change of any line (`phaseEndsAt`), but not before `now + 1 min`.
+- **Next alarm:** `nextRefreshAt` is the earlier of `now + 5 min` and the earliest hint time of any line (`hint.time`), but not before `now + 1 min`.
 - **Scheduling:** `AlarmManager.setAndAllowWhileIdle(RTC_WAKEUP, …)` with a `PendingIntent` to the receiver. These are inexact alarms, so no exact-alarm permission is needed. Android may delay them in doze; that's accepted, and the countdown chronometer stays live in the meantime.
 
 ## UI changes
@@ -205,15 +238,17 @@ The single entry point for everything else:
 
 **JVM unit tests (`LiveNotificationContentTest`):**
 
-- the phase boundaries for a full duration: onset, come-up, peak, offset, ended;
-- a duration missing the peak or offset: the known phase is shown, with no end;
+- the phases of a single ingestion's summed line: waiting for onset, coming up, peaking, coming down, ended, with the right hints;
+- a small top-up during the come-down that doesn't lift the summed line: `COMING_DOWN`, with `ENDS`;
+- a top-up that does lift the line: `COMING_DOWN` with `RISES_AGAIN`, then `COMING_UP` once it rises;
+- a flat line below half of *M*: `STEADY`;
+- the fallback for a duration missing the peak or offset: the known phase is shown, with no hint;
 - a substance with no duration: `NO_TIMELINE`, and it doesn't keep the notification alive;
-- several ingestions of one substance: the most recent active one decides the phase;
 - a time-range ingestion;
 - `endsAt` and the "everything ended" signal;
 - `nextRefreshAt`: never more than 5 min ahead, never earlier than 1 min, and it snaps to a phase change;
 - the planned line, and no planned line when the pin belongs to another experience;
-- the text formatting of a line.
+- the text of a line for each time display option: Auto (relative to now), relative to start, and regular time.
 
 **`LiveNotificationState` parsing tests:** a valid value, a malformed value, and a reused id with a different creation date.
 
