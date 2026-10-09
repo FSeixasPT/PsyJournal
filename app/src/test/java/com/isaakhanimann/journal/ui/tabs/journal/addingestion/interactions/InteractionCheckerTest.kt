@@ -67,11 +67,13 @@ class InteractionCheckerTest {
     private val tramadol = substance("Tramadol", unsafe = listOf("Stimulants", "Dextromethorphan"))
     private val fiveHtp = substance("5-Hydroxytryptophan", dangerous = listOf("Tricyclic antidepressants"))
     private val dmt = substance("DMT", commonNames = listOf("DMT", "Dimitri"), dangerous = listOf("Lithium"))
-    private val buspirone = substance("Buspirone", commonNames = listOf("Buspar", "DMT"))
+    private val buspirone = substance("Buspirone", commonNames = listOf("Buspar", "DMT", "Dimethyltryptamine"))
+    private val cannabis = substance("Cannabis", commonNames = listOf("Weed", "Herb", "Tree"), unsafe = listOf("Lithium"))
+    private val ketamine = substance("Ketamine", dangerous = listOf("MXE", "Oxycodone", "5-MeO-xxt"))
     private val checker = InteractionChecker(
         FakeSubstanceRepository(
             listOf(
-                lithium, mdma, amphetamine, alcohol, mirtazapine, tramadol, fiveHtp, dmt, buspirone,
+                lithium, mdma, amphetamine, alcohol, mirtazapine, tramadol, fiveHtp, dmt, buspirone, cannabis, ketamine,
                 substance("DOB"), substance("25I-NBOMe"), substance("25C-NBOH"), substance("2C-B"),
                 substance("5-MeO-DMT"), substance("2C-T-7"), substance("Ayahuasca"),
             )
@@ -137,5 +139,26 @@ class InteractionCheckerTest {
     fun namesThatOnlyDifferInCaseAreResolved() {
         assertEquals(InteractionType.DANGEROUS, type("dmt", "Lithium"))
         assertEquals(InteractionType.DANGEROUS, type("mdma", "Ayahuasca"))
+    }
+
+    @Test
+    fun anXInsideAnAbbreviationOrBeforeALowercaseLetterIsALetter() {
+        assertNull(type("Ketamine", "MDE"))
+        assertEquals(InteractionType.DANGEROUS, type("Ketamine", "MXE"))
+        assertNull(type("Ketamine", "Opycodone"))
+        assertEquals(InteractionType.DANGEROUS, type("Ketamine", "5-MeO-DMT"))
+    }
+
+    @Test
+    fun everydayWordsAreNotCheckedAsSubstances() {
+        assertEquals(InteractionType.UNSAFE, type("Weed", "Lithium"))
+        assertNull(type("Herb", "Lithium"))
+        assertNull(type("tree", "Lithium"))
+    }
+
+    @Test
+    fun wrongCommonNamesInTheDataAreIgnored() {
+        assertNull(type("Dimethyltryptamine", "Buspirone"))
+        assertEquals(InteractionType.DANGEROUS, type("Dimethyltryptamine", "Lithium"))
     }
 }

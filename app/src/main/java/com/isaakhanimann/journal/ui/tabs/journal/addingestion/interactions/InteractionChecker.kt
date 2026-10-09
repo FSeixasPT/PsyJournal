@@ -19,9 +19,9 @@
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.interactions
 
 import com.isaakhanimann.journal.data.substances.classes.InteractionType
-import com.isaakhanimann.journal.data.substances.classes.Interactions
 import com.isaakhanimann.journal.data.substances.classes.Substance
 import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepositoryInterface
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -56,8 +56,10 @@ class InteractionChecker @Inject constructor(
     // but a common name only if no other substance shares it and it is longer than one letter
     private fun resolve(name: String): Substance? {
         substanceRepo.getSubstance(name)?.let { return it }
-        val substanceName = substanceNamesByLowercaseName[name.lowercase()]
-            ?: substanceNamesByCommonName[name.lowercase()]
+        val lowercased = name.lowercase()
+        val substanceName = substanceNamesByLowercaseName[lowercased]
+            ?: commonNameCorrections[lowercased]
+            ?: substanceNamesByCommonName[lowercased]
             ?: return null
         return substanceRepo.getSubstance(substanceName)
     }
@@ -69,7 +71,9 @@ class InteractionChecker @Inject constructor(
     private val substanceNamesByCommonName: Map<String, String> by lazy {
         substanceRepo.getAllSubstances()
             .flatMap { substance -> substance.commonNames.map { it.lowercase() to substance.name } }
-            .filter { (commonName, _) -> commonName.length > 1 }
+            .filter { (commonName, _) ->
+                commonName.length > 1 && commonName !in everydayWords && commonName !in commonNameCorrections
+            }
             .distinct()
             .groupBy({ it.first }, { it.second })
             .filterValues { it.size == 1 }
@@ -77,61 +81,56 @@ class InteractionChecker @Inject constructor(
     }
 
     private fun getInteractionFromAToB(a: Checked, b: Checked): InteractionType? {
-        val interactions = a.substance?.interactions ?: return null
-        return getDirectInteraction(interactions, b.names)
-            ?: getWildcardInteraction(interactions, b.names)
-            ?: b.substance?.let { getClassInteraction(interactions, it.categories) }
+        val levels = prepare(a.substance ?: return null)
+        val lowercaseNames = b.names.map { it.lowercase() }
+        return levels.firstOrNull { level -> lowercaseNames.any { it in level.names } }?.type
+            ?: levels.firstOrNull { level ->
+                level.wildcards.any { regex -> b.names.any { regex.matches(it) } }
+            }?.type
+            ?: b.substance?.let { substance ->
+                levels.firstOrNull { level -> substance.categories.any { level.matchesCategory(it) } }?.type
+            }
     }
 
-    private fun getDirectInteraction(interactions: Interactions, names: List<String>) =
-        firstMatchingType(interactions) { isDirectMatch(it, names) }
-
-    private fun getWildcardInteraction(interactions: Interactions, names: List<String>) =
-        firstMatchingType(interactions) { isWildcardMatch(it, names) }
-
-    private fun getClassInteraction(interactions: Interactions, categories: List<String>) =
-        firstMatchingType(interactions) { isClassMatch(it, categories) }
-
-    private fun firstMatchingType(
-        interactions: Interactions,
-        matches: (List<String>) -> Boolean
-    ): InteractionType? = when {
-        matches(interactions.dangerous) -> InteractionType.DANGEROUS
-        matches(interactions.unsafe) -> InteractionType.UNSAFE
-        matches(interactions.uncertain) -> InteractionType.UNCERTAIN
-        else -> null
-    }
-
-    // whole words only, so "Antidepressants" doesn't match the category depressant
-    private fun isClassMatch(interactions: List<String>, categories: List<String>): Boolean {
-        // a group like "Tricyclic antidepressants" only matches its members, not every antidepressant
-        val words = extendAndCleanInteractions(interactions)
-            .filter { it.lowercase() !in groupMembers }
-            .flatMap { it.lowercase().split(Regex("[\\s,/()]+")) }
-            .toSet()
-        return categories.any { category ->
+    // the interactions of one danger level, prepared once per substance
+    private class Level(
+        val type: InteractionType,
+        val names: Set<String>,
+        val wildcards: List<Regex>,
+        private val classWords: Set<String>,
+    ) {
+        // whole words only, so "Antidepressants" doesn't match the category depressant
+        fun matchesCategory(category: String): Boolean {
             val lowercased = category.lowercase()
-            lowercased in words || "${lowercased}s" in words
+            return lowercased in classWords || "${lowercased}s" in classWords
         }
     }
 
-    private fun isWildcardMatch(interactions: List<String>, names: List<String>): Boolean {
-        return extendAndCleanInteractions(interactions).any { interaction ->
-            val regex = wildcardRegex(interaction) ?: return@any false
-            names.any { regex.matches(it) }
-        }
+    private val levelsBySubstance = ConcurrentHashMap<String, List<Level>>()
+
+    private fun prepare(substance: Substance): List<Level> = levelsBySubstance.getOrPut(substance.name) {
+        val interactions = substance.interactions ?: return@getOrPut emptyList()
+        listOf(
+            InteractionType.DANGEROUS to interactions.dangerous,
+            InteractionType.UNSAFE to interactions.unsafe,
+            InteractionType.UNCERTAIN to interactions.uncertain,
+        ).map { (type, entries) -> prepareLevel(type, entries) }
     }
 
-    private fun isDirectMatch(interactions: List<String>, names: List<String>): Boolean {
-        return extendAndCleanInteractions(interactions).any { interaction ->
-            names.any { it.equals(interaction, ignoreCase = true) }
-        }
-    }
-
-    private fun extendAndCleanInteractions(interactions: List<String>): List<String> {
-        return interactions.flatMap { name ->
+    private fun prepareLevel(type: InteractionType, entries: List<String>): Level {
+        val extended = entries.flatMap { name ->
             listOf(name) + (groupMembers[name.lowercase()] ?: emptyList())
         }.distinct()
+        return Level(
+            type = type,
+            names = extended.map { it.lowercase() }.toSet(),
+            wildcards = extended.mapNotNull { wildcardRegex(it) },
+            // a group like "Tricyclic antidepressants" only matches its members, not every antidepressant
+            classWords = extended
+                .filter { it.lowercase() !in groupMembers }
+                .flatMap { it.lowercase().split(Regex("[\\s,/()]+")) }
+                .toSet()
+        )
     }
 
     private val groupMembers = mapOf(
@@ -150,16 +149,21 @@ class InteractionChecker @Inject constructor(
     )
 
     companion object {
-        // in names like "DOx", "25x-NBOMe" or "5-MeO-xxT" an x stands for any part of the name,
-        // but an x after a lowercase letter, as in "Dextromethorphan", is just a letter
+        // in names like "DOx", "25x-NBOMe", "2C-T-X" or "5-MeO-xxT" an x stands for any part of the name,
+        // but not in words and abbreviations like "Dextromethorphan", "Oxycodone" or "MXE"
         fun wildcardRegex(interaction: String): Regex? {
             val pattern = StringBuilder()
             var hasWildcard = false
             var previousWasWildcard = false
             interaction.forEachIndexed { index, char ->
                 val previous = interaction.getOrNull(index - 1)
-                val isLetter = previous != null && previous.isLowerCase() && !previousWasWildcard
-                if (char.equals('x', ignoreCase = true) && !isLetter) {
+                val next = interaction.getOrNull(index + 1)
+                val isWildcard = (previousWasWildcard && char.equals('x', ignoreCase = true)) || when (char) {
+                    'x' -> !previous.isLowercaseLetter() && !(next.isLowercaseLetter() && next != 'x')
+                    'X' -> previous == '-' && (next == null || next == '-')
+                    else -> false
+                }
+                if (isWildcard) {
                     // consecutive x like in "xxT" become a single wildcard
                     if (!previousWasWildcard) pattern.append("\\S+")
                     hasWildcard = true
@@ -171,8 +175,26 @@ class InteractionChecker @Inject constructor(
             }
             return if (hasWildcard) Regex(pattern.toString(), RegexOption.IGNORE_CASE) else null
         }
+
+        private fun Char?.isLowercaseLetter() = this != null && isLetter() && isLowerCase()
     }
 }
+
+// common names that are everyday words, so a custom substance named like that isn't checked as the substance
+private val everydayWords = setOf(
+    "aces", "al", "aurora", "beans", "beautiful", "bees", "blow", "boat", "brown", "bud", "buttons",
+    "cactus", "cat", "circles", "clam", "colour", "crank", "crystal", "dust", "eternity", "eve", "flux",
+    "foxtrot", "girl", "glass", "grass", "gravel", "green", "herb", "ice", "jaguar", "jet", "juice", "junk",
+    "kitty", "lambda", "lean", "ma", "mal", "nexus", "pep", "pot", "purple", "rolls", "rosy", "sass",
+    "sauce", "shard", "smack", "snow", "spice", "syrup", "tabs", "the light", "toad", "tree", "tweak",
+    "vegetal", "wet", "white", "zoom",
+)
+
+// the substance data lists these as common names of Buspirone, but they mean DMT
+private val commonNameCorrections = mapOf(
+    "dimethyltryptamine" to "DMT",
+    "dmitri" to "DMT",
+)
 
 data class Interaction(
     val aName: String,
