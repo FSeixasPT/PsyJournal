@@ -199,10 +199,10 @@ The single entry point for everything else:
 
 **Experience screen:**
 
-- A "Live notification" switch row near the timeline. It's only shown when the experience has an ingestion of the user whose estimated effect hasn't ended yet, or when it's already live.
+- A small "Live notification" text button in the timeline card header, left of "Info". It is grey when off and in the primary color with a check icon when on. It's only shown when the experience has an ingestion of the user whose estimated effect hasn't ended yet, or when it's already live.
 - Turning it on:
   - On Android 13+, asks for `POST_NOTIFICATIONS` if it isn't granted.
-  - If the request is denied, the switch stays off and a short text explains that notifications are blocked, with a button to the app's notification settings.
+  - If the request is denied, the button stays off and a short text below the chart explains that notifications are blocked, with a button to the app's notification settings.
 
 **Settings, in the existing timeline/journal options group of `SettingsScreen`:**
 
@@ -213,7 +213,7 @@ The single entry point for everything else:
 
 - Trigger: after an ingestion is saved via add ingestion or quick log, with a time within the last 60 minutes or in the next 5, and the auto-start setting on.
 - The controller starts that ingestion's experience. If notification permission isn't granted, nothing happens.
-- Auto-start never asks for the permission. That only happens from the switch.
+- Auto-start never asks for the permission. That only happens from the button.
 
 ## Navigation from the notification
 
@@ -257,7 +257,7 @@ The single entry point for everything else:
 
 **On the emulator:**
 
-- start from the switch and grant the permission;
+- start from the button and grant the permission;
 - check the collapsed and expanded views and the lock screen in both settings;
 - Add ingestion, Log planned and Stop;
 - swipe away;
@@ -269,7 +269,7 @@ The single entry point for everything else:
 - new package `ui/tabs/journal/experience/livenotification/` with the files above, and two layouts in `res/layout/`;
 - `AndroidManifest.xml`: `POST_NOTIFICATIONS` permission and the receiver;
 - `UserPreferences`: the three keys;
-- `ExperienceScreen` / `ExperienceViewModel`: the switch row and the `openQuickLog` handling;
+- `ExperienceScreen` / `ExperienceViewModel`: the header button and the `openQuickLog` handling;
 - `journalGraph.kt`: `ExperienceRoute.openQuickLog`;
 - `MainActivity`, `MainScreen`: intent extras;
 - `SettingsScreen` / `SettingsViewModel`: the two settings;

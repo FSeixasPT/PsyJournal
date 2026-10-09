@@ -18,7 +18,9 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
-import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationRow
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationBlockedMessage
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationButton
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.rememberLiveNotificationToggleState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -701,13 +703,17 @@ private fun MyTimelineSection(
         TimelineDisplayOption.NotWorthDrawing -> {}
         is TimelineDisplayOption.Shown -> {
             val timelineModel = timelineDisplayOption.allTimelinesModel
+            val liveToggleState = rememberLiveNotificationToggleState(setLive)
             ElevatedCard(modifier = Modifier.padding(vertical = verticalCardPadding)) {
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     CardTitle(title = "Effect timeline")
-                    Row {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (isLiveNotificationAvailable) {
+                            LiveNotificationButton(isLive = isLive, state = liveToggleState)
+                        }
                         TextButton(onClick = navigateToExplainTimeline) {
                             Text(text = "Info")
                         }
@@ -740,7 +746,7 @@ private fun MyTimelineSection(
                     // the details always describe the real ingestions, the planned one is described below the chip
                     TimelineQuantityDetails(model = timelineModel, selectedTime = selectedTime)
                     if (isLiveNotificationAvailable) {
-                        LiveNotificationRow(isLive = isLive, setLive = setLive)
+                        LiveNotificationBlockedMessage(state = liveToggleState)
                     }
                     if (planState != null && plannedIngestionActions != null && planState.isPossibleNow) {
                         PlannedIngestionSection(

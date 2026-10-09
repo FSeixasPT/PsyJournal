@@ -17,7 +17,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
     - **Log planned** opens the usual confirmation.
     - **Stop** removes the notification.
   - It stops by itself when all effects have ended. Swiping it away also stops it.
-  - Turn it on with the switch under an experience's timeline. In Settings you can also have it start automatically after logging a recent ingestion.
+  - Turn it on with "Live notification" above an experience's timeline, next to "Info". In Settings you can also have it start automatically after logging a recent ingestion.
   - Substance details are hidden on the lock screen unless you allow them in Settings.
 - **Planned-ingestion chip under the timeline.**
   - Hold the chip to preview the effect of taking a dose now, drawn as a dashed line on the chart, with the resulting intensity and peak.
