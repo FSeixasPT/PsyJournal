@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.search.custom
 
+import com.isaakhanimann.journal.ui.utils.SaveFailedDialog
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
@@ -42,6 +43,7 @@ fun AddCustomSubstanceScreen(
     LaunchedEffect(Unit) {
         viewModel.name = initialName
     }
+    SaveFailedDialog(viewModel.saveGuard)
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Add custom substance") })

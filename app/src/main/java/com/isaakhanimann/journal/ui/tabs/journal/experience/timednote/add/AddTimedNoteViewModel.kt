@@ -95,7 +95,8 @@ class AddTimedNoteViewModel @Inject constructor(
 
     fun onDoneTap(onSaved: () -> Unit) {
         if (note.isBlank()) {
-            onSaved()
+            // nothing to save, but a second tap mustn't navigate back twice
+            saveGuard.save(action = {}, onSaved = onSaved)
             return
         }
         saveGuard.save(action = {

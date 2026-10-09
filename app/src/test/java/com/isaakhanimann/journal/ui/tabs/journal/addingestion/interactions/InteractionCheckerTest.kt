@@ -65,10 +65,13 @@ class InteractionCheckerTest {
     private val alcohol = substance("Alcohol", categories = listOf("depressant"))
     private val mirtazapine = substance("Mirtazapine", categories = listOf("depressant", "antidepressant"))
     private val tramadol = substance("Tramadol", unsafe = listOf("Stimulants", "Dextromethorphan"))
+    private val fiveHtp = substance("5-Hydroxytryptophan", dangerous = listOf("Tricyclic antidepressants"))
+    private val dmt = substance("DMT", commonNames = listOf("DMT", "Dimitri"), dangerous = listOf("Lithium"))
+    private val buspirone = substance("Buspirone", commonNames = listOf("Buspar", "DMT"))
     private val checker = InteractionChecker(
         FakeSubstanceRepository(
             listOf(
-                lithium, mdma, amphetamine, alcohol, mirtazapine, tramadol,
+                lithium, mdma, amphetamine, alcohol, mirtazapine, tramadol, fiveHtp, dmt, buspirone,
                 substance("DOB"), substance("25I-NBOMe"), substance("25C-NBOH"), substance("2C-B"),
                 substance("5-MeO-DMT"), substance("2C-T-7"), substance("Ayahuasca"),
             )
@@ -122,5 +125,17 @@ class InteractionCheckerTest {
     fun ambiguousOrSingleLetterCommonNamesAreNotResolved() {
         assertNull(type("Speed", "Tramadol"))
         assertNull(type("E", "Ayahuasca"))
+    }
+
+    @Test
+    fun aGroupNameIsNotMatchedAsAClass() {
+        assertNull(type("5-Hydroxytryptophan", "Mirtazapine"))
+        assertEquals(InteractionType.DANGEROUS, type("5-Hydroxytryptophan", "amitriptyline"))
+    }
+
+    @Test
+    fun namesThatOnlyDifferInCaseAreResolved() {
+        assertEquals(InteractionType.DANGEROUS, type("dmt", "Lithium"))
+        assertEquals(InteractionType.DANGEROUS, type("mdma", "Ayahuasca"))
     }
 }

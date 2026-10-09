@@ -52,12 +52,18 @@ class InteractionChecker @Inject constructor(
         val names = listOfNotNull(name, substance?.name).distinct()
     }
 
-    // a custom substance named with a common name like "Molly" is checked as MDMA,
-    // but only if no other substance shares that name and it is longer than one letter
+    // a custom substance named "mdma" or with a common name like "Molly" is checked as MDMA,
+    // but a common name only if no other substance shares it and it is longer than one letter
     private fun resolve(name: String): Substance? {
         substanceRepo.getSubstance(name)?.let { return it }
-        val substanceName = substanceNamesByCommonName[name.lowercase()] ?: return null
+        val substanceName = substanceNamesByLowercaseName[name.lowercase()]
+            ?: substanceNamesByCommonName[name.lowercase()]
+            ?: return null
         return substanceRepo.getSubstance(substanceName)
+    }
+
+    private val substanceNamesByLowercaseName: Map<String, String> by lazy {
+        substanceRepo.getAllSubstances().associate { it.name.lowercase() to it.name }
     }
 
     private val substanceNamesByCommonName: Map<String, String> by lazy {
@@ -98,7 +104,9 @@ class InteractionChecker @Inject constructor(
 
     // whole words only, so "Antidepressants" doesn't match the category depressant
     private fun isClassMatch(interactions: List<String>, categories: List<String>): Boolean {
+        // a group like "Tricyclic antidepressants" only matches its members, not every antidepressant
         val words = extendAndCleanInteractions(interactions)
+            .filter { it.lowercase() !in groupMembers }
             .flatMap { it.lowercase().split(Regex("[\\s,/()]+")) }
             .toSet()
         return categories.any { category ->
