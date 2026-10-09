@@ -71,7 +71,9 @@ import com.isaakhanimann.journal.data.substances.classes.Category
 import com.isaakhanimann.journal.data.substances.classes.SubstanceWithCategories
 import com.isaakhanimann.journal.ui.DOSE_DISCLAIMER
 import com.isaakhanimann.journal.ui.FULL_STOMACH_DISCLAIMER
+import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.dose.ChasingTheDragonText
+import com.isaakhanimann.journal.ui.tabs.journal.addingestion.time.ColorPicker
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.dose.OptionalDosageUnitDisclaimer
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.dose.customunit.CustomUnitRoaDoseView
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.time.TimePickerButton
@@ -116,6 +118,8 @@ fun SubstanceScreen(
         routeVisibility = viewModel.routeVisibilityFlow.collectAsState().value,
         onRouteShownChange = viewModel::setRouteShown,
         onResetRoutes = viewModel::resetRoutes,
+        journalColor = viewModel.journalColorFlow.collectAsState().value,
+        onChangeJournalColor = viewModel::changeJournalColor,
     )
 }
 
@@ -160,6 +164,8 @@ fun SubstanceScreen(
     routeVisibility: RouteVisibility? = null,
     onRouteShownChange: (AdministrationRoute, Boolean) -> Unit = { _, _ -> },
     onResetRoutes: () -> Unit = {},
+    journalColor: JournalColorChoice? = null,
+    onChangeJournalColor: (AdaptiveColor) -> Unit = {},
 ) {
     val substance = substanceWithCategories.substance
     val uriHandler = LocalUriHandler.current
@@ -200,6 +206,30 @@ fun SubstanceScreen(
                         Icon(imageVector = Icons.Default.GppBad, contentDescription = "Verified")
                         Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                         Text(text = "Info is not approved")
+                    }
+                }
+            }
+            if (journalColor != null) {
+                ElevatedCard(
+                    modifier = Modifier
+                        .padding(horizontal = horizontalPadding, vertical = verticalPaddingCards)
+                        .fillMaxWidth()
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = "Journal color",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        ColorPicker(
+                            selectedColor = journalColor.color,
+                            onChangeOfColor = onChangeJournalColor,
+                            alreadyUsedColors = journalColor.alreadyUsedColors,
+                            otherColors = journalColor.otherColors
+                        )
                     }
                 }
             }

@@ -23,6 +23,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
+import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
+import com.isaakhanimann.journal.data.room.experiences.entities.SubstanceCompanion
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepository
 import com.isaakhanimann.journal.ui.main.navigation.graphs.SubstanceRoute
@@ -46,7 +48,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SubstanceViewModel @Inject constructor(
     substanceRepo: SubstanceRepository,
-    experienceRepo: ExperienceRepository,
+    private val experienceRepo: ExperienceRepository,
     private val userPreferences: UserPreferences,
     state: SavedStateHandle,
 ) : ViewModel() {
@@ -74,6 +76,18 @@ class SubstanceViewModel @Inject constructor(
 
     fun resetRoutes() = viewModelScope.launch {
         userPreferences.updateRouteVisibility { it.withoutOverridesOf(substanceName) }
+    }
+
+    private val companionsFlow = experienceRepo.getAllSubstanceCompanionsFlow()
+
+    val journalColorFlow = companionsFlow.map { journalColorChoice(it, substanceName) }.stateIn(
+        initialValue = null,
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000)
+    )
+
+    fun changeJournalColor(color: AdaptiveColor) = viewModelScope.launch {
+        experienceRepo.update(SubstanceCompanion(substanceName, color))
     }
 
     val ingestionTimeFlow = MutableStateFlow(LocalDateTime.now())
