@@ -49,7 +49,7 @@ All new code goes in the package `ui/tabs/journal/experience/livenotification/`.
 data class LiveNotificationContent(
     val title: String,                 // the experience title
     val lines: List<SubstanceLine>,    // sorted by ingestion time of the first ingestion of the substance
-    val plannedLine: String?,          // "Planned: 2C-B 10 mg insufflated in 25 min", null without a plan
+    val plannedLine: String?,          // "Planned: 2C-B · 10 mg insufflated", null without a plan
     val endsAt: Instant?,              // when the last estimated effect ends, null if no line has a known end
     val nextRefreshAt: Instant?,       // see "Refreshing"
 )
@@ -62,7 +62,7 @@ data class SubstanceLine(
     val hint: TimeHint?,               // what happens next and when, null if unknown
 )
 
-enum class Phase { WAITING_FOR_ONSET, COMING_UP, PEAKING, STEADY, COMING_DOWN, ENDED, NO_TIMELINE }
+enum class Phase { WAITING_FOR_ONSET, COMING_UP, PEAKING, STEADY, COMING_DOWN, ACTIVE, ENDED, NO_TIMELINE }
 
 data class TimeHint(val kind: HintKind, val time: Instant)
 enum class HintKind { STARTS, PEAKS, COMES_DOWN, RISES_AGAIN, ENDS }
@@ -85,11 +85,11 @@ The phase comes from the substance's line as drawn on the chart: the sum of all 
 
 Let *h(t)* be the height of the substance's line, from the existing `heightAt` of its full timelines, and *M* its highest point over the whole line.
 
-- **Direction:** *d* = *h*(now + 5 min) − *h*(now − 5 min).
+- **Direction:** *d* = *h*(now + 1 min) − *h*(now − 1 min). It is measured over a short window so the hint times are accurate to about a minute. The threshold *t* = 0.01·max(*h*(now), 0.1·*M*) is a slope of 5 % of the current height per 10 minutes, but never less than 5 % of a tenth of *M*. Measuring against the current height means a low line that is slowly falling, such as a small second dose after the first has ended, still counts as coming down.
   - *h*(now) = 0 and the line rises later: `WAITING_FOR_ONSET`.
   - *h*(now) = 0 and the line stays at 0: `ENDED`.
-  - *d* > 0.05·*M*: `COMING_UP`.
-  - *d* < −0.05·*M*: `COMING_DOWN`.
+  - *d* > *t*: `COMING_UP`.
+  - *d* < −*t*: `COMING_DOWN`.
   - Otherwise, flat: `PEAKING` if *h*(now) ≥ 0.5·*M*, else `STEADY`. `STEADY` is the rare case where one dose's come-down balances another's come-up at a low level.
 - **Time hint:** found by stepping the line forward in 1-minute steps from now, up to its end:
   - `WAITING_FOR_ONSET`: `STARTS`, when *h* first becomes > 0.
@@ -105,6 +105,8 @@ Let *h(t)* be the height of the substance's line, from the existing `heightAt` o
 - The boundaries are the midpoints of its onset, come-up, peak and offset ranges, the same 0.5 weights the chart uses.
 - If a duration is missing, that phase and every later one are unknown. The line shows the last phase it can work out, with no hint.
 - A time-range ingestion (one with an `endTime`) counts as starting at its start time, and its peak lasts until its end time plus the peak duration.
+- If the onset is unknown but the total duration is known, the phase is `ACTIVE` ("active"), with an `ENDS` hint at the end of the total duration.
+- When the offset is unknown, the total duration decides when the substance has ended. If that's unknown too, the substance counts as ended 12 hours after its ingestion, so it can't keep the notification alive forever.
 - A substance with no duration data for any route gets `NO_TIMELINE`.
 
 **Percent of peak:** `fractionOfPeak` from `getQuantityDetails(now)` for that substance, rounded. When routes are merged, the merged group counts as one substance.
@@ -114,7 +116,8 @@ Let *h(t)* be the height of the substance's line, from the existing `heightAt` o
 **Text of a line:**
 
 - `"<substance> · <phase> · <percent>% · <hint>"`.
-- The phase words are: `waiting for onset`, `coming up`, `peaking`, `steady`, `coming down`, `ended`, `no timeline`.
+- The phase words are: `waiting for onset`, `coming up`, `peaking`, `steady`, `coming down`, `active`, `ended`, `no timeline`.
+- If routes aren't merged and a substance has several lines, each line names its route, e.g. `Ketamine (oral)`.
 - The hint words are `starts`, `peaks`, `comes down`, `rises again` and `ends`, followed by the time (see "Times"). The hint is left out when unknown.
 - Examples, with "Auto" or "Time relative to now":
   - `2C-B · peaking · 90% · comes down in 40 min`
@@ -122,7 +125,7 @@ Let *h(t)* be the height of the substance's line, from the existing `heightAt` o
   - `2C-B · coming down · 55% · rises again in 20 min`
 - The same examples with "Regular time": `… · comes down at 22:40`.
 
-**Times:** every time in the notification follows the app's time display setting, which is the stopwatch option on the experience screen. This covers the hints and the planned line. The notification uses the existing `plannedTimeText` together with `chipTimeDisplayOption`, as the redose chip does, so the notification always matches the chip:
+**Times:** every time in the notification follows the app's time display setting, which is the stopwatch option on the experience screen. A pinned plan is about taking it now, so the planned line has no time. The notification uses the existing `plannedTimeText` together with `chipTimeDisplayOption`, as the redose chip does, so the notification always matches the chip:
 
 - **Auto** and **Time relative to now:** relative to now, e.g. "in 25 min", or "10 min ago" for a planned time that's past. The notification is about the ongoing experience, so Auto always means relative to now.
 - **Time relative to start:** e.g. "2.5 hr in".
@@ -136,7 +139,7 @@ Draws the existing timeline into a bitmap of about 600×200 px for the expanded 
 
 - It uses `CanvasDrawScope` on an `ImageBitmap` and reuses the existing drawing code of `AllTimelinesModel`'s group drawables.
 - It adds a vertical "now" line.
-- It uses dark-theme colours on a transparent background.
+- It uses the substance colours of the phone's current light or dark theme, on a transparent background.
 - It has no axis labels; the text lines carry the times.
 
 If drawing fails, the notification is posted without the chart.
