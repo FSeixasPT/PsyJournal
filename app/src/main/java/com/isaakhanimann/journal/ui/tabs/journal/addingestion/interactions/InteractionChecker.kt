@@ -20,227 +20,208 @@ package com.isaakhanimann.journal.ui.tabs.journal.addingestion.interactions
 
 import com.isaakhanimann.journal.data.substances.classes.InteractionType
 import com.isaakhanimann.journal.data.substances.classes.Interactions
-import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepository
+import com.isaakhanimann.journal.data.substances.classes.Substance
+import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepositoryInterface
 import javax.inject.Inject
 import javax.inject.Singleton
 
 
 @Singleton
 class InteractionChecker @Inject constructor(
-    private val substanceRepo: SubstanceRepository,
+    private val substanceRepo: SubstanceRepositoryInterface,
 ) {
     fun getInteractionBetween(aName: String, bName: String): Interaction? {
-        if (aName == bName) {
+        val a = Checked(aName, resolve(aName))
+        val b = Checked(bName, resolve(bName))
+        if (a.names.any { name -> b.names.any { it.equals(name, ignoreCase = true) } }) {
             return null
         }
-        val interactionFromAToB = getInteractionFromAToB(aName, bName)
-        val interactionFromBToA = getInteractionFromAToB(bName, aName)
-        if (interactionFromAToB != null && interactionFromBToA != null) {
-            val isAtoB = interactionFromAToB.dangerCount >= interactionFromBToA.dangerCount
-            val interactionType = if (isAtoB) interactionFromAToB else interactionFromBToA
-            return Interaction(
-                aName = aName,
-                bName = bName,
-                interactionType = interactionType,
-            )
-        } else if (interactionFromAToB != null) {
-            return Interaction(
-                aName = aName,
-                bName = bName,
-                interactionType = interactionFromAToB,
-            )
-        } else if (interactionFromBToA != null) {
-            return Interaction(
-                aName = aName,
-                bName = bName,
-                interactionType = interactionFromBToA,
-            )
-        } else {
-            return null
-        }
+        val interactionFromAToB = getInteractionFromAToB(a, b)
+        val interactionFromBToA = getInteractionFromAToB(b, a)
+        val interactionType = listOfNotNull(interactionFromAToB, interactionFromBToA)
+            .maxByOrNull { it.dangerCount } ?: return null
+        return Interaction(
+            aName = aName,
+            bName = bName,
+            interactionType = interactionType,
+        )
     }
 
-    private fun getInteractionFromAToB(
-        aName: String,
-        bName: String,
-    ): InteractionType? {
-        val substanceA = substanceRepo.getSubstance(aName)
-        if (substanceA != null) {
-            val directInteraction = getDirectInteraction(interactions = substanceA.interactions, substanceName = bName)
-            if (directInteraction != null) {
-                return directInteraction
-            }
-            val wildcardInteraction = getWildcardInteraction(interactions = substanceA.interactions, substanceName = bName)
-            if (wildcardInteraction != null) {
-                return wildcardInteraction
-            }
-            val substanceB = substanceRepo.getSubstance(bName)
-            if (substanceB != null) {
-                val classInteraction = getClassInteraction(interactions = substanceA.interactions, categories = substanceB.categories)
-                if (classInteraction != null) {
-                    return classInteraction
-                }
-            }
-        }
-        return null
+    // a name as it was logged, together with the substance it stands for, if any
+    private class Checked(name: String, val substance: Substance?) {
+        val names = listOfNotNull(name, substance?.name).distinct()
     }
 
-    private fun getDirectInteraction(interactions: Interactions?, substanceName: String): InteractionType? {
-        if (interactions == null) {
-            return null
-        }
-        return if (isDirectMatch(interactions.dangerous, substanceName)) {
-            InteractionType.DANGEROUS
-        } else if (isDirectMatch(interactions.unsafe, substanceName)) {
-            InteractionType.UNSAFE
-        } else if (isDirectMatch(interactions.uncertain, substanceName)) {
-            InteractionType.UNCERTAIN
-        } else {
-            null
-        }
+    // a custom substance named with a common name like "Molly" is checked as MDMA,
+    // but only if no other substance shares that name and it is longer than one letter
+    private fun resolve(name: String): Substance? {
+        substanceRepo.getSubstance(name)?.let { return it }
+        val substanceName = substanceNamesByCommonName[name.lowercase()] ?: return null
+        return substanceRepo.getSubstance(substanceName)
     }
 
-    private fun getWildcardInteraction(interactions: Interactions?, substanceName: String): InteractionType? {
-        if (interactions == null) {
-            return null
-        }
-        return if (isWildcardMatch(interactions.dangerous, substanceName)) {
-            InteractionType.DANGEROUS
-        } else if (isWildcardMatch(interactions.unsafe, substanceName)) {
-            InteractionType.UNSAFE
-        } else if (isWildcardMatch(interactions.uncertain, substanceName)) {
-            InteractionType.UNCERTAIN
-        } else {
-            null
-        }
+    private val substanceNamesByCommonName: Map<String, String> by lazy {
+        substanceRepo.getAllSubstances()
+            .flatMap { substance -> substance.commonNames.map { it.lowercase() to substance.name } }
+            .filter { (commonName, _) -> commonName.length > 1 }
+            .distinct()
+            .groupBy({ it.first }, { it.second })
+            .filterValues { it.size == 1 }
+            .mapValues { it.value.first() }
     }
 
-    private fun getClassInteraction(interactions: Interactions?, categories: List<String>): InteractionType? {
-        if (interactions == null) {
-            return null
-        }
-        return if (isClassMatch(interactions.dangerous, categories)) {
-            InteractionType.DANGEROUS
-        } else if (isClassMatch(interactions.unsafe, categories)) {
-            InteractionType.UNSAFE
-        } else if (isClassMatch(interactions.uncertain, categories)) {
-            InteractionType.UNCERTAIN
-        } else {
-            null
-        }
+    private fun getInteractionFromAToB(a: Checked, b: Checked): InteractionType? {
+        val interactions = a.substance?.interactions ?: return null
+        return getDirectInteraction(interactions, b.names)
+            ?: getWildcardInteraction(interactions, b.names)
+            ?: b.substance?.let { getClassInteraction(interactions, it.categories) }
     }
 
+    private fun getDirectInteraction(interactions: Interactions, names: List<String>) =
+        firstMatchingType(interactions) { isDirectMatch(it, names) }
+
+    private fun getWildcardInteraction(interactions: Interactions, names: List<String>) =
+        firstMatchingType(interactions) { isWildcardMatch(it, names) }
+
+    private fun getClassInteraction(interactions: Interactions, categories: List<String>) =
+        firstMatchingType(interactions) { isClassMatch(it, categories) }
+
+    private fun firstMatchingType(
+        interactions: Interactions,
+        matches: (List<String>) -> Boolean
+    ): InteractionType? = when {
+        matches(interactions.dangerous) -> InteractionType.DANGEROUS
+        matches(interactions.unsafe) -> InteractionType.UNSAFE
+        matches(interactions.uncertain) -> InteractionType.UNCERTAIN
+        else -> null
+    }
+
+    // whole words only, so "Antidepressants" doesn't match the category depressant
     private fun isClassMatch(interactions: List<String>, categories: List<String>): Boolean {
-        val extendedInteractions = extendAndCleanInteractions(interactions)
-        return categories.any { categoryName ->
-                extendedInteractions.any { interactionName ->
-                    interactionName.contains(categoryName, ignoreCase = true)
-                }
-            }
+        val words = extendAndCleanInteractions(interactions)
+            .flatMap { it.lowercase().split(Regex("[\\s,/()]+")) }
+            .toSet()
+        return categories.any { category ->
+            val lowercased = category.lowercase()
+            lowercased in words || "${lowercased}s" in words
+        }
     }
 
-    private fun isWildcardMatch(interactions: List<String>, substanceName: String): Boolean {
-        val extendedInteractions = extendAndCleanInteractions(interactions)
-        return extendedInteractions.map { interaction ->
-            Regex(
-                pattern = interaction.replace(
-                    oldValue = "x",
-                    newValue = "[\\S]{2}",
-                    ignoreCase = true
-                ),
-                option = RegexOption.IGNORE_CASE
-            ).matches(substanceName)
-        }.any { it }
+    private fun isWildcardMatch(interactions: List<String>, names: List<String>): Boolean {
+        return extendAndCleanInteractions(interactions).any { interaction ->
+            val regex = wildcardRegex(interaction) ?: return@any false
+            names.any { regex.matches(it) }
+        }
     }
 
-    private fun isDirectMatch(interactions: List<String>, substanceName: String): Boolean {
-        val extendedInteractions = extendAndCleanInteractions(interactions)
-        return extendedInteractions.contains(substanceName)
+    private fun isDirectMatch(interactions: List<String>, names: List<String>): Boolean {
+        return extendAndCleanInteractions(interactions).any { interaction ->
+            names.any { it.equals(interaction, ignoreCase = true) }
+        }
     }
 
     private fun extendAndCleanInteractions(interactions: List<String>): List<String> {
         return interactions.flatMap { name ->
-            when (name) {
-                "Substituted amphetamines" -> {
-                    return@flatMap substitutedAmphetamines
-                }
-                "Serotonin releasers" -> {
-                    return@flatMap serotoninReleasers
-                }
-                "Tricyclic antidepressants" -> {
-                    return@flatMap emptyList() // remove because we don't want to match "depressant" with it and there is no substance that belongs to that class
-                }
-                else -> {
-                    return@flatMap listOf(name)
-                }
-            }
+            listOf(name) + (groupMembers[name.lowercase()] ?: emptyList())
         }.distinct()
     }
 
-    private val serotoninReleasers = listOf(
-        "MDMA",
-        "MDA",
-        "Mephedrone"
+    private val groupMembers = mapOf(
+        "substituted amphetamines" to substitutedAmphetamines,
+        "serotonin releasers" to listOf("MDMA", "MDA", "Mephedrone"),
+        "maoi" to listOf(
+            "Ayahuasca", "Syrian rue", "Harmala alkaloids", "Harmaline", "Harmine",
+            "Banisteriopsis caapi", "Moclobemide", "Phenelzine", "Tranylcypromine",
+            "Isocarboxazid", "Selegiline", "Rasagiline"
+        ),
+        "ssris" to listOf("Fluoxetine", "Sertraline", "Paroxetine", "Citalopram", "Escitalopram", "Fluvoxamine"),
+        "snris" to listOf("Venlafaxine", "Desvenlafaxine", "Duloxetine", "Milnacipran", "Levomilnacipran"),
+        "tricyclic antidepressants" to listOf(
+            "Amitriptyline", "Nortriptyline", "Clomipramine", "Imipramine", "Desipramine", "Doxepin"
+        ),
     )
 
-    private val substitutedAmphetamines = listOf(
-        "Amphetamine",
-        "Methamphetamine",
-        "Ethylamphetamine",
-        "Propylamphetamine",
-        "Isopropylamphetamine",
-        "Bromo-DragonFLY",
-        "Lisdexamfetamine",
-        "Clobenzorex",
-        "Dimethylamphetamine",
-        "Selegiline",
-        "Benzphetamine",
-        "Ortetamine",
-        "3-Methylamphetamine",
-        "4-Methylamphetamine",
-        "4-MMA",
-        "Xylopropamine",
-        "ß-methylamphetamine",
-        "3-phenylmethamphetamine",
-        "2-FA",
-        "2-FMA",
-        "2-FEA",
-        "3-FA",
-        "3-FMA",
-        "3-FEA",
-        "Fenfluramine",
-        "Norfenfluramine",
-        "4-FA",
-        "4-FMA",
-        "4-CA",
-        "4-BA",
-        "4-IA",
-        "DCA",
-        "4-HA",
-        "4-HMA",
-        "3,4-DHA",
-        "OMA",
-        "3-MA",
-        "MMMA",
-        "MMA",
-        "PMA",
-        "PMMA",
-        "PMEA",
-        "4-ETA",
-        "TMA-2",
-        "TMA-6",
-        "4-MTA",
-        "5-API",
-        "Cathine",
-        "Phenmetrazine",
-        "3-FPM",
-        "Prolintane"
-    )
-
+    companion object {
+        // in names like "DOx", "25x-NBOMe" or "5-MeO-xxT" an x stands for any part of the name,
+        // but an x after a lowercase letter, as in "Dextromethorphan", is just a letter
+        fun wildcardRegex(interaction: String): Regex? {
+            val pattern = StringBuilder()
+            var hasWildcard = false
+            var previousWasWildcard = false
+            interaction.forEachIndexed { index, char ->
+                val previous = interaction.getOrNull(index - 1)
+                val isLetter = previous != null && previous.isLowerCase() && !previousWasWildcard
+                if (char.equals('x', ignoreCase = true) && !isLetter) {
+                    // consecutive x like in "xxT" become a single wildcard
+                    if (!previousWasWildcard) pattern.append("\\S+")
+                    hasWildcard = true
+                    previousWasWildcard = true
+                } else {
+                    pattern.append(Regex.escape(char.toString()))
+                    previousWasWildcard = false
+                }
+            }
+            return if (hasWildcard) Regex(pattern.toString(), RegexOption.IGNORE_CASE) else null
+        }
+    }
 }
 
 data class Interaction(
     val aName: String,
     val bName: String,
     val interactionType: InteractionType,
+)
+
+private val substitutedAmphetamines = listOf(
+    "Amphetamine",
+    "Methamphetamine",
+    "Ethylamphetamine",
+    "Propylamphetamine",
+    "Isopropylamphetamine",
+    "Bromo-DragonFLY",
+    "Lisdexamfetamine",
+    "Clobenzorex",
+    "Dimethylamphetamine",
+    "Selegiline",
+    "Benzphetamine",
+    "Ortetamine",
+    "3-Methylamphetamine",
+    "4-Methylamphetamine",
+    "4-MMA",
+    "Xylopropamine",
+    "ß-methylamphetamine",
+    "3-phenylmethamphetamine",
+    "2-FA",
+    "2-FMA",
+    "2-FEA",
+    "3-FA",
+    "3-FMA",
+    "3-FEA",
+    "Fenfluramine",
+    "Norfenfluramine",
+    "4-FA",
+    "4-FMA",
+    "4-CA",
+    "4-BA",
+    "4-IA",
+    "DCA",
+    "4-HA",
+    "4-HMA",
+    "3,4-DHA",
+    "OMA",
+    "3-MA",
+    "MMMA",
+    "MMA",
+    "PMA",
+    "PMMA",
+    "PMEA",
+    "4-ETA",
+    "TMA-2",
+    "TMA-6",
+    "4-MTA",
+    "5-API",
+    "Cathine",
+    "Phenmetrazine",
+    "3-FPM",
+    "Prolintane"
 )
