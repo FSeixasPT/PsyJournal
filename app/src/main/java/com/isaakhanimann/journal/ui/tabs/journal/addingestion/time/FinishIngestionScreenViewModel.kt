@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.time
 
+import com.isaakhanimann.journal.ui.utils.SaveGuard
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -38,7 +39,6 @@ import com.isaakhanimann.journal.ui.utils.getInstant
 import com.isaakhanimann.journal.ui.utils.getLocalDateTime
 import com.isaakhanimann.journal.ui.utils.getStringOfPattern
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -48,7 +48,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
@@ -262,13 +261,10 @@ class FinishIngestionScreenViewModel @Inject constructor(
         selectedExperienceFlow.emit(closestExperience)
     }
 
+    val saveGuard = SaveGuard(viewModelScope)
+
     fun createSaveAndDismissAfter(dismiss: () -> Unit) {
-        viewModelScope.launch {
-            createAndSaveIngestion()
-            withContext(Dispatchers.Main) {
-                dismiss()
-            }
-        }
+        saveGuard.save(action = { createAndSaveIngestion() }, onSaved = dismiss)
     }
 
     private suspend fun createAndSaveIngestion() {

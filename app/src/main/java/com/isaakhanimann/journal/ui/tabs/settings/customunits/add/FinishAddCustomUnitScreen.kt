@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.settings.customunits.add
 
+import com.isaakhanimann.journal.ui.utils.SaveFailedDialog
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -83,6 +84,7 @@ fun FinishAddCustomUnitScreen(
     dismissAddCustomUnit: (customUnitId: Int) -> Unit,
     viewModel: FinishAddCustomUnitViewModel = hiltViewModel()
 ) {
+    SaveFailedDialog(viewModel.saveGuard)
     FinishAddCustomUnitScreenContent(
         substanceName = viewModel.substanceName,
         administrationRoute = viewModel.administrationRoute,

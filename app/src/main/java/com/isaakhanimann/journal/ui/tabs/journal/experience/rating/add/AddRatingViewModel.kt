@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.rating.add
 
+import com.isaakhanimann.journal.ui.utils.SaveGuard
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -81,8 +82,10 @@ class AddRatingViewModel @Inject constructor(
         selectedRating = newRating
     }
 
-    fun onDoneTap() {
-        viewModelScope.launch {
+    val saveGuard = SaveGuard(viewModelScope)
+
+    fun onDoneTap(onSaved: () -> Unit) {
+        saveGuard.save(action = {
             val selectedInstant = if (isThisOverallRating) {
                 null
             } else {
@@ -95,6 +98,6 @@ class AddRatingViewModel @Inject constructor(
                 experienceId = experienceId
             )
             experienceRepo.insert(newRating)
-        }
+        }, onSaved = onSaved)
     }
 }

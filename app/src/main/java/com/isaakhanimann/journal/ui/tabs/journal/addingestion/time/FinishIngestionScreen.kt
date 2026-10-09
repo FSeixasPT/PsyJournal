@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.time
 
+import com.isaakhanimann.journal.ui.utils.SaveFailedDialog
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -92,6 +93,7 @@ fun FinishIngestionScreen(
     viewModel: FinishIngestionScreenViewModel = hiltViewModel()
 ) {
     val localDateTime = viewModel.localDateTimeStartFlow.collectAsState().value
+    SaveFailedDialog(viewModel.saveGuard)
     FinishIngestionScreen(
         createSaveAndDismissAfter = {
             viewModel.createSaveAndDismissAfter(dismiss = dismissAddIngestionScreens)

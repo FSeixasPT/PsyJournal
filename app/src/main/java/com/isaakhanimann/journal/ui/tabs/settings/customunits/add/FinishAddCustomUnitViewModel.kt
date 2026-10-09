@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.settings.customunits.add
 
+import com.isaakhanimann.journal.ui.utils.SaveGuard
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -32,9 +33,7 @@ import com.isaakhanimann.journal.data.substances.classes.roa.DoseClass
 import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepository
 import com.isaakhanimann.journal.ui.main.navigation.graphs.FinishAddCustomUnitRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -130,8 +129,11 @@ class FinishAddCustomUnitViewModel @Inject constructor(
         }
     }
 
+    val saveGuard = SaveGuard(viewModelScope)
+
     fun createSaveAndDismissAfter(dismiss: (customUnitId: Int) -> Unit) {
-        viewModelScope.launch {
+        var customUnitId = 0
+        saveGuard.save(action = {
             val customUnit = CustomUnit(
                 substanceName = substanceName,
                 name = name,
@@ -145,10 +147,7 @@ class FinishAddCustomUnitViewModel @Inject constructor(
                 originalUnit = originalUnit,
                 note = note
             )
-            val customUnitId = experienceRepo.insert(customUnit)
-            withContext(Dispatchers.Main) {
-                dismiss(customUnitId)
-            }
-        }
+            customUnitId = experienceRepo.insert(customUnit)
+        }, onSaved = { dismiss(customUnitId) })
     }
 }

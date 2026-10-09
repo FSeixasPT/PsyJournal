@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
+import com.isaakhanimann.journal.ui.utils.SaveGuard
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
 import com.isaakhanimann.journal.data.room.experiences.entities.CustomUnit
@@ -63,7 +64,9 @@ interface PlannedIngestionActions {
     fun searchSubstances(searchText: String, experienceSubstanceNamesByRecency: List<String>): List<PickerEntry>
     fun companionColor(substanceName: String): AdaptiveColor?
     fun interactions(planned: PlannedIngestion, otherSubstanceNames: List<String>): List<Interaction>
-    fun log(planned: PlannedIngestion, color: AdaptiveColor)
+    // ignores a log tap while the previous log is still saving
+    val logGuard: SaveGuard
+    fun log(planned: PlannedIngestion, color: AdaptiveColor, onLogged: () -> Unit)
 }
 
 class PlannedIngestionHelper @Inject constructor(
@@ -163,8 +166,10 @@ class PlannedIngestionHelper @Inject constructor(
             override fun interactions(planned: PlannedIngestion, otherSubstanceNames: List<String>) =
                 interactionsWith(planned.substanceName, otherSubstanceNames, interactionChecker::getInteractionBetween)
 
-            override fun log(planned: PlannedIngestion, color: AdaptiveColor) {
-                scope.launch {
+            override val logGuard = SaveGuard(scope)
+
+            override fun log(planned: PlannedIngestion, color: AdaptiveColor, onLogged: () -> Unit) {
+                logGuard.save(action = {
                     logPlannedIngestion(
                         planned = planned,
                         experienceId = experienceId,
@@ -174,7 +179,11 @@ class PlannedIngestionHelper @Inject constructor(
                         loadCompanions = { experienceRepo.getAllSubstanceCompanionsFlow().first() },
                         save = { ingestion, companion -> experienceRepo.insertIngestionAndCompanion(ingestion, companion) }
                     )
-                }
+                }, onSaved = {
+                    // the same plan can be logged again later
+                    logGuard.reopen()
+                    onLogged()
+                })
             }
         }
     }

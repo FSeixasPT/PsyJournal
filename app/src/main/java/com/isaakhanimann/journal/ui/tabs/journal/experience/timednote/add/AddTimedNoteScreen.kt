@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timednote.add
 
+import com.isaakhanimann.journal.ui.utils.SaveFailedDialog
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
@@ -39,14 +40,14 @@ fun AddTimedNoteScreen(
     viewModel: AddTimedNoteViewModel = hiltViewModel(),
     navigateBack: () -> Unit
 ) {
+    SaveFailedDialog(viewModel.saveGuard)
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Add timed note") },
                 actions = {
                     IconButton(onClick = {
-                        viewModel.onDoneTap()
-                        navigateBack()
+                        viewModel.onDoneTap(onSaved = navigateBack)
                     }) {
                         Icon(
                             Icons.Filled.Done,

@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.rating.add
 
+import com.isaakhanimann.journal.ui.utils.SaveFailedDialog
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -71,10 +72,10 @@ fun AddRatingScreen(
     viewModel: AddRatingViewModel = hiltViewModel(),
     navigateBack: () -> Unit
 ) {
+    SaveFailedDialog(viewModel.saveGuard)
     AddRatingScreen(
         onDone = {
-            viewModel.onDoneTap()
-            navigateBack()
+            viewModel.onDoneTap(onSaved = navigateBack)
         },
         selectedTime = viewModel.localDateTimeFlow.collectAsState().value,
         onTimeChange = viewModel::onChangeTime,

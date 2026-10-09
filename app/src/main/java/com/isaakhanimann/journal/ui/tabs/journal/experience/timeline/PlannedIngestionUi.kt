@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
+import com.isaakhanimann.journal.ui.utils.SaveFailedDialog
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -242,6 +243,7 @@ fun PlannedIngestionSection(
             }
         )
     }
+    SaveFailedDialog(actions.logGuard)
     val snapshot = logSnapshot
     if (snapshot != null) {
         val (planned, color) = snapshot
@@ -259,9 +261,10 @@ fun PlannedIngestionSection(
                 onChangeDetails(planned)
             },
             onLog = {
-                actions.log(planned, color)
-                state.clearChoice()
-                logSnapshot = null
+                actions.log(planned, color) {
+                    state.clearChoice()
+                    logSnapshot = null
+                }
             }
         )
     }

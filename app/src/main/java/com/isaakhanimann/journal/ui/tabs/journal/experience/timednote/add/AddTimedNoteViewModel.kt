@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timednote.add
 
+import com.isaakhanimann.journal.ui.utils.SaveGuard
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -90,19 +91,23 @@ class AddTimedNoteViewModel @Inject constructor(
         color = newColor
     }
 
-    fun onDoneTap() {
-        if (note.isNotBlank()) {
-            viewModelScope.launch {
-                val newTimedNote = TimedNote(
-                    time = localDateTimeFlow.firstOrNull()?.getInstant() ?: Instant.now(),
-                    creationDate = Instant.now(),
-                    note = note,
-                    color = color,
-                    experienceId = experienceId,
-                    isPartOfTimeline = isPartOfTimeline
-                )
-                experienceRepo.insert(newTimedNote)
-            }
+    val saveGuard = SaveGuard(viewModelScope)
+
+    fun onDoneTap(onSaved: () -> Unit) {
+        if (note.isBlank()) {
+            onSaved()
+            return
         }
+        saveGuard.save(action = {
+            val newTimedNote = TimedNote(
+                time = localDateTimeFlow.firstOrNull()?.getInstant() ?: Instant.now(),
+                creationDate = Instant.now(),
+                note = note,
+                color = color,
+                experienceId = experienceId,
+                isPartOfTimeline = isPartOfTimeline
+            )
+            experienceRepo.insert(newTimedNote)
+        }, onSaved = onSaved)
     }
 }
