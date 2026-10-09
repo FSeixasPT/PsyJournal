@@ -24,17 +24,20 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -42,11 +45,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -164,6 +170,9 @@ fun rememberPlannedIngestionState(realModel: AllTimelinesModel, actions: Planned
     )
 }
 
+// a pinned plan is on the chart and in the notification, so its chip can't be hidden
+fun isPlanChipShown(isTurnedOn: Boolean, isPinned: Boolean) = isTurnedOn || isPinned
+
 @Composable
 fun PlannedIngestionSection(
     state: PlannedIngestionState,
@@ -189,8 +198,36 @@ fun PlannedIngestionSection(
             onLogOpened()
         }
     }
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(text = "Hold to preview taking now:", style = MaterialTheme.typography.labelMedium)
+    val isTurnedOn = actions.isChipShownFlow.collectAsState().value
+    if (!isPlanChipShown(isTurnedOn = isTurnedOn, isPinned = state.isPinned)) {
+        TextButton(
+            onClick = { actions.setChipShown(true) },
+            // lines the text up with the details above
+            contentPadding = PaddingValues(end = 12.dp),
+            modifier = modifier
+        ) {
+            Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+            Spacer(modifier = Modifier.width(ButtonDefaults.IconSpacing))
+            Text("Preview next ingestion")
+        }
+    } else Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "Hold to preview taking now:",
+                style = MaterialTheme.typography.labelMedium,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(
+                onClick = {
+                    // hiding a pinned plan would leave its line on the chart unexplained
+                    if (state.isPinned) actions.pin(null)
+                    actions.setChipShown(false)
+                },
+                modifier = Modifier.size(28.dp)
+            ) {
+                Icon(Icons.Outlined.Close, contentDescription = "Hide preview", modifier = Modifier.size(18.dp))
+            }
+        }
         PlannedIngestionChip(
             state = state,
             onEdit = { isEditing = true },
@@ -207,7 +244,7 @@ fun PlannedIngestionSection(
                 state.planned?.let { logSnapshot = it to (state.plannedLine?.color ?: AdaptiveColor.entries.first()) }
             }
         )
-        // both lines are always laid out so that nothing moves when they appear
+        // the lines appear below the chip, so the chip stays under the finger
         val model = state.displayedModel
         val experienceStart = state.realModel.startTime
         val savedTimeDisplayOption = actions.savedTimeDisplayOptionFlow.collectAsState().value
@@ -235,12 +272,16 @@ fun PlannedIngestionSection(
                 "If taken now: starts ${timeText(it.start)} · peaks $peaks · ends ${timeText(it.end)}"
             })
         }
-        Text(
-            text = lines.joinToString("\n"),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold,
-            minLines = 2
-        )
+        AnimatedVisibility(visible = lines.isNotEmpty()) {
+            // keeps the last text while it collapses
+            var shownText by remember { mutableStateOf("") }
+            if (lines.isNotEmpty()) shownText = lines.joinToString("\n")
+            Text(
+                text = shownText,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
     }
     if (isEditing) {
         PlannedIngestionEditorSheet(

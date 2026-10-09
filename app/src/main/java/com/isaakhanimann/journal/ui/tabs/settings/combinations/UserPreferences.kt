@@ -60,6 +60,7 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
         val KEY_IS_TIMELINE_HIDDEN = booleanPreferencesKey("KEY_IS_TIMELINE_HIDDEN")
         val KEY_LIVE_EXPERIENCE = stringPreferencesKey("KEY_LIVE_EXPERIENCE")
         val KEY_LIVE_AUTO_START = booleanPreferencesKey("KEY_LIVE_AUTO_START")
+        val KEY_PLAN_CHIP_SHOWN = booleanPreferencesKey("KEY_PLAN_CHIP_SHOWN")
         val KEY_LIVE_SHOW_ON_LOCK_SCREEN = booleanPreferencesKey("KEY_LIVE_SHOW_ON_LOCK_SCREEN")
     }
 
@@ -227,6 +228,14 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
                 preferences[PreferencesKeys.KEY_LIVE_EXPERIENCE] = value.toPreferenceString()
             }
         }
+    }
+
+    // the planned-ingestion chip under the timeline, hidden behind "Preview next ingestion" until turned on
+    val isPlanChipShownFlow: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[PreferencesKeys.KEY_PLAN_CHIP_SHOWN] ?: false }
+
+    suspend fun saveIsPlanChipShown(value: Boolean) {
+        dataStore.edit { preferences -> preferences[PreferencesKeys.KEY_PLAN_CHIP_SHOWN] = value }
     }
 
     val isLiveAutoStartFlow: Flow<Boolean> = dataStore.data

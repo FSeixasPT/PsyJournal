@@ -55,6 +55,9 @@ interface PlannedIngestionActions {
     val savedTimeDisplayOptionFlow: StateFlow<SavedTimeDisplayOption>
     // which routes are offered in the editor and count for previewability
     val routeVisibilityFlow: StateFlow<RouteVisibility>
+    // whether the chip was turned on with "Preview next ingestion", for all experiences
+    val isChipShownFlow: StateFlow<Boolean>
+    fun setChipShown(isShown: Boolean)
     fun choose(planned: PlannedIngestion?)
     // lets the normal add-ingestion flow propose this experience
     fun prepareChangeDetails(lastIngestionTime: Instant?)
@@ -106,8 +109,17 @@ class PlannedIngestionHelper @Inject constructor(
         val routeVisibility: StateFlow<RouteVisibility> =
             userPreferences.routeVisibilityFlow.stateIn(scope, SharingStarted.Eagerly, RouteVisibility())
 
+        val isChipShown: StateFlow<Boolean> =
+            userPreferences.isPlanChipShownFlow.stateIn(scope, SharingStarted.Eagerly, false)
+
         return object : PlannedIngestionActions {
             override val routeVisibilityFlow: StateFlow<RouteVisibility> = routeVisibility
+
+            override val isChipShownFlow: StateFlow<Boolean> = isChipShown
+
+            override fun setChipShown(isShown: Boolean) {
+                scope.launch { userPreferences.saveIsPlanChipShown(isShown) }
+            }
 
             override val pinnedRedoseFlow = pinFlow
 

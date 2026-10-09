@@ -20,6 +20,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
   - Turn it on with "Live notification" above an experience's timeline, next to "Info". In Settings you can also have it start automatically after logging a recent ingestion.
   - Substance details are hidden on the lock screen unless you allow them in Settings.
 - **Planned-ingestion chip under the timeline.**
+  - Show it with "Preview next ingestion" below the chart, and hide it again with ×. Your choice is remembered.
   - Hold the chip to preview the effect of taking a dose now, drawn as a dashed line on the chart, with the resulting intensity and peak.
   - Edit the planned substance, route and dose, including custom units.
   - Pin the plan to keep it visible.
