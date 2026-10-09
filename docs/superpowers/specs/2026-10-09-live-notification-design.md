@@ -85,7 +85,7 @@ The phase comes from the substance's line as drawn on the chart: the sum of all 
 
 Let *h(t)* be the height of the substance's line, from the existing `heightAt` of its full timelines, and *M* its highest point over the whole line.
 
-- **Direction:** *d* = *h*(now + 1 min) − *h*(now − 1 min). It is measured over a short window so the hint times are accurate to about a minute. The threshold *t* = 0.01·max(*h*(now), 0.1·*M*) is a slope of 5 % of the current height per 10 minutes, but never less than 5 % of a tenth of *M*. Measuring against the current height means a low line that is slowly falling, such as a small second dose after the first has ended, still counts as coming down.
+- **Direction:** *d* = *h*(now + 1 min) − *h*(now − 1 min). It is measured over a short window so the hint times are accurate to about a minute. The line is made of straight pieces, so any rise or fall counts: the threshold *t* = 0.0002·*M* only absorbs rounding. A slow comedown, such as oral caffeine's 8-hour offset, is still coming down, and a small top-up that doesn't lift the line leaves it falling.
   - *h*(now) = 0 and the line rises later: `WAITING_FOR_ONSET`.
   - *h*(now) = 0 and the line stays at 0: `ENDED`.
   - *d* > *t*: `COMING_UP`.

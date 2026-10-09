@@ -21,7 +21,6 @@ package com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.CurveLine
 import java.time.Duration
 import java.time.Instant
-import kotlin.math.max
 
 enum class Phase { WAITING_FOR_ONSET, COMING_UP, PEAKING, STEADY, COMING_DOWN, ACTIVE, ENDED, NO_TIMELINE }
 
@@ -67,8 +66,9 @@ fun CurveLine.phaseAt(time: Instant): Phase {
         return if (risesLater) Phase.WAITING_FOR_ONSET else Phase.ENDED
     }
     val change = heightAt(time + halfWindow) - heightAt(time - halfWindow)
-    // 5 % per 10 minutes of the current height, but at least of a tenth of the highest point
-    val threshold = 0.01f * max(height, 0.1f * maxHeight)
+    // the line is made of straight pieces, so any rise or fall counts; a slow comedown like
+    // oral caffeine's is still coming down, the tolerance only absorbs rounding
+    val threshold = 0.0002f * maxHeight
     return when {
         change > threshold -> Phase.COMING_UP
         change < -threshold -> Phase.COMING_DOWN

@@ -123,6 +123,22 @@ class CurvePhaseTest {
     }
 
     @Test
+    fun aSlowComedownIsComingDown() {
+        // like oral caffeine: an 8 hour offset falls slowly but steadily
+        val slow = RoaDuration(minutes(30f), minutes(30f), minutes(60f), minutes(480f), null, null)
+        val line = AllTimelinesModel(
+            dataForLines = listOf(dose(0, 1f).copy(roaDuration = slow)),
+            dataForRatings = emptyList(),
+            timedNotes = emptyList(),
+            areSubstanceHeightsIndependent = false
+        ).substanceCurves().single().line!!
+        val result = line.phaseWithHint(at(150))
+        assertEquals(Phase.COMING_DOWN, result.phase)
+        assertHint(HintKind.ENDS, at(600), result)
+        assertHint(HintKind.COMES_DOWN, at(120), line.phaseWithHint(at(90)))
+    }
+
+    @Test
     fun aLowFlatLineIsSteady() {
         // after the first dose ends at 23:00 the second dose's peak stays at 0.3 until 00:00
         val result = curve(dose(0, 1f), dose(120, 0.3f)).phaseWithHint(at(210))
