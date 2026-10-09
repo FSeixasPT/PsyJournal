@@ -259,6 +259,15 @@ class AllTimelinesModel(
         }
     }
 
+    fun substanceCurves(): List<SubstanceCurve> = roaGroups.zip(groupDrawables).map { (group, drawable) ->
+        SubstanceCurve(
+            substanceName = group.substanceName,
+            routes = group.routes.map { it.route },
+            color = group.color,
+            line = drawable.fullTimelines?.let { CurveLine(startTime, it) }
+        )
+    }
+
     private companion object {
         fun createGroup(
             substanceName: String,
