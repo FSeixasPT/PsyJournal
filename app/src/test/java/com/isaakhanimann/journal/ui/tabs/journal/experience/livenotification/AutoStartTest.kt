@@ -38,4 +38,11 @@ class AutoStartTest {
         assertFalse(isRecentForAutoStart(now.minusSeconds(60 * 60 + 1), now))
         assertFalse(isRecentForAutoStart(now.plusSeconds(5 * 60 + 1), now))
     }
+
+    @Test
+    fun onlyTheUsersOwnIngestionsStartIt() {
+        assertTrue(shouldAutoStart(consumerName = null, ingestionTime = now, now = now))
+        assertFalse(shouldAutoStart(consumerName = "Friend", ingestionTime = now, now = now))
+        assertFalse(shouldAutoStart(consumerName = null, ingestionTime = now.minusSeconds(2 * 60 * 60), now = now))
+    }
 }

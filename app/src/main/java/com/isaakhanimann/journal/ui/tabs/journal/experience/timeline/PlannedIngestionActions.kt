@@ -185,7 +185,8 @@ class PlannedIngestionHelper @Inject constructor(
                 }, onSaved = {
                     // the same plan can be logged again later
                     logGuard.reopen()
-                    liveNotificationController.onIngestionLogged(experienceId, now)
+                    // a planned ingestion is always the user's own
+                    liveNotificationController.onIngestionLogged(experienceId, now, consumerName = null)
                     onLogged()
                 })
             }

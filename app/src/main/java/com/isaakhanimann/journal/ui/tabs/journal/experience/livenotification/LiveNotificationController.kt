@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.combine
 import android.app.AlarmManager
 import android.content.Context
@@ -54,7 +55,7 @@ class LiveNotificationController @Inject constructor(
     private val userPreferences: UserPreferences,
     private val notifier: LiveNotificationNotifier,
 ) {
-    // a failed refresh must never crash the app, the next refresh tries again
+    // a failure in this scope must never crash the app
     private val scope = CoroutineScope(
         SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, error ->
             Log.w("LiveNotification", "Refresh failed", error)
@@ -82,24 +83,36 @@ class LiveNotificationController @Inject constructor(
     }
 
     suspend fun start(experienceId: Int) {
-        val experience = experienceRepo.getExperience(experienceId) ?: return
-        userPreferences.saveLiveExperience(LiveExperience(experience.id, experience.creationDate))
+        runSafely(onFailure = ::logFailure) {
+            val experience = experienceRepo.getExperience(experienceId) ?: return@runSafely
+            userPreferences.saveLiveExperience(LiveExperience(experience.id, experience.creationDate))
+        }
         refresh()
     }
 
-    suspend fun stop() = mutex.withLock { stopLocked() }
+    suspend fun stop() = runSafely(onFailure = ::logFailure) { mutex.withLock { stopLocked() } }
 
-    // starts the notification after logging an ingestion taken around now, if the user chose so
-    fun onIngestionLogged(experienceId: Int, ingestionTime: Instant) {
+    // starts the notification after logging an ingestion of the user taken around now, if the user chose so
+    fun onIngestionLogged(experienceId: Int, ingestionTime: Instant, consumerName: String?) {
         scope.launch {
-            if (!isRecentForAutoStart(ingestionTime, Instant.now())) return@launch
+            if (!shouldAutoStart(consumerName, ingestionTime, Instant.now())) return@launch
             if (!userPreferences.isLiveAutoStartFlow.first()) return@launch
             if (!notifier.canPost()) return@launch
             start(experienceId)
         }
     }
 
-    suspend fun refresh() = mutex.withLock {
+    // a failed refresh is tried again later, so the notification never stays frozen
+    suspend fun refresh() = runSafely(
+        onFailure = { error ->
+            logFailure(error)
+            scheduleRefresh(Instant.now() + retryAfterFailure)
+        }
+    ) {
+        mutex.withLock { refreshLocked() }
+    }
+
+    private suspend fun refreshLocked() {
         val live = userPreferences.liveExperienceFlow.first()
         val experience = live?.let { experienceRepo.getExperience(it.experienceId) }
         val now = Instant.now()
@@ -165,7 +178,28 @@ class LiveNotificationController @Inject constructor(
     }
 
     private fun alarmManager() = context.getSystemService(AlarmManager::class.java)
+
+    private fun logFailure(error: Throwable) {
+        Log.w("LiveNotification", "Live notification update failed", error)
+    }
 }
+
+private val retryAfterFailure: Duration = Duration.ofMinutes(5)
+
+// runs a step of the live notification without letting a failure crash the app; cancellation still cancels
+suspend fun runSafely(onFailure: (Throwable) -> Unit, block: suspend () -> Unit) {
+    try {
+        block()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        onFailure(e)
+    }
+}
+
+// a friend's ingestion doesn't belong to the user's own timeline, so it never starts the notification
+fun shouldAutoStart(consumerName: String?, ingestionTime: Instant, now: Instant): Boolean =
+    consumerName == null && isRecentForAutoStart(ingestionTime, now)
 
 // auto-start only for ingestions taken around now, not for entries about the past or plans for later
 fun isRecentForAutoStart(ingestionTime: Instant, now: Instant): Boolean =

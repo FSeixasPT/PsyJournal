@@ -293,14 +293,14 @@ class FinishIngestionScreenViewModel @Inject constructor(
                 experience = newExperience,
                 substanceCompanion = substanceCompanion
             )
-            liveNotificationController.onIngestionLogged(newExperience.id, newIngestion.time)
+            liveNotificationController.onIngestionLogged(newExperience.id, newIngestion.time, newIngestion.consumerName)
         } else {
             val newIngestion = createNewIngestion(oldIdToUse)
             experienceRepo.insertIngestionAndCompanion(
                 ingestion = newIngestion,
                 substanceCompanion = substanceCompanion
             )
-            liveNotificationController.onIngestionLogged(oldIdToUse, newIngestion.time)
+            liveNotificationController.onIngestionLogged(oldIdToUse, newIngestion.time, newIngestion.consumerName)
         }
     }
 
