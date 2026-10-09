@@ -175,15 +175,16 @@ fun PlannedIngestionSection(
     onChangeDetails: (PlannedIngestion) -> Unit,
     modifier: Modifier = Modifier,
     // opens the quick-log dialog for the pinned plan once, when coming from the notification
-    openLogOnStart: Boolean = false,
+    isLogPending: () -> Boolean = { false },
     onLogOpened: () -> Unit = {},
 ) {
     var isEditing by remember { mutableStateOf(false) }
     // the planned ingestion and its color when ✓ was tapped, so the dialog logs exactly what it shows
     var logSnapshot by remember { mutableStateOf<Pair<PlannedIngestion, AdaptiveColor>?>(null) }
-    LaunchedEffect(openLogOnStart, state.isPinned, state.planned) {
+    // asked when the pinned plan has loaded, so a request that has expired by then is ignored
+    LaunchedEffect(state.isPinned, state.planned) {
         val planned = state.planned
-        if (openLogOnStart && state.isPinned && planned != null) {
+        if (state.isPinned && planned != null && isLogPending()) {
             logSnapshot = planned to (state.plannedLine?.color ?: AdaptiveColor.entries.first())
             onLogOpened()
         }

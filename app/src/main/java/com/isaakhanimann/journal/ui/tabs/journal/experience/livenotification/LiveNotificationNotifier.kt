@@ -51,23 +51,24 @@ class LiveNotificationNotifier @Inject constructor(
     fun canPost(): Boolean {
         val isGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-        return isGranted && NotificationManagerCompat.from(context).areNotificationsEnabled()
+        val manager = NotificationManagerCompat.from(context)
+        return isGranted && manager.areNotificationsEnabled() &&
+                isChannelUsable(manager.getNotificationChannelCompat(CHANNEL_ID)?.importance)
     }
 
     @SuppressLint("MissingPermission") // canPost() checks the permission
     fun post(experienceId: Int, content: LiveNotificationContent, chart: Bitmap?, showDetailsOnLockScreen: Boolean) {
         if (!canPost()) return
         ensureChannel()
-        val (shown, more) = content.collapsedLines()
         val collapsed = RemoteViews(context.packageName, R.layout.live_notification_collapsed).apply {
             setTextViewText(R.id.live_title, content.title)
-            // the collapsed view only has room for one line, so its substances share it
-            setTextViewText(R.id.live_lines, linesText(shown, more, plannedLine = null, separator = "   "))
+            // the collapsed view only has room for one line, so its substances share it in short form
+            setTextViewText(R.id.live_lines, linesText(content.lines, { it.shortText }, plannedLine = null, separator = " · "))
         }
         val expanded = RemoteViews(context.packageName, R.layout.live_notification_expanded).apply {
             if (chart != null) setImageViewBitmap(R.id.live_chart, chart) else setViewVisibility(R.id.live_chart, View.GONE)
             setTextViewText(R.id.live_title, content.title)
-            setTextViewText(R.id.live_lines, linesText(content.lines, 0, content.plannedLine, separator = "\n"))
+            setTextViewText(R.id.live_lines, linesText(content.lines, { it.text }, content.plannedLine, separator = "\n"))
         }
         // the lock screen shows this version unless details are allowed there
         val publicVersion = baseBuilder()
@@ -108,8 +109,15 @@ class LiveNotificationNotifier @Inject constructor(
         .setSilent(true)
         .setCategory(NotificationCompat.CATEGORY_PROGRESS)
 
-    private fun linesText(lines: List<SubstanceLine>, more: Int, plannedLine: String?, separator: String): CharSequence {
+    private fun linesText(
+        lines: List<SubstanceLine>,
+        textOf: (SubstanceLine) -> String,
+        plannedLine: String?,
+        separator: String,
+    ): CharSequence {
         val text = SpannableStringBuilder()
+        // first, so a long list can't push it out of the expanded view's limited height
+        if (plannedLine != null) text.append(plannedLine)
         lines.forEach { line ->
             if (text.isNotEmpty()) text.append(separator)
             val dotStart = text.length
@@ -120,10 +128,8 @@ class LiveNotificationNotifier @Inject constructor(
                 dotStart + 1,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
             )
-            text.append(line.text)
+            text.append(textOf(line))
         }
-        if (more > 0) text.append(separator).append("+$more more")
-        if (plannedLine != null) text.append("\n").append(plannedLine)
         return text
     }
 

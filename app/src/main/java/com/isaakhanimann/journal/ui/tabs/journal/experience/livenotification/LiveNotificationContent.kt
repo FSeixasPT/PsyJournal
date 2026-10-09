@@ -41,6 +41,15 @@ data class SubstanceLine(
     val text: String,
 ) {
     val isActive: Boolean get() = phase != Phase.ENDED && phase != Phase.NO_TIMELINE
+
+    // for the collapsed notification, where all substances share one line
+    val shortText: String
+        get() = when {
+            percentOfPeak == null -> "$label ${phase.word}"
+            phase == Phase.COMING_UP -> "$label $percentOfPeak% ↑"
+            phase == Phase.COMING_DOWN -> "$label $percentOfPeak% ↓"
+            else -> "$label $percentOfPeak% ${phase.word}"
+        }
 }
 
 data class LiveNotificationContent(
@@ -52,11 +61,7 @@ data class LiveNotificationContent(
     val endsAt: Instant?,
     val isFinished: Boolean,
     val nextRefreshAt: Instant,
-) {
-    // the lines that fit in the collapsed notification, and how many more there are
-    fun collapsedLines(max: Int = 3): Pair<List<SubstanceLine>, Int> =
-        lines.take(max) to (lines.size - max).coerceAtLeast(0)
-}
+)
 
 // the notification is about the ongoing experience, so Auto is relative to now, like the redose chip
 fun liveTimeDisplayOption(saved: SavedTimeDisplayOption): TimeDisplayOption = when (saved) {

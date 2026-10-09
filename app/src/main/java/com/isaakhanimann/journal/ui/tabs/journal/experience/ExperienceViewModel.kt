@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.QuickLogRequest
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.hasActiveEffects
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationController
 import kotlinx.coroutines.flow.StateFlow
@@ -79,7 +80,7 @@ class ExperienceViewModel @Inject constructor(
     combinationSettingsStorage: CombinationSettingsStorage,
     plannedIngestionHelper: PlannedIngestionHelper,
     private val liveNotificationController: LiveNotificationController,
-    state: SavedStateHandle
+    private val state: SavedStateHandle
 ) : ViewModel() {
 
     private val areSubstanceHeightsIndependentFlow =
@@ -136,13 +137,14 @@ class ExperienceViewModel @Inject constructor(
 
     private val localIsFavoriteFlow = MutableStateFlow(false)
 
-    private val quickLogRequest = MutableStateFlow(false)
+    private var quickLogRequest = QuickLogRequest(requestedAt = null)
 
-    val isQuickLogRequested: StateFlow<Boolean> = quickLogRequest
+    fun isQuickLogPending(): Boolean = quickLogRequest.isPending(Instant.now())
 
-    // the notification's Log planned opens the quick-log dialog once
+    // the notification's Log planned opens the quick-log dialog once, also not again after the app was restarted
     fun onQuickLogOpened() {
-        quickLogRequest.value = false
+        quickLogRequest.consume()
+        state["openQuickLog"] = false
     }
 
     val isFavoriteFlow = localIsFavoriteFlow.stateIn(
@@ -155,7 +157,7 @@ class ExperienceViewModel @Inject constructor(
         val experienceRoute = state.toRoute<ExperienceRoute>()
         val expId = experienceRoute.experienceId
         experienceId = expId
-        quickLogRequest.value = experienceRoute.openQuickLog
+        if (experienceRoute.openQuickLog) quickLogRequest = QuickLogRequest(requestedAt = Instant.now())
         viewModelScope.launch {
             val experience = experienceRepo.getExperience(expId)
             val isFavorite = experience?.isFavorite ?: false

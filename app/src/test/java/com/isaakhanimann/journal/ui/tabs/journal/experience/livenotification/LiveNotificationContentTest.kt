@@ -136,17 +136,23 @@ class LiveNotificationContentTest {
     }
 
     @Test
-    fun collapsedShowsThreeLinesAndCountsTheRest() {
-        val lines = (1..5).map { line(name = "Substance $it", minutesAfterStart = it.toLong()) }
-        val (shown, more) = content(lines, at(90)).collapsedLines()
-        assertEquals(listOf("Substance 1", "Substance 2", "Substance 3"), shown.map { it.label })
-        assertEquals(2, more)
-    }
-
-    @Test
     fun activeEffectsNeedALineThatHasntEnded() {
         assertFalse(hasActiveEffects(emptyList(), false, true, at(90)))
         assertTrue(hasActiveEffects(listOf(line()), false, true, at(90)))
         assertFalse(hasActiveEffects(listOf(line()), false, true, at(200)))
+    }
+
+    @Test
+    fun shortTextsFitManySubstancesOnOneLine() {
+        val lines = listOf(line(name = "A"), line(name = "B", minutesAfterStart = 100), line(name = "C", duration = null))
+        val result = content(lines, at(150))
+        // A comes down, B comes up, C has no timeline
+        assertEquals(listOf("A 50% ↓", "B 67% ↑", "C no timeline"), result.lines.map { it.shortText })
+    }
+
+    @Test
+    fun peakingAndWaitingUseWords() {
+        val result = content(listOf(line(name = "A"), line(name = "B", minutesAfterStart = 80)), at(90))
+        assertEquals(listOf("A 100% peaking", "B waiting for onset"), result.lines.map { it.shortText })
     }
 }

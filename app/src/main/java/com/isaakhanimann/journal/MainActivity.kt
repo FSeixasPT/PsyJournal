@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal
 
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.isFreshNotificationLaunch
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.notificationTarget
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.NotificationTarget
 import androidx.compose.runtime.mutableStateOf
@@ -45,7 +46,9 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        if (savedInstanceState == null) notificationTarget.value = intent.notificationTarget()
+        if (savedInstanceState == null && isFreshNotificationLaunch(intent.flags)) {
+            notificationTarget.value = intent.notificationTarget()
+        }
         setContent {
             JournalTheme {
                 Surface(

@@ -19,6 +19,7 @@
 package com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -61,7 +62,7 @@ fun LiveNotificationRow(isLive: Boolean, setLive: (Boolean) -> Unit) {
                     when {
                         !isChecked -> setLive(false)
                         needsPermission -> permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        !NotificationManagerCompat.from(context).areNotificationsEnabled() -> isBlocked = true
+                        !areLiveNotificationsAllowed(context) -> isBlocked = true
                         else -> {
                             isBlocked = false
                             setLive(true)
@@ -85,4 +86,11 @@ fun LiveNotificationRow(isLive: Boolean, setLive: (Boolean) -> Unit) {
             }
         }
     }
+}
+
+// notifications in general and the live timeline category in particular, which can be blocked on its own
+private fun areLiveNotificationsAllowed(context: Context): Boolean {
+    val manager = NotificationManagerCompat.from(context)
+    return manager.areNotificationsEnabled() &&
+            isChannelUsable(manager.getNotificationChannelCompat(LiveNotificationNotifier.CHANNEL_ID)?.importance)
 }
