@@ -123,6 +123,11 @@ fun DrugTestingScreen() {
                     city = "Montreal",
                     url = "https://grip-prevention.ca/en/drug-checking/"
                 )
+                TestingServiceItem(
+                    name = "Toronto's Drug Checking Service",
+                    city = "Toronto",
+                    url = "https://drugchecking.community"
+                )
             }
             CardWithTesting(title = "Germany") {
                 TestingServiceItem(
@@ -169,6 +174,13 @@ fun DrugTestingScreen() {
                     name = "Rusopplysningen",
                     city = "Oslo",
                     url = "https://rusopplysningen.no/analysetjeneste"
+                )
+            }
+            CardWithTesting(title = "Portugal") {
+                TestingServiceItem(
+                    name = "Kosmicare",
+                    city = "Lisbon",
+                    url = "https://www.kosmicare.org"
                 )
             }
             CardWithTesting(title = "Slovenia") {
