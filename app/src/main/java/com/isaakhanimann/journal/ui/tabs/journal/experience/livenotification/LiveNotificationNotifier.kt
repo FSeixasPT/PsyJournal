@@ -60,11 +60,14 @@ class LiveNotificationNotifier @Inject constructor(
         ensureChannel()
         val (shown, more) = content.collapsedLines()
         val collapsed = RemoteViews(context.packageName, R.layout.live_notification_collapsed).apply {
-            setTextViewText(R.id.live_lines, linesText(shown, more, plannedLine = null))
+            setTextViewText(R.id.live_title, content.title)
+            // the collapsed view only has room for one line, so its substances share it
+            setTextViewText(R.id.live_lines, linesText(shown, more, plannedLine = null, separator = "   "))
         }
         val expanded = RemoteViews(context.packageName, R.layout.live_notification_expanded).apply {
             if (chart != null) setImageViewBitmap(R.id.live_chart, chart) else setViewVisibility(R.id.live_chart, View.GONE)
-            setTextViewText(R.id.live_lines, linesText(content.lines, 0, content.plannedLine))
+            setTextViewText(R.id.live_title, content.title)
+            setTextViewText(R.id.live_lines, linesText(content.lines, 0, content.plannedLine, separator = "\n"))
         }
         // the lock screen shows this version unless details are allowed there
         val publicVersion = baseBuilder()
@@ -105,10 +108,10 @@ class LiveNotificationNotifier @Inject constructor(
         .setSilent(true)
         .setCategory(NotificationCompat.CATEGORY_PROGRESS)
 
-    private fun linesText(lines: List<SubstanceLine>, more: Int, plannedLine: String?): CharSequence {
+    private fun linesText(lines: List<SubstanceLine>, more: Int, plannedLine: String?, separator: String): CharSequence {
         val text = SpannableStringBuilder()
         lines.forEach { line ->
-            if (text.isNotEmpty()) text.append("\n")
+            if (text.isNotEmpty()) text.append(separator)
             val dotStart = text.length
             text.append("● ")
             text.setSpan(
@@ -119,7 +122,7 @@ class LiveNotificationNotifier @Inject constructor(
             )
             text.append(line.text)
         }
-        if (more > 0) text.append("\n+$more more")
+        if (more > 0) text.append(separator).append("+$more more")
         if (plannedLine != null) text.append("\n").append(plannedLine)
         return text
     }

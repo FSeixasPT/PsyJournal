@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification
 
+import kotlinx.coroutines.flow.combine
 import android.app.AlarmManager
 import android.content.Context
 import android.util.Log
@@ -68,7 +69,14 @@ class LiveNotificationController @Inject constructor(
         scope.launch {
             userPreferences.liveExperienceFlow.collectLatest { live ->
                 if (live == null) return@collectLatest
-                experienceRepo.getIngestionsWithCompanionsFlow(live.experienceId).collect { refresh() }
+                // anything the notification shows: the ingestions, the pinned plan and the display settings
+                combine(
+                    experienceRepo.getIngestionsWithCompanionsFlow(live.experienceId),
+                    userPreferences.pinnedRedoseFlow,
+                    userPreferences.savedTimeDisplayOptionFlow,
+                    userPreferences.areRoutesMergedFlow,
+                    userPreferences.areSubstanceHeightsIndependentFlow,
+                ) { _, _, _, _, _ -> }.collect { refresh() }
             }
         }
     }
