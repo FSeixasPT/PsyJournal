@@ -18,6 +18,10 @@
 
 package com.isaakhanimann.journal.ui.main
 
+import com.isaakhanimann.journal.ui.main.navigation.graphs.AddIngestionRoute
+import com.isaakhanimann.journal.ui.main.navigation.graphs.ExperienceRoute
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.NotificationTarget
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
@@ -41,6 +45,8 @@ import com.isaakhanimann.journal.ui.main.navigation.topLevelRoutes
 
 @Composable
 fun MainScreen(
+    notificationTarget: NotificationTarget? = null,
+    onNotificationTargetHandled: () -> Unit = {},
     viewModel: MainScreenViewModel = hiltViewModel()
 ) {
     if (viewModel.isAcceptedFlow.collectAsState().value) {
@@ -98,8 +104,22 @@ fun MainScreen(
                 saferGraph(navController)
                 settingsGraph(navController)
             }
+            LaunchedEffect(notificationTarget) {
+                when (val target = notificationTarget) {
+                    null -> return@LaunchedEffect
+                    is NotificationTarget.Experience -> if (viewModel.experienceExists(target.experienceId)) {
+                        navController.navigate(ExperienceRoute(target.experienceId, target.openQuickLog))
+                    }
+                    NotificationTarget.AddIngestion -> navController.navigate(AddIngestionRoute)
+                }
+                onNotificationTargetHandled()
+            }
         }
     } else {
+        // until the conditions are accepted, the notification only opens the app
+        LaunchedEffect(notificationTarget) {
+            if (notificationTarget != null) onNotificationTargetHandled()
+        }
         AcceptConditionsScreen(onTapAccept = viewModel::accept)
     }
 }

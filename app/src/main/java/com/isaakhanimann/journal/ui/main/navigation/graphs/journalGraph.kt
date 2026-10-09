@@ -184,7 +184,7 @@ data class TimelineScreenRoute(val consumerName: String, val experienceId: Int)
 object VolumetricDosingOnJournalTabRoute
 
 @Serializable
-data class ExperienceRoute(val experienceId: Int)
+data class ExperienceRoute(val experienceId: Int, val openQuickLog: Boolean = false)
 
 @Serializable
 data class EditIngestionRoute(val ingestionId: Int)

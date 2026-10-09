@@ -18,6 +18,10 @@
 
 package com.isaakhanimann.journal
 
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.notificationTarget
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.NotificationTarget
+import androidx.compose.runtime.mutableStateOf
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -34,19 +38,31 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+    // where a tap on the live notification should lead, handled once by MainScreen
+    private val notificationTarget = mutableStateOf<NotificationTarget?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        if (savedInstanceState == null) notificationTarget.value = intent.notificationTarget()
         setContent {
             JournalTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainScreen()
+                    MainScreen(
+                        notificationTarget = notificationTarget.value,
+                        onNotificationTargetHandled = { notificationTarget.value = null }
+                    )
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        notificationTarget.value = intent.notificationTarget()
     }
 }

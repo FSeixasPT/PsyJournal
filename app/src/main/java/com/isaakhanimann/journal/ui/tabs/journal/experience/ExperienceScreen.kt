@@ -173,7 +173,9 @@ fun ExperienceScreen(
         areDosageDotsHidden = viewModel.areDosageDotsHiddenFlow.collectAsState().value,
         isTimelineHidden = viewModel.isTimelineHiddenFlow.collectAsState().value,
         plannedIngestionActions = viewModel.plannedIngestionActions,
-        navigateToChooseDose = navigateToChooseDose
+        navigateToChooseDose = navigateToChooseDose,
+        openQuickLogOnStart = viewModel.isQuickLogRequested.collectAsState().value,
+        onQuickLogOpened = viewModel::onQuickLogOpened
     )
 }
 
@@ -237,6 +239,8 @@ fun ExperienceScreen(
     isTimelineHidden: Boolean,
     plannedIngestionActions: PlannedIngestionActions? = null,
     navigateToChooseDose: (PlannedIngestion) -> Unit = {},
+    openQuickLogOnStart: Boolean = false,
+    onQuickLogOpened: () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -275,6 +279,8 @@ fun ExperienceScreen(
                 onChangeIsOralDisclaimerHidden = onChangeIsOralDisclaimerHidden,
                 plannedIngestionActions = plannedIngestionActions,
                 navigateToChooseDose = navigateToChooseDose,
+                openQuickLogOnStart = openQuickLogOnStart,
+                onQuickLogOpened = onQuickLogOpened,
             )
             if (oneExperienceScreenModel.ingestionElements.isNotEmpty()) {
                 MyIngestionList(
@@ -673,6 +679,8 @@ private fun MyTimelineSection(
     onChangeIsOralDisclaimerHidden: (Boolean) -> Unit,
     plannedIngestionActions: PlannedIngestionActions?,
     navigateToChooseDose: (PlannedIngestion) -> Unit,
+    openQuickLogOnStart: Boolean,
+    onQuickLogOpened: () -> Unit,
 ) {
     when (timelineDisplayOption) {
         TimelineDisplayOption.Hidden -> {}
@@ -725,6 +733,8 @@ private fun MyTimelineSection(
                             selectedTime = selectedTime,
                             timeDisplayOption = timeDisplayOption,
                             onChangeDetails = { navigateToChooseDose(it) },
+                            openLogOnStart = openQuickLogOnStart,
+                            onLogOpened = onQuickLogOpened,
                             modifier = Modifier.padding(top = 4.dp)
                         )
                     }

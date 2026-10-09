@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import kotlinx.coroutines.flow.StateFlow
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -132,6 +133,15 @@ class ExperienceViewModel @Inject constructor(
 
     private val localIsFavoriteFlow = MutableStateFlow(false)
 
+    private val quickLogRequest = MutableStateFlow(false)
+
+    val isQuickLogRequested: StateFlow<Boolean> = quickLogRequest
+
+    // the notification's Log planned opens the quick-log dialog once
+    fun onQuickLogOpened() {
+        quickLogRequest.value = false
+    }
+
     val isFavoriteFlow = localIsFavoriteFlow.stateIn(
         initialValue = false,
         scope = viewModelScope,
@@ -142,6 +152,7 @@ class ExperienceViewModel @Inject constructor(
         val experienceRoute = state.toRoute<ExperienceRoute>()
         val expId = experienceRoute.experienceId
         experienceId = expId
+        quickLogRequest.value = experienceRoute.openQuickLog
         viewModelScope.launch {
             val experience = experienceRepo.getExperience(expId)
             val isFavorite = experience?.isFavorite ?: false

@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.main
 
+import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -37,7 +38,10 @@ val ARE_CONDITIONS_ACCEPTED = booleanPreferencesKey("are_conditions_accepted")
 @HiltViewModel
 class MainScreenViewModel @Inject constructor(
     private val dataStore: DataStore<Preferences>,
+    private val experienceRepo: ExperienceRepository,
 ) : ViewModel() {
+
+    suspend fun experienceExists(experienceId: Int): Boolean = experienceRepo.getExperience(experienceId) != null
 
     val isAcceptedFlow: StateFlow<Boolean> = dataStore.data
         .map { preferences ->

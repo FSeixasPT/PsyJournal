@@ -174,10 +174,20 @@ fun PlannedIngestionSection(
     // opens the normal add-ingestion flow with the planned ingestion filled in
     onChangeDetails: (PlannedIngestion) -> Unit,
     modifier: Modifier = Modifier,
+    // opens the quick-log dialog for the pinned plan once, when coming from the notification
+    openLogOnStart: Boolean = false,
+    onLogOpened: () -> Unit = {},
 ) {
     var isEditing by remember { mutableStateOf(false) }
     // the planned ingestion and its color when ✓ was tapped, so the dialog logs exactly what it shows
     var logSnapshot by remember { mutableStateOf<Pair<PlannedIngestion, AdaptiveColor>?>(null) }
+    LaunchedEffect(openLogOnStart, state.isPinned, state.planned) {
+        val planned = state.planned
+        if (openLogOnStart && state.isPinned && planned != null) {
+            logSnapshot = planned to (state.plannedLine?.color ?: AdaptiveColor.entries.first())
+            onLogOpened()
+        }
+    }
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(text = "Hold to preview taking now:", style = MaterialTheme.typography.labelMedium)
         PlannedIngestionChip(
