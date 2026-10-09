@@ -419,14 +419,10 @@ fun EditIngestionScreen(
                     onValueChange = onNoteChange,
                     label = { Text(text = "Notes") },
                     modifier = Modifier.fillMaxWidth(),
-                    keyboardActions = KeyboardActions(onDone = {
-                        focusManager.clearFocus()
-                    }),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Text,
                         capitalization = KeyboardCapitalization.Sentences
                     ),
-                    singleLine = true
                 )
             }
             CardWithTitle(title = "Time") {

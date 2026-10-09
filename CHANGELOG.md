@@ -27,6 +27,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
   - Log it with "I took it now", after a confirmation, or change its details in the full add flow.
 - **Intensity details below the timeline.** Drag across the chart to see each substance's percentage of peak and the equivalent dose at that moment.
 - **Quick recent times when logging.** Pick "Now", "5 min ago", "15 min ago", "30 min ago" or "1 hr ago" instead of opening the clock. This also works when editing an ingestion.
+- **Line breaks in ingestion notes and timed notes.** Enter now starts a new line.
 - **Hide routes of administration you never use.** Choose them in Settings, and show or hide routes for a single substance on its page. Hidden routes stay available under "Show hidden routes".
 - **Merge the routes of a substance into one line.** For example, oral and insufflated ketamine can show as one line on the timeline (setting).
 - **Drug checking services** in Lisbon (Kosmicare) and Toronto.

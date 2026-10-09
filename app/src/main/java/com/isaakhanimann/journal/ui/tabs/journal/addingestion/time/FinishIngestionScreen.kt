@@ -424,6 +424,7 @@ fun NoteSection(
     onNoteChange: (String) -> Unit
 ) {
     var isShowingSuggestions by remember { mutableStateOf(true) }
+    var wasFocused by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
     val bringIntoViewRequester = BringIntoViewRequester()
@@ -432,24 +433,24 @@ fun NoteSection(
             value = note,
             onValueChange = onNoteChange,
             label = { Text(text = "Notes") },
-            keyboardActions = KeyboardActions(onDone = {
-                focusManager.clearFocus()
-                isShowingSuggestions = false
-            }),
+            // Enter adds a new line, so the keyboard has no Done key here
             keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Done,
                 capitalization = KeyboardCapitalization.Sentences
             ),
-            singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .bringIntoViewRequester(bringIntoViewRequester)
                 .onFocusEvent { focusState ->
                     if (focusState.isFocused && focusState.hasFocus) {
+                        wasFocused = true
                         isShowingSuggestions = true
                         coroutineScope.launch {
                             bringIntoViewRequester.bringIntoView()
                         }
+                    } else if (wasFocused && !focusState.hasFocus) {
+                        // leaving the field takes the place of the Done key
+                        wasFocused = false
+                        isShowingSuggestions = false
                     }
                 }
 

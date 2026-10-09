@@ -19,7 +19,6 @@
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timednote
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
@@ -31,8 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -98,7 +95,6 @@ fun TimedNoteScreenContent(
     modifier: Modifier
 ) {
     val focusRequester = remember { FocusRequester() }
-    val focusManager = LocalFocusManager.current
     LaunchedEffect(Unit) {
         if (shouldFocusTextFieldOnAppear) {
             focusRequester.requestFocus()
@@ -114,13 +110,10 @@ fun TimedNoteScreenContent(
             value = note,
             onValueChange = onNoteChange,
             label = { Text(text = "Note") },
+            // Enter adds a new line
             keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Done,
                 capitalization = KeyboardCapitalization.Sentences
             ),
-            keyboardActions = KeyboardActions(onDone = {
-                focusManager.clearFocus()
-            }),
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
