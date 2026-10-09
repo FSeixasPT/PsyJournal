@@ -92,7 +92,6 @@ class ExperienceViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000)
         )
 
-
     // both chart settings in one flow, because the timeline flow already combines six flows
     private val chartSettingsFlow =
         areSubstanceHeightsIndependentFlow.combine(areRoutesMergedFlow) { areSubstanceHeightsIndependent, areRoutesMerged ->
@@ -336,28 +335,6 @@ class ExperienceViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000)
     )
 
-    private fun getIngestionElements(sortedIngestionsWith: List<IngestionWithAssociatedData>): List<IngestionElement> {
-        return sortedIngestionsWith.map { ingestionWith ->
-            val numDots =
-                if (ingestionWith.ingestionWithCompanionAndCustomUnit.customUnit != null) {
-                    ingestionWith.roaDose?.getNumDots(
-                        ingestionDose = ingestionWith.ingestionWithCompanionAndCustomUnit.customUnitDose?.calculatedDose,
-                        ingestionUnits = ingestionWith.ingestionWithCompanionAndCustomUnit.customUnit?.originalUnit
-                    )
-                } else {
-                    ingestionWith.roaDose?.getNumDots(
-                        ingestionWith.ingestionWithCompanionAndCustomUnit.ingestion.dose,
-                        ingestionUnits = ingestionWith.ingestionWithCompanionAndCustomUnit.ingestion.units
-                    )
-                }
-            IngestionElement(
-                ingestionWithCompanionAndCustomUnit = ingestionWith.ingestionWithCompanionAndCustomUnit,
-                roaDuration = ingestionWith.roaDuration,
-                numDots = numDots
-            )
-        }
-    }
-
     val interactionsFlow =
         sortedIngestionsWithCompanionsFlow.combine(combinationSettingsStorage.enabledInteractionsFlow) { ingestions, enabledInteractions ->
             val interactionsToCheck =
@@ -461,6 +438,29 @@ class ExperienceViewModel @Inject constructor(
         )
 
     companion object {
+
+        fun getIngestionElements(sortedIngestionsWith: List<IngestionWithAssociatedData>): List<IngestionElement> {
+            return sortedIngestionsWith.map { ingestionWith ->
+                val numDots =
+                    if (ingestionWith.ingestionWithCompanionAndCustomUnit.customUnit != null) {
+                        ingestionWith.roaDose?.getNumDots(
+                            ingestionDose = ingestionWith.ingestionWithCompanionAndCustomUnit.customUnitDose?.calculatedDose,
+                            ingestionUnits = ingestionWith.ingestionWithCompanionAndCustomUnit.customUnit?.originalUnit
+                        )
+                    } else {
+                        ingestionWith.roaDose?.getNumDots(
+                            ingestionWith.ingestionWithCompanionAndCustomUnit.ingestion.dose,
+                            ingestionUnits = ingestionWith.ingestionWithCompanionAndCustomUnit.ingestion.units
+                        )
+                    }
+                IngestionElement(
+                    ingestionWithCompanionAndCustomUnit = ingestionWith.ingestionWithCompanionAndCustomUnit,
+                    roaDuration = ingestionWith.roaDuration,
+                    numDots = numDots
+                )
+            }
+        }
+
 
         fun getDataForEffectTimelines(
             ingestionElements: List<IngestionElement>,
