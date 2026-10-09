@@ -21,6 +21,7 @@ package com.isaakhanimann.journal.ui.main.navigation.graphs
 import androidx.compose.runtime.collectAsState
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
@@ -36,6 +37,7 @@ import com.isaakhanimann.journal.ui.tabs.journal.addingestion.route.CustomSubsta
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.saferuse.CheckSaferUseScreen
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.search.AddIngestionSearchScreen
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.time.FinishIngestionScreen
+import com.isaakhanimann.journal.ui.tabs.journal.addingestion.time.experienceToOpenAfterSaving
 import com.isaakhanimann.journal.ui.tabs.safer.RouteExplanationScreen
 import com.isaakhanimann.journal.ui.tabs.search.custom.AddCustomSubstanceAndContinueScreen
 import com.isaakhanimann.journal.ui.tabs.settings.customunits.add.FinishAddCustomUnitScreen
@@ -251,8 +253,14 @@ fun NavGraphBuilder.addIngestionGraph(navController: NavController) {
         }
         composableWithTransitions<FinishIngestionRoute> {
             FinishIngestionScreen(
-                dismissAddIngestionScreens = {
+                dismissAddIngestionScreens = { experienceId ->
                     navController.popBackStack(route = AddIngestionRoute, inclusive = true)
+                    val below = navController.currentBackStackEntry
+                    val experienceBelow = below?.takeIf { it.destination.hasRoute<ExperienceRoute>() }
+                        ?.toRoute<ExperienceRoute>()?.experienceId
+                    experienceToOpenAfterSaving(experienceBelow, experienceId)?.let {
+                        navController.navigate(ExperienceRoute(it))
+                    }
                 },
             )
         }

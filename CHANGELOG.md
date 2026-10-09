@@ -40,6 +40,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
   - Group names now match their members, which they mostly didn't before: DOx, 25x-NBOMe, 25x-NBOH, 2C-x, 2C-T-x and 5-MeO-xxT.
   - MAOIs (including Ayahuasca), SSRIs, SNRIs and tricyclic antidepressants list their members.
   - Custom substances named with a common name (e.g. "Molly") or in different letter case (e.g. "mdma") are checked as that substance.
+- **After saving an ingestion, its experience opens**, also when you started from the journal list or the notification.
 - **Rebranded as PsyJournal**, with its own app id, so it can be installed next to the original app.
 
 ### Fixed

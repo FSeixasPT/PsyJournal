@@ -265,11 +265,16 @@ class FinishIngestionScreenViewModel @Inject constructor(
 
     val saveGuard = SaveGuard(viewModelScope)
 
-    fun createSaveAndDismissAfter(dismiss: () -> Unit) {
-        saveGuard.save(action = { createAndSaveIngestion() }, onSaved = dismiss)
+    fun createSaveAndDismissAfter(dismiss: (experienceId: Int) -> Unit) {
+        var savedExperienceId: Int? = null
+        saveGuard.save(
+            action = { savedExperienceId = createAndSaveIngestion() },
+            onSaved = { savedExperienceId?.let(dismiss) }
+        )
     }
 
-    private suspend fun createAndSaveIngestion() {
+    // returns the id of the experience the ingestion was saved in
+    private suspend fun createAndSaveIngestion(): Int {
         val substanceCompanion = SubstanceCompanion(
             substanceName,
             color = selectedColor
@@ -294,6 +299,7 @@ class FinishIngestionScreenViewModel @Inject constructor(
                 substanceCompanion = substanceCompanion
             )
             liveNotificationController.onIngestionLogged(newExperience.id, newIngestion.time, newIngestion.consumerName)
+            return newExperience.id
         } else {
             val newIngestion = createNewIngestion(oldIdToUse)
             experienceRepo.insertIngestionAndCompanion(
@@ -301,6 +307,7 @@ class FinishIngestionScreenViewModel @Inject constructor(
                 substanceCompanion = substanceCompanion
             )
             liveNotificationController.onIngestionLogged(oldIdToUse, newIngestion.time, newIngestion.consumerName)
+            return oldIdToUse
         }
     }
 

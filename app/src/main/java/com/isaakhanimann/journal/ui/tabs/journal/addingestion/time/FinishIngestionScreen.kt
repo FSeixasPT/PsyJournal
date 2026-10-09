@@ -89,7 +89,7 @@ import java.time.LocalDateTime
 
 @Composable
 fun FinishIngestionScreen(
-    dismissAddIngestionScreens: () -> Unit,
+    dismissAddIngestionScreens: (experienceId: Int) -> Unit,
     viewModel: FinishIngestionScreenViewModel = hiltViewModel()
 ) {
     val localDateTime = viewModel.localDateTimeStartFlow.collectAsState().value
