@@ -103,7 +103,7 @@ Let *h(t)* be the height of the substance's line, from the existing `heightAt` o
 **Fallback without a summed line:** a substance whose duration data is too incomplete for a full timeline (no peak or no offset) has no summed line. Only for those, the phase comes from its most recent ingestion that hasn't ended:
 
 - The boundaries are the midpoints of its onset, come-up, peak and offset ranges, the same 0.5 weights the chart uses.
-- If a duration is missing, that phase and every later one are unknown. The line shows the last phase it can work out, with no hint.
+- If a duration is missing, that phase and every later one are unknown. The line shows the last phase it can work out, with an `ENDS` hint from the total duration if that is known, otherwise no hint.
 - A time-range ingestion (one with an `endTime`) counts as starting at its start time, and its peak lasts until its end time plus the peak duration.
 - If the onset is unknown but the total duration is known, the phase is `ACTIVE` ("active"), with an `ENDS` hint at the end of the total duration.
 - When the offset is unknown, the total duration decides when the substance has ended. If that's unknown too, the substance counts as ended 12 hours after its ingestion, so it can't keep the notification alive forever.
@@ -149,8 +149,8 @@ If drawing fails, the notification is posted without the chart.
 - **Channel:** builds and posts the notification on its own channel, `live_timeline`, named "Live timeline", with low importance (no sound, no vibration).
 - **Behaviour:** the notification is ongoing, only alerts once, and uses category `CATEGORY_PROGRESS`.
 - **Layout:** `DecoratedCustomViewStyle` with two small XML layouts:
-  - collapsed: up to 3 substance lines plus "+N more";
-  - expanded: the chart, then all lines and the planned line.
+  - collapsed: the title, then all substances on one ellipsized line in short form, e.g. "2C-B 90% ↓ · Caffeine 40% ↑";
+  - expanded: the title, the chart, the planned line, then one line per substance. The planned line comes first so a long list can't push it out.
   
   Each line has a coloured dot in the substance's colour.
 - **Countdown:** when `endsAt` is known, the notification uses `setWhen(endsAt)` with a count-down chronometer, so Android itself shows a live "ends in" time between refreshes.
@@ -225,7 +225,7 @@ The single entry point for everything else:
   - `ExperienceRoute(experienceId)`;
   - `ExperienceRoute(experienceId, openQuickLog = true)`;
   - `AddIngestionRoute`.
-- **`ExperienceRoute`:** gets `openQuickLog: Boolean = false`. When true and a pinned plan belongs to the experience, the screen opens the existing quick-log dialog once.
+- **`ExperienceRoute`:** gets `openQuickLog: Boolean = false`. When true and a pinned plan belongs to the experience, the screen opens the existing quick-log dialog once, and only within 5 seconds of opening, so it can't pop up later by surprise. It isn't repeated after Android restores the app or when the app is reopened from recent apps. Log planned always opens a new experience screen, so the dialog also shows when that experience is already open.
 - **Edge cases:**
   - If the experience no longer exists, the journal is shown.
   - If the user hasn't accepted the app's initial disclaimer yet, the extras are ignored.
@@ -233,7 +233,7 @@ The single entry point for everything else:
 ## Error handling
 
 - **Missing data:** if the experience or its ingestions can't be loaded, the notification stops quietly.
-- **Notifications blocked:** if they're blocked after starting, the state is cleared on the next refresh. `NotificationManagerCompat.areNotificationsEnabled()` is false then.
+- **Notifications blocked:** a blocked "Live timeline" category counts as blocked too. If they're blocked after starting, the state is cleared on the next refresh. `NotificationManagerCompat.areNotificationsEnabled()` is false then.
 - **Chart failure:** the notification is posted without the chart (see the chart section).
 - **Swipe-away:** on Android 14+, users can dismiss ongoing notifications. The delete intent treats that as Stop.
 
