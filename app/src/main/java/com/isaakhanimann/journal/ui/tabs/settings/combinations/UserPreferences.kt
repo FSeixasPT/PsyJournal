@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.settings.combinations
 
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveExperience
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -57,6 +58,9 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
         val KEY_HIDDEN_ROUTES = stringSetPreferencesKey("KEY_HIDDEN_ROUTES")
         val KEY_ROUTE_OVERRIDES = stringSetPreferencesKey("KEY_ROUTE_OVERRIDES")
         val KEY_IS_TIMELINE_HIDDEN = booleanPreferencesKey("KEY_IS_TIMELINE_HIDDEN")
+        val KEY_LIVE_EXPERIENCE = stringPreferencesKey("KEY_LIVE_EXPERIENCE")
+        val KEY_LIVE_AUTO_START = booleanPreferencesKey("KEY_LIVE_AUTO_START")
+        val KEY_LIVE_SHOW_ON_LOCK_SCREEN = booleanPreferencesKey("KEY_LIVE_SHOW_ON_LOCK_SCREEN")
     }
 
     suspend fun saveTimeDisplayOption(value: SavedTimeDisplayOption) {
@@ -209,5 +213,33 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
             preferences[PreferencesKeys.KEY_IS_TIMELINE_HIDDEN] = value
         }
     }
-}
 
+    // the experience shown in the live notification, if any
+    val liveExperienceFlow: Flow<LiveExperience?> = dataStore.data
+        .map { preferences -> LiveExperience.fromPreferenceString(preferences[PreferencesKeys.KEY_LIVE_EXPERIENCE]) }
+        .distinctUntilChanged()
+
+    suspend fun saveLiveExperience(value: LiveExperience?) {
+        dataStore.edit { preferences ->
+            if (value == null) {
+                preferences.remove(PreferencesKeys.KEY_LIVE_EXPERIENCE)
+            } else {
+                preferences[PreferencesKeys.KEY_LIVE_EXPERIENCE] = value.toPreferenceString()
+            }
+        }
+    }
+
+    val isLiveAutoStartFlow: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[PreferencesKeys.KEY_LIVE_AUTO_START] ?: false }
+
+    suspend fun saveIsLiveAutoStart(value: Boolean) {
+        dataStore.edit { preferences -> preferences[PreferencesKeys.KEY_LIVE_AUTO_START] = value }
+    }
+
+    val isLiveShownOnLockScreenFlow: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[PreferencesKeys.KEY_LIVE_SHOW_ON_LOCK_SCREEN] ?: false }
+
+    suspend fun saveIsLiveShownOnLockScreen(value: Boolean) {
+        dataStore.edit { preferences -> preferences[PreferencesKeys.KEY_LIVE_SHOW_ON_LOCK_SCREEN] = value }
+    }
+}
