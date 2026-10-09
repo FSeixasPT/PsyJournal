@@ -31,6 +31,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 - **Change a substance's journal color from its page**, once you have logged it.
 - **Hide routes of administration you never use.** Choose them in Settings, and show or hide routes for a single substance on its page. Hidden routes stay available under "Show hidden routes".
 - **Merge the routes of a substance into one line.** For example, oral and insufflated ketamine can show as one line on the timeline (setting).
+- **Copy support info** in Settings → Feedback: the app version, Android version and device, to paste into a bug report.
 - **Drug checking services** in Lisbon (Kosmicare) and Toronto.
 
 ### Changed

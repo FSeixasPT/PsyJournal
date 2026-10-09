@@ -36,6 +36,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material.icons.outlined.FileUpload
@@ -416,6 +417,11 @@ fun SettingsScreen(
             CardWithTitle(title = "Feedback", innerPaddingHorizontal = 0.dp) {
                 SettingsButton(imageVector = Icons.Outlined.QuestionAnswer, text = "FAQ") {
                     navigateToFAQ()
+                }
+                HorizontalDivider()
+                val feedbackContext = LocalContext.current
+                SettingsButton(imageVector = Icons.Outlined.ContentCopy, text = "Copy support info") {
+                    copySupportInfo(feedbackContext)
                 }
             }
             CardWithTitle(title = "App", innerPaddingHorizontal = 0.dp) {
