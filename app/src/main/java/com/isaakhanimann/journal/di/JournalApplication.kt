@@ -19,7 +19,17 @@
 package com.isaakhanimann.journal.di
 
 import android.app.Application
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationController
 import dagger.hilt.android.HiltAndroidApp
+import javax.inject.Inject
 
 @HiltAndroidApp
-class JournalApplication : Application()
+class JournalApplication : Application() {
+    @Inject
+    lateinit var liveNotificationController: LiveNotificationController
+
+    override fun onCreate() {
+        super.onCreate()
+        liveNotificationController.observe()
+    }
+}
