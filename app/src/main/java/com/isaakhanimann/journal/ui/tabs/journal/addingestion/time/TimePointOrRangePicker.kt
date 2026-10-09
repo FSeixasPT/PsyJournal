@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Update
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SegmentedButton
@@ -21,7 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.isaakhanimann.journal.ui.utils.getDateWithWeekdayText
 import com.isaakhanimann.journal.ui.utils.getShortTimeText
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.rememberCurrentTime
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -55,26 +58,21 @@ fun TimePointOrRangePicker(
     ) { option ->
         when (option) {
             IngestionTimePickerOption.POINT_IN_TIME -> {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                    DatePickerButton(
-                        localDateTime = localDateTimeStart,
-                        onChange = onChangeStartDateOrTime,
-                        dateString = localDateTimeStart.getDateWithWeekdayText(),
-                    )
-                    TimePickerButton(
-                        localDateTime = localDateTimeStart,
-                        onChange = onChangeStartDateOrTime,
-                        timeString = localDateTimeStart.getShortTimeText(),
-                        modifier = Modifier.weight(1f)
-                    )
-                    IconButton(onClick = {
-                        onChangeStartDateOrTime(LocalDateTime.now())
-                    }) {
-                        Icon(
-                            Icons.Default.Update,
-                            contentDescription = "Update time to now",
+                Column {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        DatePickerButton(
+                            localDateTime = localDateTimeStart,
+                            onChange = onChangeStartDateOrTime,
+                            dateString = localDateTimeStart.getDateWithWeekdayText(),
+                        )
+                        TimePickerButton(
+                            localDateTime = localDateTimeStart,
+                            onChange = onChangeStartDateOrTime,
+                            timeString = localDateTimeStart.getShortTimeText(),
+                            modifier = Modifier.weight(1f)
                         )
                     }
+                    RecentTimeChips(time = localDateTimeStart, onChange = onChangeStartDateOrTime)
                 }
             }
 
@@ -142,6 +140,22 @@ fun TimePointOrRangePicker(
                     }
                 }
             }
+        }
+    }
+}
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun RecentTimeChips(time: LocalDateTime, onChange: (LocalDateTime) -> Unit) {
+    // refreshed every few seconds, so a choice stops looking selected once its minute has passed
+    val now = LocalDateTime.ofInstant(rememberCurrentTime(), ZoneId.systemDefault())
+    val selected = selectedRecentTime(time, now)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        recentTimes.forEach { recentTime ->
+            FilterChip(
+                selected = recentTime == selected,
+                onClick = { onChange(recentTime.timeBefore(LocalDateTime.now())) },
+                label = { Text(recentTime.label) }
+            )
         }
     }
 }
