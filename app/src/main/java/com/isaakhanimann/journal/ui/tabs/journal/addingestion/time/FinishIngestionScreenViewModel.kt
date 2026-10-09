@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.time
 
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationController
 import com.isaakhanimann.journal.ui.utils.SaveGuard
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -65,6 +66,7 @@ enum class IngestionTimePickerOption {
 class FinishIngestionScreenViewModel @Inject constructor(
     private val experienceRepo: ExperienceRepository,
     userPreferences: UserPreferences,
+    private val liveNotificationController: LiveNotificationController,
     state: SavedStateHandle
 ) : ViewModel() {
     var substanceName by mutableStateOf("")
@@ -291,12 +293,14 @@ class FinishIngestionScreenViewModel @Inject constructor(
                 experience = newExperience,
                 substanceCompanion = substanceCompanion
             )
+            liveNotificationController.onIngestionLogged(newExperience.id, newIngestion.time)
         } else {
             val newIngestion = createNewIngestion(oldIdToUse)
             experienceRepo.insertIngestionAndCompanion(
                 ingestion = newIngestion,
                 substanceCompanion = substanceCompanion
             )
+            liveNotificationController.onIngestionLogged(oldIdToUse, newIngestion.time)
         }
     }
 

@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationController
 import com.isaakhanimann.journal.ui.utils.SaveGuard
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
@@ -75,6 +76,7 @@ class PlannedIngestionHelper @Inject constructor(
     private val experienceRepo: ExperienceRepository,
     private val interactionChecker: InteractionChecker,
     private val userPreferences: UserPreferences,
+    private val liveNotificationController: LiveNotificationController,
 ) {
     fun actionsFor(experienceId: Int, scope: CoroutineScope): PlannedIngestionActions {
         val started = SharingStarted.WhileSubscribed(5000)
@@ -169,12 +171,13 @@ class PlannedIngestionHelper @Inject constructor(
             override val logGuard = SaveGuard(scope)
 
             override fun log(planned: PlannedIngestion, color: AdaptiveColor, onLogged: () -> Unit) {
+                val now = Instant.now()
                 logGuard.save(action = {
                     logPlannedIngestion(
                         planned = planned,
                         experienceId = experienceId,
                         previewColor = color,
-                        now = Instant.now(),
+                        now = now,
                         // read from the database, so an existing color is never replaced
                         loadCompanions = { experienceRepo.getAllSubstanceCompanionsFlow().first() },
                         save = { ingestion, companion -> experienceRepo.insertIngestionAndCompanion(ingestion, companion) }
@@ -182,6 +185,7 @@ class PlannedIngestionHelper @Inject constructor(
                 }, onSaved = {
                     // the same plan can be logged again later
                     logGuard.reopen()
+                    liveNotificationController.onIngestionLogged(experienceId, now)
                     onLogged()
                 })
             }

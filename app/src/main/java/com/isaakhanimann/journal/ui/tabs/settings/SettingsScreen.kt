@@ -106,6 +106,10 @@ fun SettingsPreview() {
         saveAreSubstanceHeightsIndependent = {},
         areRoutesMerged = true,
         saveAreRoutesMerged = {},
+        isLiveAutoStart = false,
+        saveIsLiveAutoStart = {},
+        isLiveShownOnLockScreen = false,
+        saveIsLiveShownOnLockScreen = {},
     )
 }
 
@@ -138,6 +142,10 @@ fun SettingsScreen(
         saveAreSubstanceHeightsIndependent = viewModel::saveAreSubstanceHeightsIndependent,
         areRoutesMerged = viewModel.areRoutesMergedFlow.collectAsState().value,
         saveAreRoutesMerged = viewModel::saveAreRoutesMerged,
+        isLiveAutoStart = viewModel.isLiveAutoStartFlow.collectAsState().value,
+        saveIsLiveAutoStart = viewModel::saveIsLiveAutoStart,
+        isLiveShownOnLockScreen = viewModel.isLiveShownOnLockScreenFlow.collectAsState().value,
+        saveIsLiveShownOnLockScreen = viewModel::saveIsLiveShownOnLockScreen,
     )
 }
 
@@ -162,6 +170,10 @@ fun SettingsScreen(
     saveAreSubstanceHeightsIndependent: (Boolean) -> Unit,
     areRoutesMerged: Boolean,
     saveAreRoutesMerged: (Boolean) -> Unit,
+    isLiveAutoStart: Boolean,
+    saveIsLiveAutoStart: (Boolean) -> Unit,
+    isLiveShownOnLockScreen: Boolean,
+    saveIsLiveShownOnLockScreen: (Boolean) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -253,6 +265,20 @@ fun SettingsScreen(
                     info = "When enabled, ingestions of the same substance through different routes (e.g. insufflated and oral ketamine) are shown as one combined line. Each route keeps its own onset and duration, and doses are made comparable using each route's common dose range, so the line shows the combined effect rather than the combined amount. Routes without dose ranges in the database are always shown separately.",
                     checked = areRoutesMerged,
                     onCheckedChange = saveAreRoutesMerged
+                )
+                HorizontalDivider()
+                SwitchWithInfoRow(
+                    title = "Start live notification automatically",
+                    info = "When you log an ingestion taken in the last hour, the live notification starts for its experience. It follows the estimated timeline outside the app until the effects end. Notifications must be allowed; turn the live notification on once from an experience to allow them.",
+                    checked = isLiveAutoStart,
+                    onCheckedChange = saveIsLiveAutoStart
+                )
+                HorizontalDivider()
+                SwitchWithInfoRow(
+                    title = "Live notification details on lock screen",
+                    info = "When disabled, the lock screen only shows that an experience is in progress, without substance names or the chart. Details are shown after unlocking.",
+                    checked = isLiveShownOnLockScreen,
+                    onCheckedChange = saveIsLiveShownOnLockScreen
                 )
             }
             CardWithTitle(title = "App data", innerPaddingHorizontal = 0.dp) {

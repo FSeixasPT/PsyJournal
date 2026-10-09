@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.settings
 
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationController
 import android.net.Uri
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -39,7 +40,30 @@ class SettingsViewModel @Inject constructor(
     private val experienceRepository: ExperienceRepository,
     private val fileSystemConnection: FileSystemConnection,
     private val userPreferences: UserPreferences,
+    private val liveNotificationController: LiveNotificationController,
 ) : ViewModel() {
+
+    val isLiveAutoStartFlow = userPreferences.isLiveAutoStartFlow.stateIn(
+        initialValue = false,
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000)
+    )
+
+    fun saveIsLiveAutoStart(value: Boolean) = viewModelScope.launch {
+        userPreferences.saveIsLiveAutoStart(value)
+    }
+
+    val isLiveShownOnLockScreenFlow = userPreferences.isLiveShownOnLockScreenFlow.stateIn(
+        initialValue = false,
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000)
+    )
+
+    // a live notification takes the new lock-screen choice right away
+    fun saveIsLiveShownOnLockScreen(value: Boolean) = viewModelScope.launch {
+        userPreferences.saveIsLiveShownOnLockScreen(value)
+        liveNotificationController.refresh()
+    }
 
     fun saveDosageDotsAreHidden(value: Boolean) = viewModelScope.launch {
         userPreferences.saveDosageDotsAreHidden(value)
