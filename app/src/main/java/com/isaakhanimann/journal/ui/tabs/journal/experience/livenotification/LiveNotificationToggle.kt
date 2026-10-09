@@ -27,7 +27,6 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -48,7 +47,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 
@@ -94,7 +92,6 @@ fun rememberLiveNotificationToggleState(setLive: (Boolean) -> Unit): LiveNotific
 fun LiveNotificationButton(isLive: Boolean, state: LiveNotificationToggleState) {
     TextButton(
         onClick = { state.toggle(isLive) },
-        contentPadding = PaddingValues(horizontal = 8.dp),
         colors = ButtonDefaults.textButtonColors(
             contentColor = if (isLive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
         ),
@@ -104,10 +101,10 @@ fun LiveNotificationButton(isLive: Boolean, state: LiveNotificationToggleState) 
         }
     ) {
         if (isLive) {
-            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(4.dp))
+            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+            Spacer(modifier = Modifier.width(ButtonDefaults.IconSpacing))
         }
-        Text(text = "Live notification", style = MaterialTheme.typography.labelMedium)
+        Text(text = "Live notification")
     }
 }
 
