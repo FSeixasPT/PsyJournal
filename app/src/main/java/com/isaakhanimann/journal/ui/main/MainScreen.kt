@@ -108,8 +108,11 @@ fun MainScreen(
                 when (val target = notificationTarget) {
                     null -> return@LaunchedEffect
                     is NotificationTarget.Experience -> if (viewModel.experienceExists(target.experienceId)) {
-                        // single top, so tapping the notification twice doesn't stack the same screen
-                        navController.navigate(ExperienceRoute(target.experienceId, target.openQuickLog)) { launchSingleTop = true }
+                        // single top, so tapping the notification twice doesn't stack the same screen;
+                        // not for Log planned, which needs a new screen to show the confirmation
+                        navController.navigate(ExperienceRoute(target.experienceId, target.openQuickLog)) {
+                            launchSingleTop = !target.openQuickLog
+                        }
                     }
                     NotificationTarget.AddIngestion -> navController.navigate(AddIngestionRoute) { launchSingleTop = true }
                 }
