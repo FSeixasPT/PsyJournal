@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationRow
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -175,7 +176,10 @@ fun ExperienceScreen(
         plannedIngestionActions = viewModel.plannedIngestionActions,
         navigateToChooseDose = navigateToChooseDose,
         openQuickLogOnStart = viewModel.isQuickLogRequested.collectAsState().value,
-        onQuickLogOpened = viewModel::onQuickLogOpened
+        onQuickLogOpened = viewModel::onQuickLogOpened,
+        isLive = viewModel.isLiveFlow.collectAsState().value,
+        isLiveNotificationAvailable = viewModel.isLiveNotificationAvailableFlow.collectAsState().value,
+        setLive = viewModel::setLive
     )
 }
 
@@ -241,6 +245,9 @@ fun ExperienceScreen(
     navigateToChooseDose: (PlannedIngestion) -> Unit = {},
     openQuickLogOnStart: Boolean = false,
     onQuickLogOpened: () -> Unit = {},
+    isLive: Boolean = false,
+    isLiveNotificationAvailable: Boolean = false,
+    setLive: (Boolean) -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -281,6 +288,9 @@ fun ExperienceScreen(
                 navigateToChooseDose = navigateToChooseDose,
                 openQuickLogOnStart = openQuickLogOnStart,
                 onQuickLogOpened = onQuickLogOpened,
+                isLive = isLive,
+                isLiveNotificationAvailable = isLiveNotificationAvailable,
+                setLive = setLive,
             )
             if (oneExperienceScreenModel.ingestionElements.isNotEmpty()) {
                 MyIngestionList(
@@ -681,6 +691,9 @@ private fun MyTimelineSection(
     navigateToChooseDose: (PlannedIngestion) -> Unit,
     openQuickLogOnStart: Boolean,
     onQuickLogOpened: () -> Unit,
+    isLive: Boolean,
+    isLiveNotificationAvailable: Boolean,
+    setLive: (Boolean) -> Unit,
 ) {
     when (timelineDisplayOption) {
         TimelineDisplayOption.Hidden -> {}
@@ -726,6 +739,9 @@ private fun MyTimelineSection(
                     )
                     // the details always describe the real ingestions, the planned one is described below the chip
                     TimelineQuantityDetails(model = timelineModel, selectedTime = selectedTime)
+                    if (isLiveNotificationAvailable) {
+                        LiveNotificationRow(isLive = isLive, setLive = setLive)
+                    }
                     if (planState != null && plannedIngestionActions != null && planState.isPossibleNow) {
                         PlannedIngestionSection(
                             state = planState,

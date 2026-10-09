@@ -18,6 +18,8 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.hasActiveEffects
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationController
 import kotlinx.coroutines.flow.StateFlow
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -76,6 +78,7 @@ class ExperienceViewModel @Inject constructor(
     private val userPreferences: UserPreferences,
     combinationSettingsStorage: CombinationSettingsStorage,
     plannedIngestionHelper: PlannedIngestionHelper,
+    private val liveNotificationController: LiveNotificationController,
     state: SavedStateHandle
 ) : ViewModel() {
 
@@ -337,6 +340,33 @@ class ExperienceViewModel @Inject constructor(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000)
     )
+
+    val isLiveFlow = combine(liveNotificationController.liveExperienceFlow, experienceFlow) { live, experience ->
+        experience != null && live?.isFor(experience) == true
+    }.stateIn(
+        initialValue = false,
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000)
+    )
+
+    private val hasActiveEffectsFlow = combine(dataForEffectTimelinesFlow, chartSettingsFlow, currentTimeFlow) { lines, (areSubstanceHeightsIndependent, areRoutesMerged), now ->
+        hasActiveEffects(lines, areSubstanceHeightsIndependent, areRoutesMerged, now)
+    }.flowOn(Dispatchers.Default)
+
+    // shown while something can be followed, and always while it's live so it can be turned off
+    val isLiveNotificationAvailableFlow = combine(hasActiveEffectsFlow, isLiveFlow) { hasActiveEffects, isLive ->
+        hasActiveEffects || isLive
+    }.stateIn(
+        initialValue = false,
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000)
+    )
+
+    fun setLive(isLive: Boolean) {
+        viewModelScope.launch {
+            if (isLive) liveNotificationController.start(experienceId) else liveNotificationController.stop()
+        }
+    }
 
     val cumulativeDosesFlow = myIngestionsWithAssociatedDataFlow.map {
         getCumulativeDoses(it)
