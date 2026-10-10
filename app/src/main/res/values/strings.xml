@@ -20,8 +20,6 @@
     <string name="app_name">PsyJournal</string>
     <string name="widget_full_name">Timeline</string>
     <string name="widget_full_description">Chart and phases of the current experience</string>
-    <string name="widget_chart_name">Timeline chart</string>
-    <string name="widget_chart_description">Chart of the current experience</string>
     <string name="widget_status_name">Timeline status</string>
     <string name="widget_status_description">Phase of each substance in the current experience</string>
     <string name="widget_loading">Loading…</string>

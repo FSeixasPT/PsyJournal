@@ -9,7 +9,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="● Substance · coming down · 60% · ends in 1.5 hr"
+        android:text="● Substance 60% ▼ · ends at 11:30 PM"
         android:textColor="@color/widget_text"
         android:textSize="13sp" />
 </LinearLayout>

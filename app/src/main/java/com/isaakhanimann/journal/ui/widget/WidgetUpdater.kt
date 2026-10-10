@@ -156,7 +156,6 @@ class WidgetUpdater @Inject constructor(
 
 fun providerClass(kind: WidgetKind): Class<out TimelineWidgetProvider> = when (kind) {
     WidgetKind.FULL -> FullTimelineWidget::class.java
-    WidgetKind.CHART -> ChartTimelineWidget::class.java
     WidgetKind.STATUS -> StatusTimelineWidget::class.java
 }
 

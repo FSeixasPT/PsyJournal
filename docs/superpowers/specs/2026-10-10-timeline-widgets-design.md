@@ -3,6 +3,8 @@
 Date: 2026-10-10
 Status: Design approved in chat, awaiting spec review
 
+**Update (2026-10-10):** the "Timeline chart" widget was removed after implementation, at the user's request. Only "Timeline" and "Timeline status" remain; mentions of the chart widget below are kept as history.
+
 ## Goal
 
 The user can follow the current experience from the home screen, without opening the app or turning on the live notification. There are three widgets in the launcher's widget picker. Each one shows a different amount of the same information. It's written independently from the closed-source official app; nothing is copied from it.
@@ -35,7 +37,6 @@ The user can follow the current experience from the home screen, without opening
 | Widget | Picker name | Content | Default size | Minimum size |
 |---|---|---|---|---|
 | Full | Timeline | title row with +, chart with now line, one line per substance | 4×2 cells | 3×2 |
-| Chart | Timeline chart | title row, chart with now line | 4×2 cells | 2×1 |
 | Status | Timeline status | one line per substance, + in the corner | 3×1 cells | 2×1 |
 
 - **Title row:** the experience title, as in the journal.

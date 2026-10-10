@@ -21,7 +21,6 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
   - Substance details are hidden on the lock screen unless you allow them in Settings.
 - **Home-screen widgets.** Follow the current experience from your home screen:
   - **Timeline:** the chart with a "now" line, and each substance's phase.
-  - **Timeline chart:** only the chart.
   - **Timeline status:** only the phases, in a small widget.
   - The widgets show your most recent experience whose effects haven't ended. They update when you log, and every few minutes while the experience lasts.
   - Tapping a widget opens the experience. The + button opens the add-ingestion flow.

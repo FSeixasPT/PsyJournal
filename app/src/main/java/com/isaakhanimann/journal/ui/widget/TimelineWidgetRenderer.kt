@@ -47,16 +47,13 @@ fun renderTimelineWidget(
 ): RemoteViews {
     val layout = when (kind) {
         WidgetKind.FULL -> R.layout.widget_full
-        WidgetKind.CHART -> R.layout.widget_chart
         WidgetKind.STATUS -> R.layout.widget_status
     }
     val isDarkTheme = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
     val views = RemoteViews(context.packageName, layout)
     val experienceId = (content as? WidgetContent.Active)?.experienceId
     views.setOnClickPendingIntent(R.id.widget_root, LiveNotificationIntents.openFromWidget(context, REQUEST_OPEN, experienceId))
-    if (kind != WidgetKind.CHART) {
-        views.setOnClickPendingIntent(R.id.widget_add, LiveNotificationIntents.addIngestionFromWidget(context, REQUEST_ADD))
-    }
+    views.setOnClickPendingIntent(R.id.widget_add, LiveNotificationIntents.addIngestionFromWidget(context, REQUEST_ADD))
     when (content) {
         WidgetContent.NothingActive -> {
             val text = context.getString(R.string.widget_nothing_active)
@@ -65,15 +62,15 @@ fun renderTimelineWidget(
             } else {
                 views.setTextViewText(R.id.widget_title, text)
                 views.setViewVisibility(R.id.widget_chart, View.GONE)
-                if (kind == WidgetKind.FULL) views.setTextViewText(R.id.widget_lines, "")
+                views.setTextViewText(R.id.widget_lines, "")
             }
         }
 
         is WidgetContent.Active -> {
-            if (kind != WidgetKind.STATUS) {
+            if (kind == WidgetKind.FULL) {
                 views.setTextViewText(R.id.widget_title, content.title)
                 val density = context.resources.displayMetrics.density
-                val (widthPx, heightPx) = chartSizePx(kind, widthDp, heightDp, content.lines.size, density)
+                val (widthPx, heightPx) = chartSizePx(widthDp, heightDp, content.lines.size, density)
                 val chart = drawLiveChart(content.model, now, widthPx, heightPx, Density(context), isDarkTheme)
                 if (chart != null) {
                     views.setViewVisibility(R.id.widget_chart, View.VISIBLE)
@@ -82,9 +79,7 @@ fun renderTimelineWidget(
                     views.setViewVisibility(R.id.widget_chart, View.GONE)
                 }
             }
-            if (kind != WidgetKind.CHART) {
-                views.setTextViewText(R.id.widget_lines, linesText(content.lines, isDarkTheme))
-            }
+            views.setTextViewText(R.id.widget_lines, linesText(content.lines, isDarkTheme))
         }
     }
     return views

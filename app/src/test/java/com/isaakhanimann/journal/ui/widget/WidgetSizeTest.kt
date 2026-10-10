@@ -26,27 +26,25 @@ class WidgetSizeTest {
     @Test
     fun theChartFillsTheWidthAndTheSpaceLeftByTheText() {
         // 300 x 180 dp at density 2, 24 dp of padding; the full widget keeps 32 dp for the title and 18 dp per line
-        assertEquals(Pair(552, 212), chartSizePx(WidgetKind.FULL, 300, 180, lineCount = 1, density = 2f))
-        // the chart widget only keeps 28 dp for the title
-        assertEquals(Pair(552, 256), chartSizePx(WidgetKind.CHART, 300, 180, lineCount = 1, density = 2f))
+        assertEquals(Pair(552, 212), chartSizePx(300, 180, lineCount = 1, density = 2f))
     }
 
     @Test
     fun moreLinesLeaveLessRoomForTheChart() {
-        assertEquals(Pair(552, 140), chartSizePx(WidgetKind.FULL, 300, 180, lineCount = 3, density = 2f))
+        assertEquals(Pair(552, 140), chartSizePx(300, 180, lineCount = 3, density = 2f))
         // the lines are cut after 4, so they never take more room than that
-        assertEquals(chartSizePx(WidgetKind.FULL, 300, 180, 4, 2f), chartSizePx(WidgetKind.FULL, 300, 180, 9, 2f))
+        assertEquals(chartSizePx(300, 180, 4, 2f), chartSizePx(300, 180, 9, 2f))
     }
 
     @Test
     fun anUnknownSizeUsesTheDefaultSize() {
         // the default is 4 x 2 cells, about 250 x 110 dp
-        assertEquals(chartSizePx(WidgetKind.FULL, 250, 110, 1, 2f), chartSizePx(WidgetKind.FULL, null, null, 1, 2f))
+        assertEquals(chartSizePx(250, 110, 1, 2f), chartSizePx(null, null, 1, 2f))
     }
 
     @Test
     fun theChartIsNeverEmpty() {
-        val (width, height) = chartSizePx(WidgetKind.FULL, 40, 40, 1, 1f)
+        val (width, height) = chartSizePx(40, 40, 1, 1f)
         assertTrue(width >= 48 && height >= 24)
     }
 

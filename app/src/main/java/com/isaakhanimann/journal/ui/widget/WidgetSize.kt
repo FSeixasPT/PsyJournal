@@ -20,7 +20,7 @@ package com.isaakhanimann.journal.ui.widget
 
 import kotlin.math.roundToInt
 
-enum class WidgetKind { FULL, CHART, STATUS }
+enum class WidgetKind { FULL, STATUS }
 
 private const val defaultWidthDp = 250
 private const val defaultHeightDp = 110
@@ -34,12 +34,12 @@ private const val lineDp = 18
 // the full widget's lines are cut after this many, see widget_full.xml
 private const val maxLines = 4
 
-// the chart bitmap size for a widget of this size in dp; drawing a 0 px bitmap would throw
-fun chartSizePx(kind: WidgetKind, widthDp: Int?, heightDp: Int?, lineCount: Int, density: Float): Pair<Int, Int> {
+// the chart bitmap size for a full widget of this size in dp; drawing a 0 px bitmap would throw
+fun chartSizePx(widthDp: Int?, heightDp: Int?, lineCount: Int, density: Float): Pair<Int, Int> {
     val width = widthDp ?: defaultWidthDp
     val height = heightDp ?: defaultHeightDp
-    // the title row, and for the full widget the substance lines below the chart
-    val textDp = if (kind == WidgetKind.FULL) titleDp + linesMarginDp + lineDp * lineCount.coerceIn(1, maxLines) else titleDp
+    // the title row and the substance lines below the chart
+    val textDp = titleDp + linesMarginDp + lineDp * lineCount.coerceIn(1, maxLines)
     val widthPx = ((width - paddingDp) * density).roundToInt().coerceAtLeast(minimumWidthPx)
     val heightPx = ((height - paddingDp - textDp) * density).roundToInt().coerceAtLeast(minimumHeightPx)
     return Pair(widthPx, heightPx)

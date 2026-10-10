@@ -69,5 +69,4 @@ abstract class TimelineWidgetProvider(val kind: WidgetKind) : AppWidgetProvider(
 }
 
 class FullTimelineWidget : TimelineWidgetProvider(WidgetKind.FULL)
-class ChartTimelineWidget : TimelineWidgetProvider(WidgetKind.CHART)
 class StatusTimelineWidget : TimelineWidgetProvider(WidgetKind.STATUS)
