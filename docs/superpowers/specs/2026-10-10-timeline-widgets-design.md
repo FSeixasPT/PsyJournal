@@ -78,7 +78,7 @@ sealed interface WidgetContent {
 - `buildWidgetContent(...)`:
   - for the chosen experience, it calls `buildLiveNotificationContent` with no planned ingestion and wraps the result in `Active`;
   - with no chosen experience, it returns `NothingActive`.
-- `nextRefreshAt` is the notification's (1 to 5 minutes, at the next phase change). `NothingActive` schedules no alarm.
+- `nextRefreshAt` is the notification's next phase change, capped at 2 minutes for the widgets (the notification keeps its 5-minute cap). `NothingActive` schedules no alarm.
 
 ### 2. `TimelineWidgetRenderer.kt`
 
@@ -119,7 +119,7 @@ sealed interface WidgetContent {
 ## Refreshing
 
 - **Journal or setting change while the app runs:** `observe()`, as described above. Logging from the app, editing, deleting and the planned-chip "I took it now" all go through the database, so they're covered.
-- **During an active experience:** the alarm at `nextRefreshAt`, every 1 to 5 minutes. This keeps the now line, the percent and the "in 40 min" text current.
+- **During an active experience:** the alarm at `nextRefreshAt`, every 1 to 2 minutes. This keeps the now line, the percent and the "in 40 min" text current.
 - **No active experience:** no alarm. The 30-minute `updatePeriodMillis` heartbeat and the triggers below pick up the next experience.
 - **Android triggers:** a widget is placed, resized or restored, or the time or timezone changes.
 

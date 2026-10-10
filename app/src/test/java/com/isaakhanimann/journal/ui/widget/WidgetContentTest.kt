@@ -106,4 +106,18 @@ class WidgetContentTest {
         val ingestions = listOf(3 to at(-120), 5 to at(-60), 3 to at(-180), 5 to at(-4000))
         assertEquals(listOf(5, 3), candidateExperienceIdsLatestFirst(ingestions))
     }
+
+    @Test
+    fun widgetsRefreshAtLeastEveryTwoMinutes() {
+        // the next phase change is 30 minutes away, so only the cap decides
+        val content = buildWidgetContent(candidate(1, 0), settings, at(90)) as WidgetContent.Active
+        assertEquals(at(92), content.nextRefreshAt)
+    }
+
+    @Test
+    fun aNearerPhaseChangeStillComesFirst() {
+        // comes down at 120, one minute from now
+        val content = buildWidgetContent(candidate(1, 0), settings, at(119)) as WidgetContent.Active
+        assertEquals(at(120), content.nextRefreshAt)
+    }
 }

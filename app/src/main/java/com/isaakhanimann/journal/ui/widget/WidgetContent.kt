@@ -25,6 +25,7 @@ import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.Sub
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.buildLiveNotificationContent
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.hasActiveEffects
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.AllTimelinesModel
+import java.time.Duration
 import java.time.Instant
 
 // an experience and the user's own effect lines in it, from myEffectLines
@@ -81,5 +82,9 @@ fun buildWidgetContent(chosen: WidgetCandidate?, settings: WidgetSettings, now: 
         now = now
     )
     if (content.isFinished) return WidgetContent.NothingActive
-    return WidgetContent.Active(chosen.experience.id, content.title, content.lines, model, content.nextRefreshAt)
+    // more often than the notification's 5 minutes, so the chart's now line moves smoothly on the home screen
+    val nextRefreshAt = minOf(content.nextRefreshAt, now + longestWidgetRefreshInterval)
+    return WidgetContent.Active(chosen.experience.id, content.title, content.lines, model, nextRefreshAt)
 }
+
+private val longestWidgetRefreshInterval: Duration = Duration.ofMinutes(2)
