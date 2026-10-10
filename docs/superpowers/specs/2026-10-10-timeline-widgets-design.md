@@ -83,7 +83,7 @@ sealed interface WidgetContent {
 ### 2. `TimelineWidgetRenderer.kt`
 
 - `render(context, kind: WidgetKind, content: WidgetContent, sizePx): RemoteViews`, where `enum class WidgetKind { FULL, CHART, STATUS }`.
-- **Substance lines:** the lines are added as child views (`RemoteViews.addView` with a one-line item layout) into a vertical container. There are at most 6 lines, so no collection adapter is needed.
+- **Substance lines:** one `TextView` with a colored "●" span before each line, joined by line breaks, the way the notification's expanded view does it. `maxLines` cuts a long list at the bottom, so no collection adapter is needed.
 - **Chart:** `setImageViewBitmap`. If `drawLiveChart` returns null, the chart view is hidden and the text stays.
 - **Taps:** they reuse `LiveNotificationIntents`:
   - the root opens the experience (`NotificationTarget.Experience(id, openQuickLog = false)`), or the main activity when nothing is active;
