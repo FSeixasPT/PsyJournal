@@ -312,7 +312,7 @@ fun SettingsScreen(
                                 onClick = {
                                     isShowingExportDialog = false
                                     launcherExport.launch(
-                                        "Journal ${
+                                        "PsyJournal ${
                                             Instant.now().getStringOfPattern("dd MMM yyyy")
                                         }.json"
                                     )

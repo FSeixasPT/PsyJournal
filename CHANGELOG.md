@@ -6,6 +6,10 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ## Unreleased
 
+### Changed
+
+- **Exported backups are named "PsyJournal" and the date**, so they're easy to tell apart from the original app's.
+
 ## 12.0 — 2026-10-10
 
 ### Added
