@@ -1,4 +1,4 @@
-First PsyJournal release, a fork of PsychonautWiki Journal 11.11.
+First PsyJournal release, a fork of PsychonautWiki Journal 11.11, with its own sunset icon.
 • Live timeline notification and home-screen widgets
 • Preview your next dose on the timeline
 • Quick times like "15 min ago" when logging

@@ -6,10 +6,6 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ## Unreleased
 
-### Changed
-
-- **New app icon.** The same eye on a warm sunset background, so PsyJournal is easy to tell apart from the original app on your home screen. The launch screen matches it.
-
 ## 12.0 — 2026-10-10
 
 ### Added
@@ -48,6 +44,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ### Changed
 
+- **New app icon.** The same eye on a warm sunset background, so PsyJournal is easy to tell apart from the original app on your home screen. The launch screen matches it.
 - **Interaction warnings are more complete.**
   - Group names now match their members, which they mostly didn't before: DOx, 25x-NBOMe, 25x-NBOH, 2C-x, 2C-T-x and 5-MeO-xxT.
   - MAOIs (including Ayahuasca), SSRIs, SNRIs and tricyclic antidepressants list their members.
