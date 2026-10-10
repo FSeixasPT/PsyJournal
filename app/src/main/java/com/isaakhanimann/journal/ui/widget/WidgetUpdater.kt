@@ -96,11 +96,15 @@ class WidgetUpdater @Inject constructor(
         }
         val now = Instant.now()
         val content = loadContent(now)
+        val configuration = context.resources.configuration
         idsByKind.forEach { (kind, ids) ->
             ids.forEach { id ->
                 val options = manager.getAppWidgetOptions(id)
                 val (widthDp, heightDp) = widgetSizeDp(
-                    isPortrait = context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT,
+                    isPortrait = isPortraitLauncher(
+                        isPortraitNow = configuration.orientation == Configuration.ORIENTATION_PORTRAIT,
+                        smallestScreenWidthDp = configuration.smallestScreenWidthDp
+                    ),
                     minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH),
                     maxWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH),
                     minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT),
@@ -128,16 +132,18 @@ class WidgetUpdater @Inject constructor(
             areRoutesMerged = userPreferences.areRoutesMergedFlow.first(),
             savedTimeDisplayOption = userPreferences.savedTimeDisplayOptionFlow.first(),
         )
-        val experiences = experienceRepo.getSortedExperiencesWithIngestionsWithSortDateBetween(
+        // 3 days is longer than any substance stays active
+        val recentIngestions = experienceRepo.getIngestionsWithCompanions(
             fromInstant = now - Duration.ofDays(3),
             toInstant = now + Duration.ofDays(1)
-        ).sortedByDescending { it.experience.sortDate }
-        // loaded one at a time, newest first, and stops at the first active one
+        ).map { it.ingestion.experienceId to it.ingestion.time }
+        // loaded one at a time, latest first, and stops at the first active one
         var chosen: WidgetCandidate? = null
-        for (experience in experiences) {
+        for (experienceId in candidateExperienceIdsLatestFirst(recentIngestions)) {
+            val experience = experienceRepo.getExperience(experienceId) ?: continue
             val candidate = WidgetCandidate(
-                experience.experience,
-                myEffectLines(experienceRepo.getIngestionsWithCompanions(experience.experience.id), substanceRepo)
+                experience,
+                myEffectLines(experienceRepo.getIngestionsWithCompanions(experienceId), substanceRepo)
             )
             if (chooseWidgetExperience(listOf(candidate), settings, now) != null) {
                 chosen = candidate

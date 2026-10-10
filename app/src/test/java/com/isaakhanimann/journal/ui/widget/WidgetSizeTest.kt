@@ -61,4 +61,13 @@ class WidgetSizeTest {
     fun missingOptionsGiveNoSize() {
         assertEquals(Pair(null, null), widgetSizeDp(isPortrait = true, minWidth = 0, maxWidth = 0, minHeight = 0, maxHeight = 0))
     }
+
+    @Test
+    fun aPhoneLauncherIsPortraitEvenWhenALandscapeAppIsOpen() {
+        // a refresh can run while a video plays in landscape; the home screen of a phone is still portrait
+        assertEquals(true, isPortraitLauncher(isPortraitNow = false, smallestScreenWidthDp = 411))
+        assertEquals(true, isPortraitLauncher(isPortraitNow = true, smallestScreenWidthDp = 411))
+        // tablets rotate their home screen, so the current orientation counts
+        assertEquals(false, isPortraitLauncher(isPortraitNow = false, smallestScreenWidthDp = 800))
+    }
 }

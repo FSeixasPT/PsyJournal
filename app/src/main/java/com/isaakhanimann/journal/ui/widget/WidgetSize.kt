@@ -51,3 +51,7 @@ fun widgetSizeDp(isPortrait: Boolean, minWidth: Int, maxWidth: Int, minHeight: I
     val height = if (isPortrait) maxHeight else minHeight
     return Pair(width.takeIf { it > 0 }, height.takeIf { it > 0 })
 }
+
+// phone launchers stay in portrait, so a refresh while a landscape app is open must not size for landscape
+fun isPortraitLauncher(isPortraitNow: Boolean, smallestScreenWidthDp: Int): Boolean =
+    isPortraitNow || smallestScreenWidthDp < 600

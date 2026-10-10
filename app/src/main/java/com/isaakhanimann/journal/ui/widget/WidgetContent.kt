@@ -48,6 +48,14 @@ sealed interface WidgetContent {
     data object NothingActive : WidgetContent
 }
 
+// the experiences of these ingestions (experience id, time), the one with the latest ingestion first;
+// by ingestion rather than by the experience's sort date, which is the time of its first ingestion
+fun candidateExperienceIdsLatestFirst(ingestions: List<Pair<Int, Instant>>): List<Int> =
+    ingestions.groupBy({ it.first }, { it.second })
+        .entries
+        .sortedByDescending { (_, times) -> times.max() }
+        .map { it.key }
+
 // the most recent experience whose estimated effects haven't ended, so an ended newer one doesn't hide a running older one
 fun chooseWidgetExperience(candidatesNewestFirst: List<WidgetCandidate>, settings: WidgetSettings, now: Instant): WidgetCandidate? =
     candidatesNewestFirst.firstOrNull {

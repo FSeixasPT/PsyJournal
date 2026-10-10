@@ -99,4 +99,11 @@ class WidgetContentTest {
     fun anExperienceThatEndedGivesNothingActive() {
         assertEquals(WidgetContent.NothingActive, buildWidgetContent(candidate(1, 0), settings, at(200)))
     }
+
+    @Test
+    fun candidatesAreTheExperiencesWithRecentIngestionsLatestFirst() {
+        // experience 5 was started days ago but got an ingestion an hour ago, so it is the most recent
+        val ingestions = listOf(3 to at(-120), 5 to at(-60), 3 to at(-180), 5 to at(-4000))
+        assertEquals(listOf(5, 3), candidateExperienceIdsLatestFirst(ingestions))
+    }
 }

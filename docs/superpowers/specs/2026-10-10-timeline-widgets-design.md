@@ -49,11 +49,11 @@ The user can follow the current experience from the home screen, without opening
 
 `chooseWidgetExperience` (pure, unit-tested):
 
-- **Input:** the experiences whose sort date is within the last 3 days, with their ingestions, newest first. These come from `getSortedExperiencesWithIngestionsWithSortDateBetween(now − 3 days, now + 1 day)`. The extra day covers an experience whose sort date is slightly in the future.
-- **Rule:** the first experience, newest first, for which `hasActiveEffects` is true. It's computed on `myEffectLines` of its ingestions with the user's merge-routes and independent-heights settings, at `now`.
+- **Input:** the experiences that have an ingestion with a time in the last 3 days (`getIngestionsWithCompanions(now − 3 days, now + 1 day)`), the one with the latest such ingestion first. The extra day covers ingestions entered slightly in the future. The window is on ingestion times, not on the experience's sort date: the sort date is the time of the first ingestion and isn't updated when later ones are added.
+- **Rule:** the first experience, in that order, for which `hasActiveEffects` is true. It's computed on `myEffectLines` of its ingestions with the user's merge-routes and independent-heights settings, at `now`.
 - **Output:** that experience, or none.
 
-3 days is longer than any substance in the data stays active. An experience older than that, with nothing logged since, can't still be active.
+3 days is longer than any substance in the data stays active, so an experience whose last ingestion is older than that can't still be active.
 
 ## Components
 
