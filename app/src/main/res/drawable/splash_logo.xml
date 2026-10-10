@@ -19,9 +19,22 @@
 
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <!-- the Sunset disc from the app icon behind the eye -->
     <item
-        android:width="100dp"
-        android:height="88dp"
+        android:width="150dp"
+        android:height="150dp"
+        android:gravity="center"
+        tools:ignore="UnusedAttribute">
+        <shape android:shape="oval">
+            <gradient
+                android:angle="270"
+                android:endColor="#FBBF24"
+                android:startColor="#FB7185" />
+        </shape>
+    </item>
+    <item
+        android:width="94dp"
+        android:height="83dp"
         android:drawable="@drawable/eye_open"
         android:gravity="center"
         tools:ignore="UnusedAttribute" />

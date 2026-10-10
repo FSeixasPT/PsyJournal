@@ -6,6 +6,10 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ## Unreleased
 
+### Changed
+
+- **New app icon.** The same eye on a warm sunset background, so PsyJournal is easy to tell apart from the original app on your home screen. The launch screen matches it.
+
 ## 12.0 — 2026-10-10
 
 ### Added
