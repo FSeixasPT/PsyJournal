@@ -39,6 +39,8 @@ data class SubstanceLine(
     // when the line reaches zero, null if unknown
     val endsAt: Instant?,
     val text: String,
+    // what happens next and when, e.g. "peaks in 20 min", in the chosen time display
+    val hintText: String?,
 ) {
     val isActive: Boolean get() = phase != Phase.ENDED && phase != Phase.NO_TIMELINE
 
@@ -46,6 +48,10 @@ data class SubstanceLine(
     // so a wrap only happens between substances
     val shortText: String
         get() = shortTextWithSpaces.replace(' ', ' ')
+
+    // the short form with the hint, for the widgets, e.g. "2C-B 56% ▲ · peaks at 11:32 AM"
+    val compactText: String
+        get() = listOfNotNull(shortText, hintText).joinToString(" · ")
 
     private val shortTextWithSpaces: String
         get() = when {
@@ -112,7 +118,7 @@ fun buildLiveNotificationContent(
         }
         val hintText = phaseWithHint.hint?.let { "${it.kind.word} ${plannedTimeText(it.time, now, model.startTime, timeOption)}" }
         val text = listOfNotNull(label, phaseWithHint.phase.word, percent?.let { "$it%" }, hintText).joinToString(" · ")
-        SubstanceLine(label, curve.color, phaseWithHint.phase, percent, phaseWithHint.hint, endsAt, text)
+        SubstanceLine(label, curve.color, phaseWithHint.phase, percent, phaseWithHint.hint, endsAt, text, hintText)
     }
     val active = substanceLines.filter { it.isActive }
     val endsAt = if (active.isNotEmpty() && active.all { it.endsAt != null }) active.maxOf { it.endsAt!! } else null

@@ -145,4 +145,14 @@ class WidgetContentTest {
             content.lines.single().text
         )
     }
+
+    @Test
+    fun widgetLinesUseArrowsLikeTheCollapsedNotification() {
+        // coming down at 150, half of the peak, ends at 180
+        val content = buildWidgetContent(candidate(1, 0), settings, at(150)) as WidgetContent.Active
+        assertEquals(
+            "TestSubstance 50% ▼ · ends " + plannedTimeText(at(180), at(150), at(0), TimeDisplayOption.REGULAR),
+            content.lines.single().compactText.replace(' ', ' ')
+        )
+    }
 }

@@ -96,14 +96,15 @@ private fun linesText(lines: List<SubstanceLine>, isDarkTheme: Boolean): CharSeq
     lines.forEach { line ->
         if (text.isNotEmpty()) text.append("\n")
         val dotStart = text.length
-        text.append("● ")
+        text.append("● ")
         text.setSpan(
             ForegroundColorSpan(line.color.getComposeColor(isDarkTheme).toArgb()),
             dotStart,
             dotStart + 1,
             Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
         )
-        text.append(line.text)
+        // the same arrows as the collapsed notification
+        text.append(line.compactText)
     }
     return text
 }
