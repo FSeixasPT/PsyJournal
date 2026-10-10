@@ -19,6 +19,12 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
   - It stops by itself when all effects have ended. Swiping it away also stops it.
   - Turn it on with "Live notification" above an experience's timeline, next to "Info". In Settings you can also have it start automatically after logging a recent ingestion.
   - Substance details are hidden on the lock screen unless you allow them in Settings.
+- **Home-screen widgets.** Follow the current experience from your home screen:
+  - **Timeline:** the chart with a "now" line, and each substance's phase.
+  - **Timeline chart:** only the chart.
+  - **Timeline status:** only the phases, in a small widget.
+  - The widgets show your most recent experience whose effects haven't ended. They update when you log, and every few minutes while the experience lasts.
+  - Tapping a widget opens the experience. The + button opens the add-ingestion flow.
 - **Planned-ingestion chip under the timeline.**
   - Show it with "Preview next ingestion" below the chart, and hide it again with ×. Your choice is remembered.
   - Hold the chip to preview the effect of taking a dose now, drawn as a dashed line on the chart, with the resulting intensity and peak.
