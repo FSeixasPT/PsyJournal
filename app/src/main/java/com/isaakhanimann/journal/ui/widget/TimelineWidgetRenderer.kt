@@ -52,7 +52,7 @@ fun renderTimelineWidget(
     val isDarkTheme = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
     val views = RemoteViews(context.packageName, layout)
     val experienceId = (content as? WidgetContent.Active)?.experienceId
-    views.setOnClickPendingIntent(R.id.widget_root, LiveNotificationIntents.openFromWidget(context, REQUEST_OPEN, experienceId))
+    views.setOnClickPendingIntent(android.R.id.background, LiveNotificationIntents.openFromWidget(context, REQUEST_OPEN, experienceId))
     views.setOnClickPendingIntent(R.id.widget_add, LiveNotificationIntents.addIngestionFromWidget(context, REQUEST_ADD))
     when (content) {
         WidgetContent.NothingActive -> {
@@ -70,7 +70,7 @@ fun renderTimelineWidget(
             if (kind == WidgetKind.FULL) {
                 views.setTextViewText(R.id.widget_title, content.title)
                 val density = context.resources.displayMetrics.density
-                val (widthPx, heightPx) = chartSizePx(widthDp, heightDp, content.lines.size, density)
+                val (widthPx, heightPx) = chartSizePx(widthDp, heightDp, content.lines.size, density, context.resources.configuration.fontScale)
                 val chart = drawLiveChart(content.model, now, widthPx, heightPx, Density(context), isDarkTheme)
                 if (chart != null) {
                     views.setViewVisibility(R.id.widget_chart, View.VISIBLE)

@@ -37,6 +37,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -55,6 +56,10 @@ class WidgetUpdater @Inject constructor(
 ) {
     private val mutex = Mutex()
 
+    // when the last refresh finished, so triggers sent together share one refresh
+    @Volatile
+    private var lastFinishedAt: Instant? = null
+
     private val scope = CoroutineScope(
         SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, error ->
             Log.w("Widgets", "Widget update failed", error)
@@ -62,13 +67,18 @@ class WidgetUpdater @Inject constructor(
     )
 
     // a failed refresh is tried again later, so the widgets never stay frozen
-    suspend fun refreshAll() = runSafely(
+    // skipIfRecent for Android's widget triggers; journal changes and the alarm always refresh
+    suspend fun refreshAll(skipIfRecent: Boolean = false) = runSafely(
         onFailure = { error ->
             Log.w("Widgets", "Widget refresh failed", error)
             scheduleRefresh(Instant.now() + retryAfterFailure)
         }
     ) {
-        mutex.withLock { refreshLocked() }
+        mutex.withLock {
+            if (skipIfRecent && isRecentRefresh(lastFinishedAt, Instant.now())) return@withLock
+            refreshLocked()
+            lastFinishedAt = Instant.now()
+        }
     }
 
     // keeps the widgets in step with the journal while the app process runs
@@ -81,6 +91,8 @@ class WidgetUpdater @Inject constructor(
                 userPreferences.areRoutesMergedFlow,
                 userPreferences.areSubstanceHeightsIndependentFlow,
             ) { _, _, _, _ -> }
+                // the first value is the journal as it already is, so the widgets are up to date
+                .drop(1)
                 .debounce(500)
                 .collect { refreshAll() }
         }

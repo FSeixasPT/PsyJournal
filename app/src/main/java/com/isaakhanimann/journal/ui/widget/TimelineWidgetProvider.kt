@@ -31,6 +31,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 @EntryPoint
 @InstallIn(SingletonComponent::class)
@@ -39,7 +40,7 @@ interface WidgetEntryPoint {
 }
 
 // every trigger refreshes all widgets, so the three kinds always show the same experience
-abstract class TimelineWidgetProvider(val kind: WidgetKind) : AppWidgetProvider() {
+abstract class TimelineWidgetProvider : AppWidgetProvider() {
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
         if (intent.action == Intent.ACTION_TIME_CHANGED || intent.action == Intent.ACTION_TIMEZONE_CHANGED) {
@@ -60,7 +61,8 @@ abstract class TimelineWidgetProvider(val kind: WidgetKind) : AppWidgetProvider(
         val pendingResult = goAsync()
         CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
             try {
-                updater.refreshAll()
+                // under the 10 s Android gives a receiver
+                withTimeoutOrNull(receiverTimeoutMillis) { updater.refreshAll(skipIfRecent = true) }
             } finally {
                 pendingResult.finish()
             }
@@ -68,5 +70,7 @@ abstract class TimelineWidgetProvider(val kind: WidgetKind) : AppWidgetProvider(
     }
 }
 
-class FullTimelineWidget : TimelineWidgetProvider(WidgetKind.FULL)
-class StatusTimelineWidget : TimelineWidgetProvider(WidgetKind.STATUS)
+class FullTimelineWidget : TimelineWidgetProvider()
+class StatusTimelineWidget : TimelineWidgetProvider()
+
+const val receiverTimeoutMillis = 9_000L

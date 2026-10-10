@@ -68,4 +68,10 @@ class WidgetSizeTest {
         // tablets rotate their home screen, so the current orientation counts
         assertEquals(false, isPortraitLauncher(isPortraitNow = false, smallestScreenWidthDp = 800))
     }
+
+    @Test
+    fun largerFontsLeaveLessRoomForTheChart() {
+        // at font scale 1.5 the title and one line take 1.5 x (28 + 18) dp, plus the 4 dp margin
+        assertEquals(Pair(552, 206), chartSizePx(300, 200, lineCount = 1, density = 2f, fontScale = 1.5f))
+    }
 }

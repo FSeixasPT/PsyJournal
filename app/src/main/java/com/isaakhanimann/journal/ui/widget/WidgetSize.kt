@@ -35,11 +35,11 @@ private const val lineDp = 18
 private const val maxLines = 4
 
 // the chart bitmap size for a full widget of this size in dp; drawing a 0 px bitmap would throw
-fun chartSizePx(widthDp: Int?, heightDp: Int?, lineCount: Int, density: Float): Pair<Int, Int> {
+fun chartSizePx(widthDp: Int?, heightDp: Int?, lineCount: Int, density: Float, fontScale: Float = 1f): Pair<Int, Int> {
     val width = widthDp ?: defaultWidthDp
     val height = heightDp ?: defaultHeightDp
-    // the title row and the substance lines below the chart
-    val textDp = titleDp + linesMarginDp + lineDp * lineCount.coerceIn(1, maxLines)
+    // the title row and the substance lines below the chart; their text grows with the system font size
+    val textDp = (titleDp + lineDp * lineCount.coerceIn(1, maxLines)) * fontScale + linesMarginDp
     val widthPx = ((width - paddingDp) * density).roundToInt().coerceAtLeast(minimumWidthPx)
     val heightPx = ((height - paddingDp - textDp) * density).roundToInt().coerceAtLeast(minimumHeightPx)
     return Pair(widthPx, heightPx)

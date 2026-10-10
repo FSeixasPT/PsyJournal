@@ -62,4 +62,12 @@ class WidgetRefreshTest {
     fun noWidgetsSchedulesNoAlarm() {
         assertNull(widgetRefreshAt(active, hasWidgets = false))
     }
+
+    @Test
+    fun triggersRightAfterARefreshAreSkipped() {
+        // Android sends several triggers at once, e.g. a time change reaches every widget kind
+        assertEquals(true, isRecentRefresh(lastFinishedAt = next, now = next.plusSeconds(2)))
+        assertEquals(false, isRecentRefresh(lastFinishedAt = next, now = next.plusSeconds(3)))
+        assertEquals(false, isRecentRefresh(lastFinishedAt = null, now = next))
+    }
 }

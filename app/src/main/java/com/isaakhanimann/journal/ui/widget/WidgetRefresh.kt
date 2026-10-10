@@ -18,8 +18,15 @@
 
 package com.isaakhanimann.journal.ui.widget
 
+import java.time.Duration
 import java.time.Instant
 
 // alarms only while a widget shows an active experience, so nothing wakes the phone otherwise
 fun widgetRefreshAt(content: WidgetContent, hasWidgets: Boolean): Instant? =
     if (hasWidgets && content is WidgetContent.Active) content.nextRefreshAt else null
+
+private val coalescingWindow: Duration = Duration.ofSeconds(3)
+
+// one refresh covers the triggers Android sends together, e.g. a time change reaching every widget kind
+fun isRecentRefresh(lastFinishedAt: Instant?, now: Instant): Boolean =
+    lastFinishedAt != null && Duration.between(lastFinishedAt, now) < coalescingWindow

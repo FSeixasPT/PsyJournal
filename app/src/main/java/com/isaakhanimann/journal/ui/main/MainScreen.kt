@@ -20,6 +20,7 @@ package com.isaakhanimann.journal.ui.main
 
 import com.isaakhanimann.journal.ui.main.navigation.graphs.AddIngestionRoute
 import com.isaakhanimann.journal.ui.main.navigation.graphs.ExperienceRoute
+import com.isaakhanimann.journal.ui.main.navigation.graphs.JournalScreenRoute
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.NotificationTarget
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.Icon
@@ -115,6 +116,8 @@ fun MainScreen(
                         }
                     }
                     NotificationTarget.AddIngestion -> navController.navigate(AddIngestionRoute) { launchSingleTop = true }
+                    // the journal list is always at the bottom of the back stack
+                    NotificationTarget.Journal -> navController.popBackStack(JournalScreenRoute, inclusive = false)
                 }
                 onNotificationTargetHandled()
             }

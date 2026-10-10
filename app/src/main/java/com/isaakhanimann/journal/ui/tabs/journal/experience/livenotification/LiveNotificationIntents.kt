@@ -26,6 +26,7 @@ import com.isaakhanimann.journal.MainActivity
 sealed interface NotificationTarget {
     data class Experience(val experienceId: Int, val openQuickLog: Boolean) : NotificationTarget
     data object AddIngestion : NotificationTarget
+    data object Journal : NotificationTarget
 }
 
 object LiveNotificationIntents {
@@ -36,6 +37,7 @@ object LiveNotificationIntents {
     private const val EXTRA_OPEN_EXPERIENCE_ID = "live_open_experience_id"
     private const val EXTRA_OPEN_QUICK_LOG = "live_open_quick_log"
     private const val EXTRA_ADD_INGESTION = "live_add_ingestion"
+    private const val EXTRA_OPEN_JOURNAL = "live_open_journal"
 
     private const val FLAGS = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
 
@@ -54,6 +56,8 @@ object LiveNotificationIntents {
         val intent = mainActivityIntent(context)
         if (experienceId != null) {
             intent.putExtra(EXTRA_OPEN_EXPERIENCE_ID, experienceId).putExtra(EXTRA_OPEN_QUICK_LOG, false)
+        } else {
+            intent.putExtra(EXTRA_OPEN_JOURNAL, true)
         }
         return PendingIntent.getActivity(context, requestCode, intent, FLAGS)
     }
@@ -77,6 +81,7 @@ object LiveNotificationIntents {
     fun target(intent: Intent?): NotificationTarget? {
         if (intent == null) return null
         if (intent.getBooleanExtra(EXTRA_ADD_INGESTION, false)) return NotificationTarget.AddIngestion
+        if (intent.getBooleanExtra(EXTRA_OPEN_JOURNAL, false)) return NotificationTarget.Journal
         val experienceId = intent.getIntExtra(EXTRA_OPEN_EXPERIENCE_ID, -1)
         if (experienceId < 0) return null
         return NotificationTarget.Experience(experienceId, intent.getBooleanExtra(EXTRA_OPEN_QUICK_LOG, false))

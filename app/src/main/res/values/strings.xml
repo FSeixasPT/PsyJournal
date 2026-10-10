@@ -24,4 +24,6 @@
     <string name="widget_status_description">Phase of each substance in the current experience</string>
     <string name="widget_loading">Loading…</string>
     <string name="widget_nothing_active">No active experience</string>
+    <string name="widget_add_ingestion">Add ingestion</string>
+    <string name="widget_chart_description_a11y">Timeline</string>
 </resources>

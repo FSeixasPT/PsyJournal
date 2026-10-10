@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/widget_root"
+    android:id="@android:id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
@@ -24,7 +24,7 @@
         android:layout_width="28dp"
         android:layout_height="28dp"
         android:layout_gravity="top"
-        android:contentDescription="Add ingestion"
+        android:contentDescription="@string/widget_add_ingestion"
         android:padding="4dp"
         android:src="@drawable/ic_widget_add" />
 </LinearLayout>
