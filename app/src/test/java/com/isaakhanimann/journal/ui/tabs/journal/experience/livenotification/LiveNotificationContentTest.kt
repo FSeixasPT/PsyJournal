@@ -147,12 +147,21 @@ class LiveNotificationContentTest {
         val lines = listOf(line(name = "A"), line(name = "B", minutesAfterStart = 100), line(name = "C", duration = null))
         val result = content(lines, at(150))
         // A comes down, B comes up, C has no timeline
-        assertEquals(listOf("A 50% ▼", "B 67% ▲", "C no timeline"), result.lines.map { it.shortText })
+        assertEquals(listOf("A 50% ▼", "B 67% ▲", "C no timeline"), result.lines.map { it.shortText.replace(NBSP, ' ') })
     }
 
     @Test
     fun peakingAndWaitingUseWords() {
         val result = content(listOf(line(name = "A"), line(name = "B", minutesAfterStart = 80)), at(90))
-        assertEquals(listOf("A 100% peaking", "B waiting for onset"), result.lines.map { it.shortText })
+        assertEquals(listOf("A 100% peaking", "B waiting for onset"), result.lines.map { it.shortText.replace(NBSP, ' ') })
+    }
+
+    @Test
+    fun aShortTextNeverBreaksInsideOneSubstance() {
+        // the collapsed notification may wrap, but only between substances
+        val result = content(listOf(line(name = "A"), line(name = "B", minutesAfterStart = 80)), at(90))
+        assertTrue(result.lines.all { ' ' !in it.shortText })
     }
 }
+
+private const val NBSP = ' '

@@ -119,7 +119,8 @@ class LiveNotificationNotifier @Inject constructor(
         lines.forEach { line ->
             if (text.isNotEmpty()) text.append(separator)
             val dotStart = text.length
-            text.append("● ")
+            // a non-breaking space, so the dot stays with its substance when the text wraps
+            text.append("● ")
             text.setSpan(
                 ForegroundColorSpan(line.color.getComposeColor(isDarkTheme).toArgb()),
                 dotStart,

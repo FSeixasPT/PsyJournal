@@ -42,8 +42,12 @@ data class SubstanceLine(
 ) {
     val isActive: Boolean get() = phase != Phase.ENDED && phase != Phase.NO_TIMELINE
 
-    // for the collapsed notification, where all substances share one line
+    // for the collapsed notification, where all substances share one line; non-breaking spaces,
+    // so a wrap only happens between substances
     val shortText: String
+        get() = shortTextWithSpaces.replace(' ', ' ')
+
+    private val shortTextWithSpaces: String
         get() = when {
             percentOfPeak == null -> "$label ${phase.word}"
             phase == Phase.COMING_UP -> "$label $percentOfPeak% ▲"

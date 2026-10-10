@@ -4,11 +4,12 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
+    <!-- wraps to a second line; Android clips collapsed custom views taller than about 64 dp, so more lines end in "…" -->
     <TextView
         android:id="@+id/live_lines"
         style="@style/TextAppearance.Compat.Notification"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ellipsize="end"
-        android:maxLines="1" />
+        android:maxLines="2" />
 </LinearLayout>
