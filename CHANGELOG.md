@@ -8,6 +8,8 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ### Changed
 
+- **Targets Android 16.** The app is built for the latest Android version, as Google Play requires.
+- **Reproducible builds.** Building a release from source gives the same APK as the published one, so app stores like F-Droid can verify it and publish the same signed APK.
 - **Exported backups are named "PsyJournal" and the date**, so they're easy to tell apart from the original app's.
 
 ## 12.0 — 2026-10-10
