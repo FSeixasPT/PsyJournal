@@ -62,7 +62,8 @@ class LiveNotificationNotifier @Inject constructor(
         ensureChannel()
         val collapsed = RemoteViews(context.packageName, R.layout.live_notification_collapsed).apply {
             // the collapsed view only has room for one line, so its substances share it in short form
-            setTextViewText(R.id.live_lines, linesText(content.lines, { it.shortText }, plannedLine = null, separator = " · "))
+            // the space before the bar doesn't break, so a wrapped line never starts with it
+            setTextViewText(R.id.live_lines, linesText(content.lines, { it.shortText }, plannedLine = null, separator = " | "))
         }
         val expanded = RemoteViews(context.packageName, R.layout.live_notification_expanded).apply {
             if (chart != null) setImageViewBitmap(R.id.live_chart, chart) else setViewVisibility(R.id.live_chart, View.GONE)
