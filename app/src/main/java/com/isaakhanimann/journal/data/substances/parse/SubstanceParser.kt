@@ -23,6 +23,7 @@ import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.data.substances.classes.*
 import com.isaakhanimann.journal.data.substances.classes.roa.*
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -30,8 +31,13 @@ import javax.inject.Singleton
 @Singleton
 class SubstanceParser @Inject constructor() : SubstanceParserInterface {
 
+    // an empty file for text that isn't a substance file, like extractSubstanceString's null
     override fun parseSubstanceFile(string: String): SubstanceFile {
-        val wholeFile = JSONObject(string)
+        val wholeFile = try {
+            JSONObject(string)
+        } catch (e: JSONException) {
+            return SubstanceFile(categories = emptyList(), substances = emptyList())
+        }
         return SubstanceFile(
             categories = parseCategories(wholeFile),
             substances = parseSubstances(wholeFile)
