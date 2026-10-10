@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- the widgets hold a light and a dark variant of their chart and lines; the launcher picks one
+         with the current theme, so the widget follows it at once, also while the app isn't running;
+         the values are android:visibility's enum indexes: 0 visible, 2 gone -->
+    <integer name="widget_light_visibility">0</integer>
+    <integer name="widget_dark_visibility">2</integer>
+</resources>

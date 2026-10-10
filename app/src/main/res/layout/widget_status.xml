@@ -8,16 +8,34 @@
     android:orientation="horizontal"
     android:padding="12dp">
 
-    <TextView
+    <FrameLayout
         android:id="@+id/widget_lines"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:ellipsize="end"
-        android:maxLines="6"
-        android:text="@string/widget_loading"
-        android:textColor="@color/widget_text"
-        android:textSize="13sp" />
+        android:layout_weight="1">
+
+        <TextView
+            android:id="@+id/widget_lines_light"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="6"
+            android:text="@string/widget_loading"
+            android:textColor="@color/widget_text"
+            android:textSize="13sp"
+            android:visibility="@integer/widget_light_visibility" />
+
+        <TextView
+            android:id="@+id/widget_lines_dark"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="6"
+            android:text="@string/widget_loading"
+            android:textColor="@color/widget_text"
+            android:textSize="13sp"
+            android:visibility="@integer/widget_dark_visibility" />
+    </FrameLayout>
 
     <ImageView
         android:id="@+id/widget_add"

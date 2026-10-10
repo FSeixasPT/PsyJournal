@@ -42,7 +42,7 @@ The user can follow the current experience from the home screen, without opening
 - **Title row:** the experience title, as in the journal.
 - **Substance lines:** a color dot, then `SubstanceLine.compactText`: the collapsed notification's short form with ▲ / ▼ for coming up and down, then the time hint. For example, "2C-B 56% ▲ · peaks at 11:32 AM". The times are clock times ("peaks at 15:42") when the user's time display option is "Auto" or "Relative to now", because a widget can be seen long after its last refresh and "in 23 min" would be stale; "Relative to start" and "Between" are kept (`widgetTimeDisplayOption`). If there are more lines than fit, the list is cut at the bottom. Lines are in the order they're drawn on the chart.
 - **Chart:** `drawLiveChart`, drawn at the widget's current size in pixels. The size is read from `AppWidgetManager.getAppWidgetOptions`, and if it's missing the default size is used. The chart is drawn again when the widget is resized.
-- **Theme:** the background, text and chart colors follow the system's dark mode. The chart already takes an `isDarkTheme` flag, and the layouts use `values-night` colors.
+- **Theme:** the background, text and chart colors follow the system's dark mode at once. Each refresh draws a light and a dark chart and line text; the layout shows one of them through `values-night` visibility resources, which the launcher resolves, so no refresh is needed when the theme changes.
 - **No active experience:** the text "No active experience". "Timeline" and "Timeline status" keep the + button. "Timeline chart" shows only the text.
 - **Before the first update:** the layout itself shows "Loading…", so a just-placed widget is never blank.
 

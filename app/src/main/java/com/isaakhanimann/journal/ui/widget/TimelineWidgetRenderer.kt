@@ -19,7 +19,6 @@
 package com.isaakhanimann.journal.ui.widget
 
 import android.content.Context
-import android.content.res.Configuration
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
@@ -49,7 +48,6 @@ fun renderTimelineWidget(
         WidgetKind.FULL -> R.layout.widget_full
         WidgetKind.STATUS -> R.layout.widget_status
     }
-    val isDarkTheme = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
     val views = RemoteViews(context.packageName, layout)
     val experienceId = (content as? WidgetContent.Active)?.experienceId
     views.setOnClickPendingIntent(android.R.id.background, LiveNotificationIntents.openFromWidget(context, REQUEST_OPEN, experienceId))
@@ -58,11 +56,11 @@ fun renderTimelineWidget(
         WidgetContent.NothingActive -> {
             val text = context.getString(R.string.widget_nothing_active)
             if (kind == WidgetKind.STATUS) {
-                views.setTextViewText(R.id.widget_lines, text)
+                views.setLinesText(text, text)
             } else {
                 views.setTextViewText(R.id.widget_title, text)
                 views.setViewVisibility(R.id.widget_chart, View.GONE)
-                views.setTextViewText(R.id.widget_lines, "")
+                views.setLinesText("", "")
             }
         }
 
@@ -71,18 +69,27 @@ fun renderTimelineWidget(
                 views.setTextViewText(R.id.widget_title, content.title)
                 val density = context.resources.displayMetrics.density
                 val (widthPx, heightPx) = chartSizePx(widthDp, heightDp, content.lines.size, density, context.resources.configuration.fontScale)
-                val chart = drawLiveChart(content.model, now, widthPx, heightPx, Density(context), isDarkTheme)
-                if (chart != null) {
+                // both themes are drawn, the layout shows the one the launcher is in
+                val light = drawLiveChart(content.model, now, widthPx, heightPx, Density(context), isDarkTheme = false)
+                val dark = drawLiveChart(content.model, now, widthPx, heightPx, Density(context), isDarkTheme = true)
+                if (light != null && dark != null) {
                     views.setViewVisibility(R.id.widget_chart, View.VISIBLE)
-                    views.setImageViewBitmap(R.id.widget_chart, chart)
+                    views.setImageViewBitmap(R.id.widget_chart_light, light)
+                    views.setImageViewBitmap(R.id.widget_chart_dark, dark)
                 } else {
                     views.setViewVisibility(R.id.widget_chart, View.GONE)
                 }
             }
-            views.setTextViewText(R.id.widget_lines, linesText(content.lines, isDarkTheme))
+            views.setLinesText(linesText(content.lines, isDarkTheme = false), linesText(content.lines, isDarkTheme = true))
         }
     }
     return views
+}
+
+// the light and dark variants; which one shows is set by the layout's values-night resources
+private fun RemoteViews.setLinesText(light: CharSequence, dark: CharSequence) {
+    setTextViewText(R.id.widget_lines_light, light)
+    setTextViewText(R.id.widget_lines_dark, dark)
 }
 
 // a colored dot before each substance, like the notification's expanded view
