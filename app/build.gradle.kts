@@ -16,8 +16,8 @@ android {
         applicationId = "io.github.fseixaspt.psyjournal"
         minSdk = 26
         targetSdk = 35
-        versionCode = 62
-        versionName = "11.11"
+        versionCode = 63
+        versionName = "12.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -26,8 +26,22 @@ android {
         schemaDirectory("$projectDir/schemas")
     }
 
+    // the key lives outside the repo; its location and passwords come from ~/.gradle/gradle.properties
+    val releaseStoreFile = providers.gradleProperty("PSYJOURNAL_STORE_FILE").orNull
+    signingConfigs {
+        if (releaseStoreFile != null) {
+            create("release") {
+                storeFile = file(releaseStoreFile)
+                storePassword = providers.gradleProperty("PSYJOURNAL_STORE_PASSWORD").get()
+                keyAlias = providers.gradleProperty("PSYJOURNAL_KEY_ALIAS").get()
+                keyPassword = providers.gradleProperty("PSYJOURNAL_KEY_PASSWORD").get()
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (releaseStoreFile != null) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

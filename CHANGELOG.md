@@ -6,6 +6,8 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ## Unreleased
 
+## 12.0 — 2026-10-10
+
 ### Added
 
 - **Live timeline notification.** Follow the current experience from the notification shade without opening the app.
