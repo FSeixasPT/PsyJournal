@@ -6,12 +6,6 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ## Unreleased
 
-### Changed
-
-- **Targets Android 16.** The app is built for the latest Android version, as Google Play requires.
-- **Reproducible builds.** Building a release from source gives the same APK as the published one, so app stores like F-Droid can verify it and publish the same signed APK.
-- **Exported backups are named "PsyJournal" and the date**, so they're easy to tell apart from the original app's.
-
 ## 12.0 — 2026-10-10
 
 ### Added
@@ -50,6 +44,9 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ### Changed
 
+- **Targets Android 16.** The app is built for the latest Android version, as Google Play requires.
+- **Reproducible builds.** Building a release from source gives the same APK as the published one, so app stores like F-Droid can verify it and publish the same signed APK.
+- **Exported backups are named "PsyJournal" and the date**, so they're easy to tell apart from the original app's.
 - **New app icon.** The same eye on a warm sunset background, so PsyJournal is easy to tell apart from the original app on your home screen. The launch screen matches it.
 - **Interaction warnings are more complete.**
   - Group names now match their members, which they mostly didn't before: DOx, 25x-NBOMe, 25x-NBOH, 2C-x, 2C-T-x and 5-MeO-xxT.
