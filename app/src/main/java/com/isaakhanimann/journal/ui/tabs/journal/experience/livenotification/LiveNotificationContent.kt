@@ -46,8 +46,8 @@ data class SubstanceLine(
     val shortText: String
         get() = when {
             percentOfPeak == null -> "$label ${phase.word}"
-            phase == Phase.COMING_UP -> "$label $percentOfPeak% ↑"
-            phase == Phase.COMING_DOWN -> "$label $percentOfPeak% ↓"
+            phase == Phase.COMING_UP -> "$label $percentOfPeak% ▲"
+            phase == Phase.COMING_DOWN -> "$label $percentOfPeak% ▼"
             else -> "$label $percentOfPeak% ${phase.word}"
         }
 }

@@ -147,7 +147,7 @@ class LiveNotificationContentTest {
         val lines = listOf(line(name = "A"), line(name = "B", minutesAfterStart = 100), line(name = "C", duration = null))
         val result = content(lines, at(150))
         // A comes down, B comes up, C has no timeline
-        assertEquals(listOf("A 50% ↓", "B 67% ↑", "C no timeline"), result.lines.map { it.shortText })
+        assertEquals(listOf("A 50% ▼", "B 67% ▲", "C no timeline"), result.lines.map { it.shortText })
     }
 
     @Test
