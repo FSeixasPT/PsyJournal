@@ -18,9 +18,11 @@
 
 package com.isaakhanimann.journal.ui.widget
 
+import android.app.AlarmManager
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.res.Configuration
 import android.util.Log
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
 import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepository
@@ -28,7 +30,15 @@ import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.run
 import com.isaakhanimann.journal.ui.tabs.journal.experience.myEffectLines
 import com.isaakhanimann.journal.ui.tabs.settings.combinations.UserPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Duration
@@ -45,26 +55,72 @@ class WidgetUpdater @Inject constructor(
 ) {
     private val mutex = Mutex()
 
-    // renders every placed widget of every kind from one content
-    suspend fun refreshAll() = runSafely(onFailure = { Log.w("Widgets", "Widget refresh failed", it) }) {
+    private val scope = CoroutineScope(
+        SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, error ->
+            Log.w("Widgets", "Widget update failed", error)
+        }
+    )
+
+    // a failed refresh is tried again later, so the widgets never stay frozen
+    suspend fun refreshAll() = runSafely(
+        onFailure = { error ->
+            Log.w("Widgets", "Widget refresh failed", error)
+            scheduleRefresh(Instant.now() + retryAfterFailure)
+        }
+    ) {
         mutex.withLock { refreshLocked() }
+    }
+
+    // keeps the widgets in step with the journal while the app process runs
+    @OptIn(FlowPreview::class)
+    fun observe() {
+        scope.launch {
+            combine(
+                experienceRepo.getSortedExperiencesWithIngestionsFlow(),
+                userPreferences.savedTimeDisplayOptionFlow,
+                userPreferences.areRoutesMergedFlow,
+                userPreferences.areSubstanceHeightsIndependentFlow,
+            ) { _, _, _, _ -> }
+                .debounce(500)
+                .collect { refreshAll() }
+        }
     }
 
     private suspend fun refreshLocked() {
         val manager = AppWidgetManager.getInstance(context)
         val idsByKind = WidgetKind.entries.associateWith { manager.getAppWidgetIds(ComponentName(context, providerClass(it))) }
-        if (idsByKind.values.all { it.isEmpty() }) return
+        val hasWidgets = idsByKind.values.any { it.isNotEmpty() }
+        if (!hasWidgets) {
+            cancelRefresh()
+            return
+        }
         val now = Instant.now()
         val content = loadContent(now)
         idsByKind.forEach { (kind, ids) ->
             ids.forEach { id ->
                 val options = manager.getAppWidgetOptions(id)
-                val widthDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH).takeIf { it > 0 }
-                val heightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT).takeIf { it > 0 }
+                val (widthDp, heightDp) = widgetSizeDp(
+                    isPortrait = context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT,
+                    minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH),
+                    maxWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH),
+                    minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT),
+                    maxHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT),
+                )
                 manager.updateAppWidget(id, renderTimelineWidget(context, kind, content, widthDp, heightDp, now))
             }
         }
+        val at = widgetRefreshAt(content, hasWidgets)
+        if (at != null) scheduleRefresh(at) else cancelRefresh()
     }
+
+    // inexact, so no exact-alarm permission is needed
+    private fun scheduleRefresh(at: Instant) {
+        alarmManager().setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at.toEpochMilli(), WidgetRefreshReceiver.pendingIntent(context))
+    }
+
+    private fun cancelRefresh() = alarmManager().cancel(WidgetRefreshReceiver.pendingIntent(context))
+
+    private fun alarmManager() = context.getSystemService(AlarmManager::class.java)
 
     private suspend fun loadContent(now: Instant): WidgetContent {
         val settings = WidgetSettings(
@@ -97,3 +153,5 @@ fun providerClass(kind: WidgetKind): Class<out TimelineWidgetProvider> = when (k
     WidgetKind.CHART -> ChartTimelineWidget::class.java
     WidgetKind.STATUS -> StatusTimelineWidget::class.java
 }
+
+private val retryAfterFailure: Duration = Duration.ofMinutes(5)

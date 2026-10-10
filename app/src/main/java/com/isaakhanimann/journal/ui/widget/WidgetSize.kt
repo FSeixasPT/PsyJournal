@@ -28,13 +28,26 @@ private const val paddingDp = 24
 private const val minimumWidthPx = 48
 private const val minimumHeightPx = 24
 
+private const val titleDp = 28
+private const val linesMarginDp = 4
+private const val lineDp = 18
+// the full widget's lines are cut after this many, see widget_full.xml
+private const val maxLines = 4
+
 // the chart bitmap size for a widget of this size in dp; drawing a 0 px bitmap would throw
-fun chartSizePx(kind: WidgetKind, widthDp: Int?, heightDp: Int?, density: Float): Pair<Int, Int> {
+fun chartSizePx(kind: WidgetKind, widthDp: Int?, heightDp: Int?, lineCount: Int, density: Float): Pair<Int, Int> {
     val width = widthDp ?: defaultWidthDp
     val height = heightDp ?: defaultHeightDp
     // the title row, and for the full widget the substance lines below the chart
-    val textDp = if (kind == WidgetKind.FULL) 92 else 28
+    val textDp = if (kind == WidgetKind.FULL) titleDp + linesMarginDp + lineDp * lineCount.coerceIn(1, maxLines) else titleDp
     val widthPx = ((width - paddingDp) * density).roundToInt().coerceAtLeast(minimumWidthPx)
     val heightPx = ((height - paddingDp - textDp) * density).roundToInt().coerceAtLeast(minimumHeightPx)
     return Pair(widthPx, heightPx)
+}
+
+// the widget's size as the launcher shows it now; null for a size Android didn't report
+fun widgetSizeDp(isPortrait: Boolean, minWidth: Int, maxWidth: Int, minHeight: Int, maxHeight: Int): Pair<Int?, Int?> {
+    val width = if (isPortrait) minWidth else maxWidth
+    val height = if (isPortrait) maxHeight else minHeight
+    return Pair(width.takeIf { it > 0 }, height.takeIf { it > 0 })
 }

@@ -20,6 +20,7 @@ package com.isaakhanimann.journal.di
 
 import android.app.Application
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationController
+import com.isaakhanimann.journal.ui.widget.WidgetUpdater
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -28,8 +29,12 @@ class JournalApplication : Application() {
     @Inject
     lateinit var liveNotificationController: LiveNotificationController
 
+    @Inject
+    lateinit var widgetUpdater: WidgetUpdater
+
     override fun onCreate() {
         super.onCreate()
         liveNotificationController.observe()
+        widgetUpdater.observe()
     }
 }

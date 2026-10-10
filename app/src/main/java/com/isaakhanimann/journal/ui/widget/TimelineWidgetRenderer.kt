@@ -73,7 +73,7 @@ fun renderTimelineWidget(
             if (kind != WidgetKind.STATUS) {
                 views.setTextViewText(R.id.widget_title, content.title)
                 val density = context.resources.displayMetrics.density
-                val (widthPx, heightPx) = chartSizePx(kind, widthDp, heightDp, density)
+                val (widthPx, heightPx) = chartSizePx(kind, widthDp, heightDp, content.lines.size, density)
                 val chart = drawLiveChart(content.model, now, widthPx, heightPx, Density(context), isDarkTheme)
                 if (chart != null) {
                     views.setViewVisibility(R.id.widget_chart, View.VISIBLE)

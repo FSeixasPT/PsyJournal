@@ -25,21 +25,40 @@ import org.junit.Test
 class WidgetSizeTest {
     @Test
     fun theChartFillsTheWidthAndTheSpaceLeftByTheText() {
-        // 300 x 180 dp at density 2; the full widget keeps 92 dp for the title and lines and 24 dp of padding
-        assertEquals(Pair(552, 128), chartSizePx(WidgetKind.FULL, 300, 180, 2f))
-        // the chart widget only keeps 28 dp for the title and 24 dp of padding
-        assertEquals(Pair(552, 256), chartSizePx(WidgetKind.CHART, 300, 180, 2f))
+        // 300 x 180 dp at density 2, 24 dp of padding; the full widget keeps 32 dp for the title and 18 dp per line
+        assertEquals(Pair(552, 212), chartSizePx(WidgetKind.FULL, 300, 180, lineCount = 1, density = 2f))
+        // the chart widget only keeps 28 dp for the title
+        assertEquals(Pair(552, 256), chartSizePx(WidgetKind.CHART, 300, 180, lineCount = 1, density = 2f))
+    }
+
+    @Test
+    fun moreLinesLeaveLessRoomForTheChart() {
+        assertEquals(Pair(552, 140), chartSizePx(WidgetKind.FULL, 300, 180, lineCount = 3, density = 2f))
+        // the lines are cut after 4, so they never take more room than that
+        assertEquals(chartSizePx(WidgetKind.FULL, 300, 180, 4, 2f), chartSizePx(WidgetKind.FULL, 300, 180, 9, 2f))
     }
 
     @Test
     fun anUnknownSizeUsesTheDefaultSize() {
         // the default is 4 x 2 cells, about 250 x 110 dp
-        assertEquals(chartSizePx(WidgetKind.FULL, 250, 110, 2f), chartSizePx(WidgetKind.FULL, null, null, 2f))
+        assertEquals(chartSizePx(WidgetKind.FULL, 250, 110, 1, 2f), chartSizePx(WidgetKind.FULL, null, null, 1, 2f))
     }
 
     @Test
     fun theChartIsNeverEmpty() {
-        val (width, height) = chartSizePx(WidgetKind.FULL, 40, 40, 1f)
+        val (width, height) = chartSizePx(WidgetKind.FULL, 40, 40, 1, 1f)
         assertTrue(width >= 48 && height >= 24)
+    }
+
+    @Test
+    fun portraitUsesTheNarrowWidthAndTheTallHeight() {
+        // Android reports the portrait size as the min width and the max height, the landscape one the other way round
+        assertEquals(Pair(300, 210), widgetSizeDp(isPortrait = true, minWidth = 300, maxWidth = 420, minHeight = 134, maxHeight = 210))
+        assertEquals(Pair(420, 134), widgetSizeDp(isPortrait = false, minWidth = 300, maxWidth = 420, minHeight = 134, maxHeight = 210))
+    }
+
+    @Test
+    fun missingOptionsGiveNoSize() {
+        assertEquals(Pair(null, null), widgetSizeDp(isPortrait = true, minWidth = 0, maxWidth = 0, minHeight = 0, maxHeight = 0))
     }
 }
