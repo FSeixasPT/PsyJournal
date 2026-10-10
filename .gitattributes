@@ -1,0 +1,14 @@
+# Check out text files with LF on every OS. Kotlin multi-line strings keep their line endings in
+# the compiled app, so a CRLF checkout on Windows would make the release build differ from a
+# Linux build (F-Droid) and break reproducible builds.
+* text=auto eol=lf
+
+*.png binary
+*.webp binary
+*.jpg binary
+*.jks binary
+*.jar binary
+*.zip binary
+
+# Windows batch files need CRLF
+*.bat text eol=crlf
