@@ -49,6 +49,18 @@ object LiveNotificationIntents {
     fun addIngestion(context: Context): PendingIntent =
         PendingIntent.getActivity(context, 3, mainActivityIntent(context).putExtra(EXTRA_ADD_INGESTION, true), FLAGS)
 
+    // widgets reuse the notification's targets with their own request codes, so neither replaces the other's intent
+    fun openFromWidget(context: Context, requestCode: Int, experienceId: Int?): PendingIntent {
+        val intent = mainActivityIntent(context)
+        if (experienceId != null) {
+            intent.putExtra(EXTRA_OPEN_EXPERIENCE_ID, experienceId).putExtra(EXTRA_OPEN_QUICK_LOG, false)
+        }
+        return PendingIntent.getActivity(context, requestCode, intent, FLAGS)
+    }
+
+    fun addIngestionFromWidget(context: Context, requestCode: Int): PendingIntent =
+        PendingIntent.getActivity(context, requestCode, mainActivityIntent(context).putExtra(EXTRA_ADD_INGESTION, true), FLAGS)
+
     fun broadcast(context: Context, action: String): PendingIntent {
         val intent = Intent(context, LiveNotificationReceiver::class.java).setAction(action)
         val requestCode = when (action) {

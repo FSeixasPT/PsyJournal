@@ -44,6 +44,45 @@
         <receiver
             android:name=".ui.tabs.journal.experience.livenotification.LiveNotificationReceiver"
             android:exported="false" />
+        <receiver
+            android:name=".ui.widget.FullTimelineWidget"
+            android:exported="false"
+            android:label="@string/widget_full_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_full_info" />
+        </receiver>
+        <receiver
+            android:name=".ui.widget.ChartTimelineWidget"
+            android:exported="false"
+            android:label="@string/widget_chart_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_chart_info" />
+        </receiver>
+        <receiver
+            android:name=".ui.widget.StatusTimelineWidget"
+            android:exported="false"
+            android:label="@string/widget_status_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_status_info" />
+        </receiver>
     </application>
 
 </manifest>

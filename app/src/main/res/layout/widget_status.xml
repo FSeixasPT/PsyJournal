@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/widget_lines"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="6"
+        android:text="@string/widget_loading"
+        android:textColor="@color/widget_text"
+        android:textSize="13sp" />
+
+    <ImageView
+        android:id="@+id/widget_add"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="top"
+        android:contentDescription="Add ingestion"
+        android:padding="4dp"
+        android:src="@drawable/ic_widget_add" />
+</LinearLayout>
