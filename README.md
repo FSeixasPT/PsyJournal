@@ -19,10 +19,10 @@ Release APKs on the [releases page](https://github.com/FSeixasPT/PsyJournal/rele
 
     SHA-256: B9:DA:7A:E5:F0:0C:C2:32:23:F4:58:20:83:5F:94:A3:26:14:9D:63:45:59:79:92:CD:66:01:EF:44:B7:04:8F
 
-The build is reproducible: building a release tag from source gives the same APK as the published one, apart from the signature.
+From 12.1 on, the build is reproducible: building a release tag from source gives the same APK as the published one, apart from the signature.
 
 1. Use JDK 21. The Gradle wrapper pins Gradle 8.13, and the Android Gradle Plugin downloads the SDK platform and build tools it needs.
-2. Check out the release tag, for example `git checkout v12.0`.
+2. Check out the release tag, for example `git checkout v12.1`.
 3. Build an unsigned release APK (the blank store file turns signing off):
 
        ./gradlew assembleRelease -PPSYJOURNAL_STORE_FILE=
