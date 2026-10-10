@@ -27,7 +27,8 @@ android {
     }
 
     // the key lives outside the repo; its location and passwords come from ~/.gradle/gradle.properties
-    val releaseStoreFile = providers.gradleProperty("PSYJOURNAL_STORE_FILE").orNull
+    // blank means unsigned, e.g. to check that the build is reproducible
+    val releaseStoreFile = providers.gradleProperty("PSYJOURNAL_STORE_FILE").orNull?.takeIf { it.isNotBlank() }
     signingConfigs {
         if (releaseStoreFile != null) {
             create("release") {
@@ -42,6 +43,8 @@ android {
     buildTypes {
         release {
             if (releaseStoreFile != null) signingConfig = signingConfigs.getByName("release")
+            // F-Droid builds without git history, so the commit must not end up in the APK
+            vcsInfo.include = false
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -50,6 +53,11 @@ android {
             )
             ndk.debugSymbolLevel = "FULL"
         }
+    }
+    // the dependency list AGP adds is encrypted for Google; F-Droid rejects it and it isn't needed
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
