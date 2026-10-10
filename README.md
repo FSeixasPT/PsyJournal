@@ -3,7 +3,7 @@
 PsyJournal is an Android app to make recreational drug users safer. The aim is to provide features that are attractive to users as well as useful from a harm-reduction perspective.
 This app is built natively with [Jetpack Compose](https://developer.android.com/jetpack/compose).
 
-![A presentation of the App](metadata/en-US/images/Google%20Pixel%204%20XL%20Presentation.png)
+![PsyJournal screenshots](metadata/en-US/images/presentation.png)
 
 ## Origin and credits
 
