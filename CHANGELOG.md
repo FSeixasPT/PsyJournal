@@ -6,6 +6,10 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ## Unreleased
 
+### Changed
+
+- **Thinner lines in the live notification's chart**, so the small chart is easier to read.
+
 ## 12.0 — 2026-10-10
 
 ### Added

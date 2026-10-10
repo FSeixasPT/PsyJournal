@@ -124,7 +124,8 @@ class LiveNotificationController @Inject constructor(
                     now = now,
                     widthPx = 600,
                     heightPx = 160,
-                    density = Density(context),
+                    // the notification shows a small chart, so its lines, dots and now line are drawn thinner
+                    density = Density(context.resources.displayMetrics.density * notificationLineScale),
                     isDarkTheme = notifier.isDarkTheme
                 )
                 notifier.post(
@@ -204,3 +205,5 @@ fun shouldAutoStart(consumerName: String?, ingestionTime: Instant, now: Instant)
 // auto-start only for ingestions taken around now, not for entries about the past or plans for later
 fun isRecentForAutoStart(ingestionTime: Instant, now: Instant): Boolean =
     ingestionTime >= now - Duration.ofMinutes(60) && ingestionTime <= now + Duration.ofMinutes(5)
+
+private const val notificationLineScale = 0.6f
