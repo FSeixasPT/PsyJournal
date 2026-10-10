@@ -26,6 +26,8 @@ import com.isaakhanimann.journal.data.substances.classes.roa.DurationUnits
 import com.isaakhanimann.journal.data.substances.classes.roa.RoaDuration
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.DataForOneEffectLine
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.SavedTimeDisplayOption
+import com.isaakhanimann.journal.ui.tabs.journal.experience.components.TimeDisplayOption
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.plannedTimeText
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -91,7 +93,10 @@ class WidgetContentTest {
         val content = buildWidgetContent(candidate(1, 0), settings, at(90)) as WidgetContent.Active
         assertEquals(1, content.experienceId)
         assertEquals("Experience 1", content.title)
-        assertEquals("TestSubstance · peaking · 100% · comes down in 30 min", content.lines.single().text)
+        assertEquals(
+            "TestSubstance · peaking · 100% · comes down " + plannedTimeText(at(120), at(90), at(0), TimeDisplayOption.REGULAR),
+            content.lines.single().text
+        )
         assertTrue(content.nextRefreshAt > at(90))
     }
 
@@ -119,5 +124,25 @@ class WidgetContentTest {
         // comes down at 120, one minute from now
         val content = buildWidgetContent(candidate(1, 0), settings, at(119)) as WidgetContent.Active
         assertEquals(at(120), content.nextRefreshAt)
+    }
+
+    @Test
+    fun timesRelativeToNowBecomeClockTimesSoTheyNeverGoStale() {
+        val relativeToNow = settings.copy(savedTimeDisplayOption = SavedTimeDisplayOption.RELATIVE_TO_NOW)
+        val content = buildWidgetContent(candidate(1, 0), relativeToNow, at(90)) as WidgetContent.Active
+        assertEquals(
+            "TestSubstance · peaking · 100% · comes down " + plannedTimeText(at(120), at(90), at(0), TimeDisplayOption.REGULAR),
+            content.lines.single().text
+        )
+    }
+
+    @Test
+    fun timesRelativeToTheStartAreKept() {
+        val relativeToStart = settings.copy(savedTimeDisplayOption = SavedTimeDisplayOption.RELATIVE_TO_START)
+        val content = buildWidgetContent(candidate(1, 0), relativeToStart, at(90)) as WidgetContent.Active
+        assertEquals(
+            "TestSubstance · peaking · 100% · comes down " + plannedTimeText(at(120), at(90), at(0), TimeDisplayOption.RELATIVE_TO_START),
+            content.lines.single().text
+        )
     }
 }

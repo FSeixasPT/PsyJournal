@@ -78,13 +78,19 @@ fun buildWidgetContent(chosen: WidgetCandidate?, settings: WidgetSettings, now: 
         model = model,
         lines = chosen.lines,
         plannedIngestion = null,
-        savedTimeDisplayOption = settings.savedTimeDisplayOption,
+        savedTimeDisplayOption = widgetTimeDisplayOption(settings.savedTimeDisplayOption),
         now = now
     )
     if (content.isFinished) return WidgetContent.NothingActive
     // more often than the notification's 5 minutes, so the chart's now line moves smoothly on the home screen
     val nextRefreshAt = minOf(content.nextRefreshAt, now + longestWidgetRefreshInterval)
     return WidgetContent.Active(chosen.experience.id, content.title, content.lines, model, nextRefreshAt)
+}
+
+// a widget can be looked at long after its last refresh, so "in 23 min" would be stale; a clock time never is
+fun widgetTimeDisplayOption(saved: SavedTimeDisplayOption): SavedTimeDisplayOption = when (saved) {
+    SavedTimeDisplayOption.AUTO, SavedTimeDisplayOption.RELATIVE_TO_NOW -> SavedTimeDisplayOption.REGULAR
+    else -> saved
 }
 
 private val longestWidgetRefreshInterval: Duration = Duration.ofMinutes(2)

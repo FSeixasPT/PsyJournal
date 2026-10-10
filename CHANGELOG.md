@@ -25,6 +25,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
   - **Timeline status:** only the phases, in a small widget.
   - The widgets show your most recent experience whose effects haven't ended. They update when you log, and every few minutes while the experience lasts.
   - Tapping a widget opens the experience. The + button opens the add-ingestion flow.
+  - Times are clock times, like "peaks at 15:42", so they stay correct between updates. If you chose times relative to the start, those are kept.
 - **Planned-ingestion chip under the timeline.**
   - Show it with "Preview next ingestion" below the chart, and hide it again with ×. Your choice is remembered.
   - Hold the chip to preview the effect of taking a dose now, drawn as a dashed line on the chart, with the resulting intensity and peak.
