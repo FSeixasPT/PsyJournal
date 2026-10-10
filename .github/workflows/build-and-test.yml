@@ -28,6 +28,13 @@ jobs:
       - name: Build and test
         run: ./gradlew testDebugUnitTest assembleDebug --no-daemon
 
+      # an unsigned release build; its checksum must match a local build of the same commit,
+      # which shows the build is reproducible across machines (F-Droid builds on Linux)
+      - name: Build unsigned release and print its checksum
+        run: |
+          ./gradlew assembleRelease -PPSYJOURNAL_STORE_FILE= --no-daemon
+          sha256sum app/build/outputs/apk/release/app-release-unsigned.apk
+
       - name: Upload test reports
         if: failure()
         uses: actions/upload-artifact@v4
