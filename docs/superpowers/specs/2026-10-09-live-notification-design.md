@@ -149,8 +149,8 @@ If drawing fails, the notification is posted without the chart.
 - **Channel:** builds and posts the notification on its own channel, `live_timeline`, named "Live timeline", with low importance (no sound, no vibration).
 - **Behaviour:** the notification is ongoing, only alerts once, and uses category `CATEGORY_PROGRESS`.
 - **Layout:** `DecoratedCustomViewStyle` with two small XML layouts:
-  - collapsed: the title, then all substances on one ellipsized line in short form, e.g. "2C-B 90% ↓ · Caffeine 40% ↑";
-  - expanded: the title, the chart, the planned line, then one line per substance. The planned line comes first so a long list can't push it out.
+  - collapsed: all substances on one ellipsized line in short form, e.g. "2C-B 90% ▼ · Caffeine 40% ▲";
+  - expanded: the chart, the planned line, then one line per substance. Neither view shows the experience title; it stays the notification's content title for accessibility. The planned line comes first so a long list can't push it out.
   
   Each line has a coloured dot in the substance's colour.
 - **Countdown:** when `endsAt` is known, the notification uses `setWhen(endsAt)` with a count-down chronometer, so Android itself shows a live "ends in" time between refreshes.

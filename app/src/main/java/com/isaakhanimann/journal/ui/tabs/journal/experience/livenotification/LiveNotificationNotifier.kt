@@ -61,13 +61,11 @@ class LiveNotificationNotifier @Inject constructor(
         if (!canPost()) return
         ensureChannel()
         val collapsed = RemoteViews(context.packageName, R.layout.live_notification_collapsed).apply {
-            setTextViewText(R.id.live_title, content.title)
             // the collapsed view only has room for one line, so its substances share it in short form
             setTextViewText(R.id.live_lines, linesText(content.lines, { it.shortText }, plannedLine = null, separator = " · "))
         }
         val expanded = RemoteViews(context.packageName, R.layout.live_notification_expanded).apply {
             if (chart != null) setImageViewBitmap(R.id.live_chart, chart) else setViewVisibility(R.id.live_chart, View.GONE)
-            setTextViewText(R.id.live_title, content.title)
             setTextViewText(R.id.live_lines, linesText(content.lines, { it.text }, content.plannedLine, separator = "\n"))
         }
         // the lock screen shows this version unless details are allowed there
