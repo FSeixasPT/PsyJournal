@@ -28,11 +28,11 @@ import java.time.Instant
 data class Ingestion(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val substanceName: String,
+    var substanceName: String,
     var time: Instant,
     var endTime: Instant? = null,
     var creationDate: Instant? = Instant.now(),
-    val administrationRoute: AdministrationRoute,
+    var administrationRoute: AdministrationRoute,
     var dose: Double?,
     var isDoseAnEstimate: Boolean,
     var estimatedDoseStandardDeviation: Double?,

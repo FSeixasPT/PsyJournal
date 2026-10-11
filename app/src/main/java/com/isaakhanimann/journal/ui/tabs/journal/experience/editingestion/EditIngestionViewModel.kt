@@ -29,6 +29,8 @@ import androidx.navigation.toRoute
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
 import com.isaakhanimann.journal.data.room.experiences.entities.CustomUnit
 import com.isaakhanimann.journal.data.room.experiences.entities.Ingestion
+import com.isaakhanimann.journal.data.substances.AdministrationRoute
+import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepository
 import com.isaakhanimann.journal.ui.main.navigation.graphs.EditIngestionRoute
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.time.IngestionTimePickerOption
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toPreservedString
@@ -54,6 +56,7 @@ import javax.inject.Inject
 class EditIngestionViewModel @Inject constructor(
     private val experienceRepo: ExperienceRepository,
     private val userPreferences: UserPreferences,
+    private val substanceRepo: SubstanceRepository,
     state: SavedStateHandle
 ) : ViewModel() {
     private var ingestionFlow: MutableStateFlow<Ingestion?> = MutableStateFlow(null)
@@ -71,15 +74,67 @@ class EditIngestionViewModel @Inject constructor(
     var consumerName by mutableStateOf("")
     var isPartOfTimeline by mutableStateOf(true)
     var customUnit: CustomUnit? by mutableStateOf(null)
-    val otherCustomUnits = experienceRepo.getAllCustomUnitsFlow().combine(ingestionFlow) { customUnits, ing ->
-        customUnits.filter {customUnit ->
-            customUnit.administrationRoute == ing?.administrationRoute && customUnit.substanceName == ing.substanceName && customUnit.id != ing.customUnitId
+    val substanceNameFlow = MutableStateFlow("")
+    val routeFlow = MutableStateFlow(AdministrationRoute.ORAL)
+
+    // custom units of the chosen substance and route, other than the one the ingestion uses
+    val otherCustomUnits = combine(
+        experienceRepo.getAllCustomUnitsFlow(),
+        ingestionFlow,
+        substanceNameFlow,
+        routeFlow
+    ) { customUnits, ing, substanceName, route ->
+        customUnits.filter { customUnit ->
+            customUnit.administrationRoute == route && customUnit.substanceName == substanceName && customUnit.id != ing?.customUnitId
         }
     }.stateIn(
         initialValue = emptyList(),
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000)
     )
+
+    // PsychonautWiki and custom substances to change to
+    val allSubstanceNamesFlow: StateFlow<List<String>> =
+        experienceRepo.getCustomSubstancesFlow().map { customSubstances ->
+            substanceRepo.getAllSubstances().map { it.name } + customSubstances.map { it.name }
+        }.stateIn(
+            initialValue = emptyList(),
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000)
+        )
+
+    val routeOptionsFlow: StateFlow<List<AdministrationRoute>> = substanceNameFlow.map { substanceName ->
+        routesInOrder(substanceRepo.getSubstance(substanceName)?.roas?.map { it.route } ?: emptyList())
+    }.stateIn(
+        initialValue = AdministrationRoute.entries,
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000)
+    )
+
+    fun onChangeSubstance(substanceName: String) = onChangeSubstanceAndRoute(substanceName, routeFlow.value)
+
+    fun onChangeRoute(route: AdministrationRoute) = onChangeSubstanceAndRoute(substanceNameFlow.value, route)
+
+    private fun onChangeSubstanceAndRoute(substanceName: String, route: AdministrationRoute) {
+        val fields = DoseFields(
+            dose = if (isKnown) dose.toDoubleOrNull() else null,
+            isEstimate = isEstimate,
+            estimatedDoseStandardDeviation = estimatedDoseStandardDeviation.toDoubleOrNull(),
+            units = units,
+            customUnit = customUnit
+        )
+        val changed = fields.afterChangeTo(substanceName, route)
+        if (changed != fields) {
+            dose = changed.dose?.toPreservedString() ?: ""
+            isKnown = changed.dose != null
+            isEstimate = changed.isEstimate
+            estimatedDoseStandardDeviation = changed.estimatedDoseStandardDeviation?.toPreservedString() ?: ""
+            units = changed.units
+            customUnit = changed.customUnit
+        }
+        substanceNameFlow.value = substanceName
+        routeFlow.value = route
+    }
 
     fun onDoseChange(newDoseText: String) {
         dose = newDoseText
@@ -105,6 +160,8 @@ class EditIngestionViewModel @Inject constructor(
             isKnown = ing.dose != null
             units = ing.units ?: ""
             consumerName = ing.consumerName ?: ""
+            substanceNameFlow.value = ing.substanceName
+            routeFlow.value = ing.administrationRoute
             isPartOfTimeline = ing.isPartOfTimeline
             localDateTimeStartFlow.emit(ing.time.getLocalDateTime())
             val endTime = ing.endTime
@@ -210,6 +267,16 @@ class EditIngestionViewModel @Inject constructor(
                 it.endTime = endTime
                 it.consumerName = consumerName.ifBlank { null }
                 it.isPartOfTimeline = isPartOfTimeline
+                val substanceName = substanceNameFlow.value
+                if (substanceName != it.substanceName) {
+                    // a substance never logged before needs a color for its timeline line
+                    val companion = companionFor(substanceName, experienceRepo.getAllSubstanceCompanions())
+                    if (experienceRepo.getSubstanceCompanionFlow(substanceName).first() == null) {
+                        experienceRepo.insert(companion)
+                    }
+                }
+                it.substanceName = substanceName
+                it.administrationRoute = routeFlow.value
                 experienceRepo.update(it)
             }
         }
