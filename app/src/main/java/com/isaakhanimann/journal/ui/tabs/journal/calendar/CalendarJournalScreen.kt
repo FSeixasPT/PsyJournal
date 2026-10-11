@@ -204,7 +204,8 @@ fun ExperienceRowWithFetch(
                 dismissSheet()
                 navigateToExperiencePopNothing(experienceId)
             },
-            isTimeRelativeToNow = false
+            isTimeRelativeToNow = false,
+            duration = remember(experience) { viewModel.getDuration(experience) }
         )
     }
 }

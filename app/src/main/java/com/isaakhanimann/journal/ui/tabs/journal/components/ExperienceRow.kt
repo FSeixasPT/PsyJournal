@@ -31,10 +31,14 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.HourglassEmpty
+import androidx.compose.material.icons.outlined.Medication
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -45,6 +49,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -53,13 +60,16 @@ import com.isaakhanimann.journal.data.room.experiences.relations.ExperienceWithI
 import com.isaakhanimann.journal.data.room.experiences.relations.IngestionWithCompanionAndCustomUnit
 import com.isaakhanimann.journal.ui.theme.horizontalPadding
 import com.isaakhanimann.journal.ui.utils.getDateWithWeekdayText
+import java.time.Duration
 
 @Preview(showBackground = true)
 @Composable
 fun ExperienceRow(
     @PreviewParameter(ExperienceWithIngestionsCompanionsAndRatingsPreviewProvider::class) experienceWithIngestionsCompanionsAndRatings: ExperienceWithIngestionsCompanionsAndRatings,
     navigateToExperienceScreen: () -> Unit = {},
-    isTimeRelativeToNow: Boolean = true
+    isTimeRelativeToNow: Boolean = true,
+    // estimated, from the first ingestion until the effects end; null if unknown
+    duration: Duration? = null,
 ) {
     Row(
         modifier = Modifier
@@ -76,10 +86,36 @@ fun ExperienceRow(
         val experience = experienceWithIngestionsCompanionsAndRatings.experience
         ColorRectangle(ingestions = ingestions)
         Column {
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text(
                     text = experience.title,
                     style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                if (duration != null) {
+                    val hours = duration.toHoursText()
+                    DetailWithIcon(
+                        imageVector = Icons.Outlined.HourglassEmpty,
+                        text = hours,
+                        contentDescription = "Lasts about $hours"
+                    )
+                }
+                val noteCount = experienceWithIngestionsCompanionsAndRatings.noteCount
+                if (noteCount > 0) {
+                    DetailWithIcon(
+                        imageVector = Icons.Outlined.Description,
+                        text = noteCount.toString(),
+                        contentDescription = if (noteCount == 1) "1 note" else "$noteCount notes"
+                    )
+                }
+                DetailWithIcon(
+                    imageVector = Icons.Outlined.Medication,
+                    text = ingestions.size.toString(),
+                    contentDescription = if (ingestions.size == 1) "1 ingestion" else "${ingestions.size} ingestions"
                 )
                 if (experience.isFavorite) {
                     Icon(imageVector = Icons.Filled.Star, contentDescription = "Is favorite")
@@ -139,6 +175,20 @@ fun ExperienceRow(
                 }
             }
         }
+    }
+}
+
+// a small, faded icon with a short detail, so the details don't compete with the title
+@Composable
+private fun DetailWithIcon(imageVector: ImageVector, text: String, contentDescription: String) {
+    val color = MaterialTheme.colorScheme.onSurfaceVariant
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        modifier = Modifier.semantics(mergeDescendants = true) { this.contentDescription = contentDescription }
+    ) {
+        Icon(imageVector = imageVector, contentDescription = null, tint = color, modifier = Modifier.size(16.dp))
+        Text(text = text, style = MaterialTheme.typography.labelMedium, color = color)
     }
 }
 

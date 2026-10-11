@@ -21,6 +21,10 @@ package com.isaakhanimann.journal.ui.tabs.journal.calendar
 import androidx.lifecycle.ViewModel
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
 import com.isaakhanimann.journal.data.room.experiences.relations.ExperienceWithIngestionsCompanionsAndRatings
+import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepository
+import com.isaakhanimann.journal.ui.tabs.journal.components.experienceDuration
+import com.isaakhanimann.journal.ui.tabs.journal.experience.myEffectLines
+import java.time.Duration
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -28,9 +32,13 @@ import javax.inject.Inject
 @HiltViewModel
 class ExperienceFetchViewModel @Inject constructor(
     val experienceRepo: ExperienceRepository,
+    private val substanceRepo: SubstanceRepository,
 ) : ViewModel() {
 
     suspend fun getExperience(experienceId: Int): ExperienceWithIngestionsCompanionsAndRatings? {
         return experienceRepo.getExperienceWithIngestionsCompanionsAndRatings(experienceId)
     }
+
+    fun getDuration(experience: ExperienceWithIngestionsCompanionsAndRatings): Duration? =
+        experienceDuration(myEffectLines(experience.ingestionsWithCompanions, substanceRepo))
 }

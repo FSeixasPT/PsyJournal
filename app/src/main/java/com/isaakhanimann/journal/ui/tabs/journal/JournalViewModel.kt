@@ -27,13 +27,21 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
 import com.isaakhanimann.journal.data.substances.repositories.SearchRepository
+import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepository
+import com.isaakhanimann.journal.ui.tabs.journal.components.experienceDuration
+import com.isaakhanimann.journal.ui.tabs.journal.experience.myEffectLines
 import com.isaakhanimann.journal.ui.tabs.settings.combinations.UserPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.Duration
 import javax.inject.Inject
 
 val IS_MIGRATED_0 = booleanPreferencesKey("is_migrated_0")
@@ -45,6 +53,7 @@ class JournalViewModel @Inject constructor(
     searchRepository: SearchRepository,
     private val dataStore: DataStore<Preferences>,
     private val userPreferences: UserPreferences,
+    private val substanceRepo: SubstanceRepository,
 ) : ViewModel() {
 
 
@@ -156,6 +165,22 @@ class JournalViewModel @Inject constructor(
             }
             .stateIn(
                 initialValue = emptyList(),
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000)
+            )
+
+    // estimated durations by experience id, in their own flow so the list doesn't wait for them
+    val durations: StateFlow<Map<Int, Duration>> =
+        experienceRepo.getSortedExperienceWithIngestionsCompanionsAndRatingsFlow()
+            .map { experiences ->
+                experiences.mapNotNull { experience ->
+                    experienceDuration(myEffectLines(experience.ingestionsWithCompanions, substanceRepo))
+                        ?.let { experience.experience.id to it }
+                }.toMap()
+            }
+            .flowOn(Dispatchers.Default)
+            .stateIn(
+                initialValue = emptyMap(),
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000)
             )
