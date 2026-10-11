@@ -68,4 +68,22 @@ class AddSubstanceTest {
         assertTrue(added.isPartOfTimeline)
         assertFalse(added.color == AdaptiveColor.PINK)
     }
+
+    @Test
+    fun aSubstanceWithoutIngestionsCanBeRemoved() {
+        assertEquals(
+            "Removes Caffeine from this list. It gets a new color if you log it later.",
+            removeColorExplanation("Caffeine", loggedSubstanceNames = setOf("2C-B"))
+        )
+        assertTrue(canRemoveColor("Caffeine", loggedSubstanceNames = setOf("2C-B")))
+    }
+
+    @Test
+    fun aSubstanceInTheJournalKeepsItsColor() {
+        assertFalse(canRemoveColor("2C-B", loggedSubstanceNames = setOf("2C-B")))
+        assertEquals(
+            "2C-B is in your journal, so it keeps a color. To leave it out of timelines, turn it off instead.",
+            removeColorExplanation("2C-B", loggedSubstanceNames = setOf("2C-B"))
+        )
+    }
 }

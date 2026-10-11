@@ -48,3 +48,14 @@ fun newCompanion(substanceName: String, configured: List<SubstanceCompanion>): S
     val color = unused.filter { it.isPreferred }.randomOrNull() ?: unused.randomOrNull() ?: AdaptiveColor.entries.random()
     return SubstanceCompanion(substanceName = substanceName, color = color)
 }
+
+// a substance in the journal needs its color for its timeline lines, so only unused ones can be removed
+fun canRemoveColor(substanceName: String, loggedSubstanceNames: Set<String>): Boolean =
+    substanceName !in loggedSubstanceNames
+
+fun removeColorExplanation(substanceName: String, loggedSubstanceNames: Set<String>): String =
+    if (canRemoveColor(substanceName, loggedSubstanceNames)) {
+        "Removes $substanceName from this list. It gets a new color if you log it later."
+    } else {
+        "$substanceName is in your journal, so it keeps a color. To leave it out of timelines, turn it off instead."
+    }

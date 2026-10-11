@@ -27,12 +27,14 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -74,7 +76,10 @@ fun ColorPicker(
     selectedColor: AdaptiveColor,
     onChangeOfColor: (AdaptiveColor) -> Unit,
     alreadyUsedColors: List<AdaptiveColor>,
-    otherColors: List<AdaptiveColor>
+    otherColors: List<AdaptiveColor>,
+    // shows a remove button with this explanation when not null; onRemove null keeps it disabled
+    removeExplanation: String? = null,
+    onRemove: (() -> Unit)? = null
 ) {
     val isDarkTheme = isSystemInDarkTheme()
     var isColorPickerVisible by remember {
@@ -100,7 +105,9 @@ fun ColorPicker(
             dismiss = { isColorPickerVisible = false },
             onChangeOfColor = onChangeOfColor,
             alreadyUsedColors = alreadyUsedColors,
-            otherColors = otherColors
+            otherColors = otherColors,
+            removeExplanation = removeExplanation,
+            onRemove = onRemove
         )
     }
 }
@@ -125,7 +132,9 @@ fun ColorDialog(
     dismiss: () -> Unit,
     onChangeOfColor: (AdaptiveColor) -> Unit,
     alreadyUsedColors: List<AdaptiveColor>,
-    otherColors: List<AdaptiveColor>
+    otherColors: List<AdaptiveColor>,
+    removeExplanation: String? = null,
+    onRemove: (() -> Unit)? = null
 ) {
     AlertDialog(
         onDismissRequest = dismiss,
@@ -136,6 +145,10 @@ fun ColorDialog(
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState())
             ) {
+                if (removeExplanation != null) {
+                    Text(text = removeExplanation, style = MaterialTheme.typography.bodySmall)
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
                 if (otherColors.isEmpty()) {
                     Text(text = "No unused colors")
                 } else {
@@ -159,10 +172,26 @@ fun ColorDialog(
         },
         confirmButton = {
             TextButton(
-                modifier = Modifier.fillMaxWidth(),
+                // alone it spans the dialog; next to Remove it takes its own width
+                modifier = if (removeExplanation == null) Modifier.fillMaxWidth() else Modifier,
                 onClick = dismiss
             ) {
                 Text("Cancel", textAlign = TextAlign.Center)
+            }
+        },
+        dismissButton = if (removeExplanation == null) null else {
+            {
+                TextButton(
+                    onClick = {
+                        onRemove?.invoke()
+                        dismiss()
+                    },
+                    enabled = onRemove != null
+                ) {
+                    Icon(Icons.Outlined.Delete, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Remove")
+                }
             }
         },
     )

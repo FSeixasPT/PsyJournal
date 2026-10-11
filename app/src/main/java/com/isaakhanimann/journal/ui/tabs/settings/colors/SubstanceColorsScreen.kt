@@ -67,7 +67,9 @@ fun SubstanceColorsScreen(
         alreadyUsedColors = viewModel.alreadyUsedColorsFlow.collectAsState().value,
         otherColors = viewModel.otherColorsFlow.collectAsState().value,
         allSubstanceNames = viewModel.allSubstanceNamesFlow.collectAsState().value,
-        addSubstance = viewModel::addSubstance
+        addSubstance = viewModel::addSubstance,
+        loggedSubstanceNames = viewModel.loggedSubstanceNamesFlow.collectAsState().value,
+        removeSubstance = viewModel::removeSubstance
     )
 }
 
@@ -101,7 +103,9 @@ fun SubstanceColorsScreenContent(
     alreadyUsedColors: List<AdaptiveColor>,
     otherColors: List<AdaptiveColor>,
     allSubstanceNames: List<String> = emptyList(),
-    addSubstance: (substanceName: String) -> Unit = {}
+    addSubstance: (substanceName: String) -> Unit = {},
+    loggedSubstanceNames: Set<String> = emptySet(),
+    removeSubstance: (substanceName: String) -> Unit = {}
 ) {
     var isAddingSubstance by rememberSaveable { mutableStateOf(false) }
     Scaffold(
@@ -143,7 +147,13 @@ fun SubstanceColorsScreenContent(
                             updateColor(it, substanceCompanion.substanceName)
                         },
                         alreadyUsedColors = alreadyUsedColors,
-                        otherColors = otherColors
+                        otherColors = otherColors,
+                        removeExplanation = removeColorExplanation(substanceCompanion.substanceName, loggedSubstanceNames),
+                        onRemove = if (canRemoveColor(substanceCompanion.substanceName, loggedSubstanceNames)) {
+                            { removeSubstance(substanceCompanion.substanceName) }
+                        } else {
+                            null
+                        }
                     )
                     Column(modifier = Modifier.weight(1f)) {
                         Text(

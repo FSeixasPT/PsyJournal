@@ -249,6 +249,9 @@ interface ExperienceDao {
     }
 
     @Transaction
+    @Query("SELECT DISTINCT substanceName FROM ingestion")
+    fun getLoggedSubstanceNamesFlow(): Flow<List<String>>
+
     @Query("DELETE FROM substancecompanion WHERE substanceName NOT IN (SELECT substanceName FROM ingestion)")
     suspend fun deleteUnusedSubstanceCompanions()
 
