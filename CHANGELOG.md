@@ -8,7 +8,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ### Added
 
-- **Notes and ingestion counts in the journal.** Each experience row shows how many ingestions it has and, if it has any, how many notes: its written notes count as one, plus its timed notes.
+- **Duration, notes and ingestion counts in the journal.** Each experience row shows how many ingestions it has, how many notes if it has any (its written notes count as one, plus its timed notes) and roughly how long it lasts: the hours from your first ingestion until the effects are estimated to end.
 - **Duration range on the timeline.** Turn on "Show duration range" in Settings to shade the area between the shortest and the longest durations known for the route, instead of the area below the curve, so you can see how much the timing can vary. It applies to the experience, fullscreen and substance timelines.
 
 ### Changed

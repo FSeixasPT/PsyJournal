@@ -74,6 +74,7 @@ import com.isaakhanimann.journal.ui.tabs.stats.EmptyScreenDisclaimer
 import com.isaakhanimann.journal.ui.theme.JournalTheme
 import com.isaakhanimann.journal.ui.theme.horizontalPadding
 import kotlinx.coroutines.launch
+import java.time.Duration
 
 @Composable
 fun JournalScreen(
@@ -102,6 +103,7 @@ fun JournalScreen(
         isSearchEnabled = viewModel.isSearchEnabled.value,
         onChangeIsSearchEnabled = viewModel::onChangeOfIsSearchEnabled,
         experiences = experiences,
+        durations = viewModel.durations.collectAsState().value,
     )
 }
 
@@ -145,6 +147,8 @@ fun JournalScreen(
     isSearchEnabled: Boolean,
     onChangeIsSearchEnabled: (Boolean) -> Unit,
     experiences: List<ExperienceWithIngestionsCompanionsAndRatings>,
+    // estimated durations by experience id
+    durations: Map<Int, Duration> = emptyMap(),
 ) {
     Scaffold(
         topBar = {
@@ -300,7 +304,8 @@ fun JournalScreen(
                                 navigateToExperienceScreen = {
                                     navigateToExperiencePopNothing(experienceWithIngestions.experience.id)
                                 },
-                                isTimeRelativeToNow = isTimeRelativeToNow
+                                isTimeRelativeToNow = isTimeRelativeToNow,
+                                duration = durations[experienceWithIngestions.experience.id]
                             )
                             HorizontalDivider()
                         }

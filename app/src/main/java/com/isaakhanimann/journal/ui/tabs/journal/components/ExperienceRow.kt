@@ -37,6 +37,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material.icons.outlined.Medication
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -59,13 +60,16 @@ import com.isaakhanimann.journal.data.room.experiences.relations.ExperienceWithI
 import com.isaakhanimann.journal.data.room.experiences.relations.IngestionWithCompanionAndCustomUnit
 import com.isaakhanimann.journal.ui.theme.horizontalPadding
 import com.isaakhanimann.journal.ui.utils.getDateWithWeekdayText
+import java.time.Duration
 
 @Preview(showBackground = true)
 @Composable
 fun ExperienceRow(
     @PreviewParameter(ExperienceWithIngestionsCompanionsAndRatingsPreviewProvider::class) experienceWithIngestionsCompanionsAndRatings: ExperienceWithIngestionsCompanionsAndRatings,
     navigateToExperienceScreen: () -> Unit = {},
-    isTimeRelativeToNow: Boolean = true
+    isTimeRelativeToNow: Boolean = true,
+    // estimated, from the first ingestion until the effects end; null if unknown
+    duration: Duration? = null,
 ) {
     Row(
         modifier = Modifier
@@ -92,17 +96,25 @@ fun ExperienceRow(
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f)
                 )
+                if (duration != null) {
+                    val hours = duration.toHoursText()
+                    DetailWithIcon(
+                        imageVector = Icons.Outlined.HourglassEmpty,
+                        text = hours,
+                        contentDescription = "Lasts about $hours"
+                    )
+                }
                 val noteCount = experienceWithIngestionsCompanionsAndRatings.noteCount
                 if (noteCount > 0) {
-                    CountWithIcon(
+                    DetailWithIcon(
                         imageVector = Icons.Outlined.Description,
-                        count = noteCount,
+                        text = noteCount.toString(),
                         contentDescription = if (noteCount == 1) "1 note" else "$noteCount notes"
                     )
                 }
-                CountWithIcon(
+                DetailWithIcon(
                     imageVector = Icons.Outlined.Medication,
-                    count = ingestions.size,
+                    text = ingestions.size.toString(),
                     contentDescription = if (ingestions.size == 1) "1 ingestion" else "${ingestions.size} ingestions"
                 )
                 if (experience.isFavorite) {
@@ -166,9 +178,9 @@ fun ExperienceRow(
     }
 }
 
-// a small, faded icon with a number, so the details don't compete with the title
+// a small, faded icon with a short detail, so the details don't compete with the title
 @Composable
-private fun CountWithIcon(imageVector: ImageVector, count: Int, contentDescription: String) {
+private fun DetailWithIcon(imageVector: ImageVector, text: String, contentDescription: String) {
     val color = MaterialTheme.colorScheme.onSurfaceVariant
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -176,7 +188,7 @@ private fun CountWithIcon(imageVector: ImageVector, count: Int, contentDescripti
         modifier = Modifier.semantics(mergeDescendants = true) { this.contentDescription = contentDescription }
     ) {
         Icon(imageVector = imageVector, contentDescription = null, tint = color, modifier = Modifier.size(16.dp))
-        Text(text = count.toString(), style = MaterialTheme.typography.labelMedium, color = color)
+        Text(text = text, style = MaterialTheme.typography.labelMedium, color = color)
     }
 }
 
