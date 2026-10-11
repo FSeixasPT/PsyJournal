@@ -37,7 +37,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -68,7 +71,14 @@ class LiveNotificationController @Inject constructor(
     // keeps the notification in step with the journal while the app process runs
     fun observe() {
         scope.launch {
-            userPreferences.liveExperienceFlow.collectLatest { live ->
+            userPreferences.liveExperienceFlow
+                // starts again if reading the saved live experience ever fails, instead of ending for good
+                .retryWhen { error, _ ->
+                    logFailure(error)
+                    delay(retryObserverAfter.toMillis())
+                    true
+                }
+                .collectLatest { live ->
                 if (live == null) return@collectLatest
                 // anything the notification shows: the ingestions, the pinned plan and the display settings
                 combine(
@@ -77,7 +87,10 @@ class LiveNotificationController @Inject constructor(
                     userPreferences.savedTimeDisplayOptionFlow,
                     userPreferences.areRoutesMergedFlow,
                     userPreferences.areSubstanceHeightsIndependentFlow,
-                ) { _, _, _, _, _ -> }.collect { refresh() }
+                ) { _, _, _, _, _ -> }
+                    // a failing source must not end the observer for the rest of the app session
+                    .catch { logFailure(it) }
+                    .collect { refresh() }
             }
         }
     }
@@ -91,6 +104,11 @@ class LiveNotificationController @Inject constructor(
     }
 
     suspend fun stop() = runSafely(onFailure = ::logFailure) { mutex.withLock { stopLocked() } }
+
+    // called before deleting an experience, so its notification ends at once and doesn't rely on the observer
+    suspend fun onExperienceDeleted(experience: Experience) {
+        if (stopsLiveNotification(userPreferences.liveExperienceFlow.first(), deleted = experience)) stop()
+    }
 
     // starts the notification after logging an ingestion of the user taken around now, if the user chose so
     fun onIngestionLogged(experienceId: Int, ingestionTime: Instant, consumerName: String?) {
@@ -186,6 +204,7 @@ class LiveNotificationController @Inject constructor(
 }
 
 private val retryAfterFailure: Duration = Duration.ofMinutes(5)
+private val retryObserverAfter: Duration = Duration.ofSeconds(5)
 
 // runs a step of the live notification without letting a failure crash the app; cancellation still cancels
 suspend fun runSafely(onFailure: (Throwable) -> Unit, block: suspend () -> Unit) {

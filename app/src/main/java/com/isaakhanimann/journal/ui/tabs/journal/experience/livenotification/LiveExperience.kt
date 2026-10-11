@@ -40,3 +40,6 @@ data class LiveExperience(val experienceId: Int, val experienceCreatedAt: Instan
         }
     }
 }
+
+// deleting the experience the notification follows ends the notification; another experience leaves it running
+fun stopsLiveNotification(live: LiveExperience?, deleted: Experience): Boolean = live?.isFor(deleted) == true

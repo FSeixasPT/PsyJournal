@@ -119,6 +119,8 @@ class SettingsViewModel @Inject constructor(
                 try {
                     val json = Json { ignoreUnknownKeys = true }
                     val journalExport = json.decodeFromString<JournalExport>(text)
+                    // the imported journal replaces the experience the notification follows
+                    liveNotificationController.stop()
                     experienceRepository.deleteEverything()
                     experienceRepository.insertEverything(journalExport)
                     snackbarHostState.showSnackbar(
@@ -233,6 +235,7 @@ class SettingsViewModel @Inject constructor(
 
     fun deleteEverything() {
         viewModelScope.launch {
+            liveNotificationController.stop()
             experienceRepository.deleteEverything()
         }
     }

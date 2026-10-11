@@ -51,4 +51,14 @@ class LiveExperienceTest {
         assertFalse(live.isFor(experience(3, createdAt.plusSeconds(60))))
         assertFalse(live.isFor(experience(4, createdAt)))
     }
+
+    @Test
+    fun deletingTheLiveExperienceStopsTheNotification() {
+        val live = LiveExperience(3, createdAt)
+        assertTrue(stopsLiveNotification(live, deleted = experience(3, createdAt)))
+        // another experience, or one that reused the id, leaves it running
+        assertFalse(stopsLiveNotification(live, deleted = experience(4, createdAt)))
+        assertFalse(stopsLiveNotification(live, deleted = experience(3, createdAt.plusSeconds(60))))
+        assertFalse(stopsLiveNotification(null, deleted = experience(3, createdAt)))
+    }
 }

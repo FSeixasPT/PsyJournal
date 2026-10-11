@@ -416,6 +416,7 @@ class ExperienceViewModel @Inject constructor(
 
     fun deleteExperience() {
         viewModelScope.launch {
+            experienceRepo.getExperience(experienceId)?.let { liveNotificationController.onExperienceDeleted(it) }
             experienceRepo.deleteEverythingOfExperience(experienceId = experienceId)
         }
     }

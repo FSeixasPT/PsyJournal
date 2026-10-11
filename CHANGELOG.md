@@ -10,6 +10,10 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 - **Thinner lines in the live notification's chart**, so the small chart is easier to read.
 
+### Fixed
+
+- Deleting the experience that the live notification follows now removes the notification. Deleting everything or importing a journal does too.
+
 ## 12.0 — 2026-10-10
 
 ### Added
