@@ -398,19 +398,22 @@ data class FullTimelines(
             color = color,
             style = density.normalStroke
         )
-        path.lineTo(
-            x = lastPoint.x * pixelsPerSec,
-            y = canvasHeight + drawScope.strokeWidth / 2
-        )
-        path.lineTo(
-            x = firstPoint.x * pixelsPerSec,
-            y = canvasHeight + drawScope.strokeWidth / 2
-        )
-        path.close()
-        drawScope.drawPath(
-            path = path,
-            color = color.copy(alpha = shapeAlpha)
-        )
+        // the range band replaces the fill below the curve, so the two shadings don't stack
+        if (rangeBand == null) {
+            path.lineTo(
+                x = lastPoint.x * pixelsPerSec,
+                y = canvasHeight + drawScope.strokeWidth / 2
+            )
+            path.lineTo(
+                x = firstPoint.x * pixelsPerSec,
+                y = canvasHeight + drawScope.strokeWidth / 2
+            )
+            path.close()
+            drawScope.drawPath(
+                path = path,
+                color = color.copy(alpha = shapeAlpha)
+            )
+        }
         for (point in finalPointsNormalised) {
             if (point.isIngestionPoint) {
                 drawScope.drawCircle(
@@ -442,10 +445,8 @@ private fun FullTimelines.drawRangeBand(
         for (point in edge.drop(1)) lineTo(x = point.x * pixelsPerSec, y = yOf(point))
         close()
     }
-    drawScope.drawPath(path = path, color = color.copy(alpha = rangeBandAlpha))
+    drawScope.drawPath(path = path, color = color.copy(alpha = shapeAlpha))
 }
-
-private const val rangeBandAlpha = 0.15f
 
 data class FullDurations(
     val onset: FullDurationRange,
