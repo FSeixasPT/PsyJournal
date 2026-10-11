@@ -110,7 +110,6 @@ import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.rememberPla
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.TimelineQuantityDetails
 import com.isaakhanimann.journal.ui.theme.JournalTheme
 import com.isaakhanimann.journal.ui.theme.horizontalPadding
-import com.isaakhanimann.journal.ui.utils.getDateWithWeekdayText
 import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -634,13 +633,8 @@ private fun MyIngestionList(
     navigateToIngestionScreen: (ingestionId: Int) -> Unit,
     timeDisplayOption: TimeDisplayOption
 ) {
+    // each ingestion row shows its own day and time, so the card has no date header
     ElevatedCard(modifier = Modifier.padding(vertical = verticalCardPadding)) {
-        CardTitle(
-            title = oneExperienceScreenModel.firstIngestionTime.getDateWithWeekdayText()
-        )
-        if (oneExperienceScreenModel.ingestionElements.isNotEmpty()) {
-            HorizontalDivider()
-        }
         oneExperienceScreenModel.ingestionElements.forEachIndexed { index, ingestionElement ->
             IngestionRow(
                 ingestionElement = ingestionElement,

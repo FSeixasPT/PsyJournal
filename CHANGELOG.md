@@ -16,6 +16,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ### Changed
 
+- **Simpler ingestion list.** The list below an experience's timeline no longer has a date header, since each ingestion already shows its day and time.
 - **Timeline hours follow your phone's clock format.** With the 12-hour format, the hours below timelines read "1 PM" or "2 PM" instead of "13" or "14", and fewer hours are labeled on narrow charts so the labels don't overlap.
 - **Thinner lines in the live notification's chart**, so the small chart is easier to read.
 
