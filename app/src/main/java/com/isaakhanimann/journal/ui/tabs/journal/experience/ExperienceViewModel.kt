@@ -48,7 +48,7 @@ import com.isaakhanimann.journal.ui.tabs.journal.experience.models.CumulativeRou
 import com.isaakhanimann.journal.ui.tabs.journal.experience.models.IngestionElement
 import com.isaakhanimann.journal.ui.tabs.journal.experience.models.InteractionExplanation
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.AllTimelinesModel
-import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.DataForOneRating
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.ratingsOnTimeline
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.DataForOneTimedNote
 import com.isaakhanimann.journal.ui.tabs.settings.combinations.CombinationSettingsStorage
 import com.isaakhanimann.journal.ui.tabs.settings.combinations.UserPreferences
@@ -300,7 +300,7 @@ class ExperienceViewModel @Inject constructor(
                 TimelineDisplayOption.Hidden
             } else {
                 val isWorthDrawing =
-                    ingestionElements.isNotEmpty() && !(ingestionElements.all { it.roaDuration == null })
+                    dataForEffectLines.isNotEmpty() && !(dataForEffectLines.all { it.roaDuration == null })
                 if (isWorthDrawing) {
                     val model = AllTimelinesModel(
                         dataForLines = dataForEffectLines,
@@ -447,24 +447,14 @@ class ExperienceViewModel @Inject constructor(
         } else if (dataForEffectLines.isEmpty()) {
             return@combine TimelineDisplayOption.NotWorthDrawing
         } else {
-            val dataForRatings = ratings.mapNotNull {
-                val ratingTime = it.time
-                return@mapNotNull if (ratingTime == null) {
-                    null
-                } else {
-                    DataForOneRating(
-                        time = ratingTime,
-                        option = it.option
-                    )
-                }
-            }
+            val dataForRatings = ratingsOnTimeline(ratings)
             val dataForTimedNotes =
                 timedNotesSorted.filter { it.isPartOfTimeline }
                     .map {
                         DataForOneTimedNote(time = it.time, color = it.color)
                     }
             val isWorthDrawing =
-                ingestionElements.isNotEmpty() && !(ingestionElements.all { it.roaDuration == null } && dataForRatings.isEmpty() && dataForTimedNotes.isEmpty())
+                !(dataForEffectLines.all { it.roaDuration == null } && dataForRatings.isEmpty() && dataForTimedNotes.isEmpty())
             if (isWorthDrawing) {
                 val model = AllTimelinesModel(
                     dataForLines = dataForEffectLines,
@@ -514,12 +504,13 @@ class ExperienceViewModel @Inject constructor(
         fun getDataForEffectTimelines(
             ingestionElements: List<IngestionElement>,
             substances: List<Substance>
-        ) =
-            ingestionElements.map { oneElement ->
+        ): List<DataForOneEffectLine> {
+            // hidden ingestions still count for the heights, so hiding one doesn't change the others
+            val allIngestions = ingestionElements.map { it.ingestionWithCompanionAndCustomUnit }
+            return ingestionElements.filter { it.ingestionWithCompanionAndCustomUnit.isPartOfTimeline }.map { oneElement ->
                 val horizontalWeight = horizontalWeightFromDots(oneElement.numDots)
                 val ingestionWithCompanion = oneElement.ingestionWithCompanionAndCustomUnit
                 val ingestion = ingestionWithCompanion.ingestion
-                val allIngestions = ingestionElements.map { it.ingestionWithCompanionAndCustomUnit }
                 val roaDose = substances.firstOrNull { it.name == ingestion.substanceName }
                     ?.getRoa(ingestion.administrationRoute)?.roaDose
                 val isDoseKnown = ingestionWithCompanion.pureDose != null
@@ -544,6 +535,7 @@ class ExperienceViewModel @Inject constructor(
                     endTime = ingestion.endTime
                 )
             }
+        }
 
         fun getCumulativeDoses(ingestions: List<IngestionWithAssociatedData>): List<CumulativeDose> {
             return ingestions.groupBy { it.ingestionWithCompanionAndCustomUnit.ingestion.substanceName }

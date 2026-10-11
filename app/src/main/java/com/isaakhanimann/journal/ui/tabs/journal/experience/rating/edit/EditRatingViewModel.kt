@@ -48,6 +48,7 @@ class EditRatingViewModel @Inject constructor(
     var localDateTimeFlow = MutableStateFlow(LocalDateTime.now())
     var rating: ShulginRating? = null
     var isOverallRatingFlow = MutableStateFlow(false)
+    var isPartOfTimeline by mutableStateOf(true)
 
     init {
         val editRatingRoute = state.toRoute<EditRatingRoute>()
@@ -62,6 +63,7 @@ class EditRatingViewModel @Inject constructor(
                 isOverallRatingFlow.value = true
             }
             selectedRatingOption = loadedRating.option
+            isPartOfTimeline = loadedRating.isPartOfTimeline
         }
     }
 
@@ -89,6 +91,7 @@ class EditRatingViewModel @Inject constructor(
             rating?.let {
                 it.time = if (isOverallRatingFlow.value) null else selectedInstant
                 it.option = selectedRatingOption
+                it.isPartOfTimeline = isPartOfTimeline
                 experienceRepo.update(it)
             }
         }

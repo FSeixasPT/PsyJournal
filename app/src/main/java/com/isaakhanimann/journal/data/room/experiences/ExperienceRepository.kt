@@ -46,6 +46,7 @@ class ExperienceRepository @Inject constructor(private val experienceDao: Experi
     suspend fun insert(rating: ShulginRating) = experienceDao.insert(rating)
     suspend fun insert(customUnit: CustomUnit) = experienceDao.insert(customUnit).toInt()
     suspend fun insert(timedNote: TimedNote) = experienceDao.insert(timedNote)
+    suspend fun insert(substanceCompanion: SubstanceCompanion) = experienceDao.insert(substanceCompanion)
     suspend fun update(experience: Experience) = experienceDao.update(experience)
     suspend fun update(ingestion: Ingestion) = experienceDao.update(ingestion)
     suspend fun update(rating: ShulginRating) = experienceDao.update(rating)

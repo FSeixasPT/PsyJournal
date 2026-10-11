@@ -26,6 +26,8 @@ data class JournalColorChoice(
     val color: AdaptiveColor,
     val alreadyUsedColors: List<AdaptiveColor>,
     val otherColors: List<AdaptiveColor>,
+    // false when the substance is hidden from the timelines of every experience
+    val isPartOfTimeline: Boolean,
 )
 
 // null for a substance that was never logged, its color is chosen when it is first logged
@@ -36,5 +38,10 @@ fun journalColorChoice(companions: List<SubstanceCompanion>, substanceName: Stri
         color = companion.color,
         alreadyUsedColors = used,
         otherColors = AdaptiveColor.entries.filter { it !in used },
+        isPartOfTimeline = companion.isPartOfTimeline,
     )
 }
+
+// a new color must not show a substance the user hid from timelines
+fun companionWithColor(substanceName: String, existing: SubstanceCompanion?, color: AdaptiveColor): SubstanceCompanion =
+    existing?.copy(color = color) ?: SubstanceCompanion(substanceName = substanceName, color = color)

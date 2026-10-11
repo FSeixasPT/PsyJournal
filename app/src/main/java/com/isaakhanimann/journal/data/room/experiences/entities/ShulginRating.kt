@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.data.room.experiences.entities
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.time.Instant
@@ -30,5 +31,8 @@ data class ShulginRating(
     var time: Instant?,
     var creationDate: Instant? = Instant.now(),
     var option: ShulginRatingOption,
-    var experienceId: Int
+    var experienceId: Int,
+    // false hides the rating from the timeline without deleting it
+    @ColumnInfo(defaultValue = "1")
+    var isPartOfTimeline: Boolean = true
 )

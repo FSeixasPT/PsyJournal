@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.data.room.experiences.entities
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
@@ -40,5 +41,8 @@ data class Ingestion(
     var notes: String?,
     var stomachFullness: StomachFullness?,
     var consumerName: String?,
-    var customUnitId: Int?
+    var customUnitId: Int?,
+    // false hides the ingestion from timelines without deleting it
+    @ColumnInfo(defaultValue = "1")
+    var isPartOfTimeline: Boolean = true
 )

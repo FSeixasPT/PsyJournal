@@ -79,7 +79,9 @@ fun EditRatingScreen(
             viewModel.delete()
             navigateBack()
         },
-        isOverallRating = viewModel.isOverallRatingFlow.collectAsState().value
+        isOverallRating = viewModel.isOverallRatingFlow.collectAsState().value,
+        isPartOfTimeline = viewModel.isPartOfTimeline,
+        onChangeIsPartOfTimeline = { viewModel.isPartOfTimeline = it }
     )
 }
 
@@ -92,7 +94,9 @@ fun EditRatingScreen(
     selectedRating: ShulginRatingOption,
     onRatingChange: (ShulginRatingOption) -> Unit,
     onDelete: () -> Unit,
-    isOverallRating: Boolean
+    isOverallRating: Boolean,
+    isPartOfTimeline: Boolean = true,
+    onChangeIsPartOfTimeline: (Boolean) -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -125,7 +129,12 @@ fun EditRatingScreen(
         ) {
             Spacer(modifier = Modifier.height(3.dp))
             if (!isOverallRating) {
-                TimePickerSection(selectedTime = selectedTime, onTimeChange = onTimeChange)
+                TimePickerSection(
+                    selectedTime = selectedTime,
+                    onTimeChange = onTimeChange,
+                    isPartOfTimeline = isPartOfTimeline,
+                    onChangeIsPartOfTimeline = onChangeIsPartOfTimeline
+                )
             }
             RatingPickerSection(selectedRating = selectedRating, onRatingChange = onRatingChange)
             RatingsExplanationSection()

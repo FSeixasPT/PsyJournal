@@ -69,6 +69,7 @@ class EditIngestionViewModel @Inject constructor(
     var localDateTimeStartFlow = MutableStateFlow(LocalDateTime.now())
     var localDateTimeEndFlow = MutableStateFlow(LocalDateTime.now())
     var consumerName by mutableStateOf("")
+    var isPartOfTimeline by mutableStateOf(true)
     var customUnit: CustomUnit? by mutableStateOf(null)
     val otherCustomUnits = experienceRepo.getAllCustomUnitsFlow().combine(ingestionFlow) { customUnits, ing ->
         customUnits.filter {customUnit ->
@@ -104,6 +105,7 @@ class EditIngestionViewModel @Inject constructor(
             isKnown = ing.dose != null
             units = ing.units ?: ""
             consumerName = ing.consumerName ?: ""
+            isPartOfTimeline = ing.isPartOfTimeline
             localDateTimeStartFlow.emit(ing.time.getLocalDateTime())
             val endTime = ing.endTime
             if (endTime != null) {
@@ -207,6 +209,7 @@ class EditIngestionViewModel @Inject constructor(
                 it.time = selectedStartInstant
                 it.endTime = endTime
                 it.consumerName = consumerName.ifBlank { null }
+                it.isPartOfTimeline = isPartOfTimeline
                 experienceRepo.update(it)
             }
         }

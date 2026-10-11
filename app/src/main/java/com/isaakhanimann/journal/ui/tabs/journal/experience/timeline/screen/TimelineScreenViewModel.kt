@@ -38,7 +38,7 @@ import com.isaakhanimann.journal.ui.tabs.journal.experience.components.SavedTime
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.TimeDisplayOption
 import com.isaakhanimann.journal.ui.tabs.journal.experience.models.IngestionElement
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.AllTimelinesModel
-import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.DataForOneRating
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.ratingsOnTimeline
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.DataForOneTimedNote
 import com.isaakhanimann.journal.ui.tabs.settings.combinations.UserPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -187,24 +187,14 @@ class TimelineScreenViewModel @Inject constructor(
         if (dataForEffectLines.isEmpty()) {
             return@combine TimelineDisplayOption.NotWorthDrawing
         } else {
-            val dataForRatings = newRatings.mapNotNull {
-                val ratingTime = it.time
-                return@mapNotNull if (ratingTime == null) {
-                    null
-                } else {
-                    DataForOneRating(
-                        time = ratingTime,
-                        option = it.option
-                    )
-                }
-            }
+            val dataForRatings = ratingsOnTimeline(newRatings)
             val dataForTimedNotes =
                 newTimedNotes.filter { it.isPartOfTimeline }
                     .map {
                         DataForOneTimedNote(time = it.time, color = it.color)
                     }
             val isWorthDrawing =
-                dataForEffectLines.isNotEmpty() && !(dataForEffectLines.all { it.roaDuration == null } && newRatings.isEmpty() && newTimedNotes.isEmpty())
+                dataForEffectLines.isNotEmpty() && !(dataForEffectLines.all { it.roaDuration == null } && dataForRatings.isEmpty() && dataForTimedNotes.isEmpty())
             if (isWorthDrawing) {
                 val model = AllTimelinesModel(
                     dataForLines = dataForEffectLines,

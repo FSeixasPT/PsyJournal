@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
+import com.isaakhanimann.journal.data.room.experiences.entities.ShulginRating
 import com.isaakhanimann.journal.data.room.experiences.entities.ShulginRatingOption
 import java.time.Instant
 
@@ -26,3 +27,8 @@ data class DataForOneRating(
     val option: ShulginRatingOption
 )
 
+// the overall rating has no time, so only timed ratings that aren't hidden are drawn
+fun ratingsOnTimeline(ratings: List<ShulginRating>): List<DataForOneRating> = ratings.mapNotNull { rating ->
+    val time = rating.time ?: return@mapNotNull null
+    if (rating.isPartOfTimeline) DataForOneRating(time = time, option = rating.option) else null
+}

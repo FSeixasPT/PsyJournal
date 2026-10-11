@@ -129,6 +129,8 @@ fun EditIngestionScreen(
         onChangeEndDateOrTime = viewModel::onChangeEndTime,
         consumerName = viewModel.consumerName,
         onChangeConsumerName = viewModel::onChangeConsumerName,
+        isPartOfTimeline = viewModel.isPartOfTimeline,
+        onChangeIsPartOfTimeline = { viewModel.isPartOfTimeline = it },
         consumerNamesSorted = viewModel.sortedConsumerNamesFlow.collectAsState().value,
         customUnit = viewModel.customUnit,
         onCustomUnitChange = viewModel::onChangeCustomUnit,
@@ -210,6 +212,8 @@ fun EditIngestionScreen(
     localDateTimeEnd: LocalDateTime,
     consumerName: String,
     onChangeConsumerName: (String) -> Unit,
+    isPartOfTimeline: Boolean = true,
+    onChangeIsPartOfTimeline: (Boolean) -> Unit = {},
     consumerNamesSorted: List<String>,
     customUnit: CustomUnit?,
     onCustomUnitChange: (CustomUnit?) -> Unit,
@@ -465,6 +469,13 @@ fun EditIngestionScreen(
                                 )
                             }
                         }
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = "Show in timeline", modifier = Modifier.weight(1f))
+                        Switch(checked = isPartOfTimeline, onCheckedChange = onChangeIsPartOfTimeline)
                     }
                 }
             }

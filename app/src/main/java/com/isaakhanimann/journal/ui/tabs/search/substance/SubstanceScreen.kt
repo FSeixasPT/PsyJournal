@@ -52,6 +52,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -120,6 +121,7 @@ fun SubstanceScreen(
         onResetRoutes = viewModel::resetRoutes,
         journalColor = viewModel.journalColorFlow.collectAsState().value,
         onChangeJournalColor = viewModel::changeJournalColor,
+        onChangeIsPartOfTimeline = viewModel::changeIsPartOfTimeline,
     )
 }
 
@@ -166,6 +168,7 @@ fun SubstanceScreen(
     onResetRoutes: () -> Unit = {},
     journalColor: JournalColorChoice? = null,
     onChangeJournalColor: (AdaptiveColor) -> Unit = {},
+    onChangeIsPartOfTimeline: (Boolean) -> Unit = {},
 ) {
     val substance = substanceWithCategories.substance
     val uriHandler = LocalUriHandler.current
@@ -230,6 +233,19 @@ fun SubstanceScreen(
                             alreadyUsedColors = journalColor.alreadyUsedColors,
                             otherColors = journalColor.otherColors
                         )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(start = horizontalPadding, end = horizontalPadding, bottom = 8.dp)
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = "Show in timelines", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                text = "Off hides ${substance.name} from the timelines of all experiences",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        Switch(checked = journalColor.isPartOfTimeline, onCheckedChange = onChangeIsPartOfTimeline)
                     }
                 }
             }

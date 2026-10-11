@@ -533,7 +533,8 @@ private fun ShulginRatingsSection(
                     }
                     .fillMaxWidth()
                     .padding(vertical = 8.dp, horizontal = horizontalPadding),
-                ratingSign = pair.second.option.sign) {
+                ratingSign = pair.second.option.sign,
+                isPartOfTimeline = pair.second.isPartOfTimeline) {
                 NoteOrRatingTimeOrDurationText(
                     time = pair.first,
                     timeDisplayOption = timeDisplayOption,
