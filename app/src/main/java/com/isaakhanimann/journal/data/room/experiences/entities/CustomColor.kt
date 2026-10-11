@@ -136,3 +136,7 @@ object AdaptiveColorSerializer : KSerializer<AdaptiveColor> {
     override fun deserialize(decoder: Decoder): AdaptiveColor =
         AdaptiveColor.fromName(decoder.decodeString()) ?: AdaptiveColor.RED
 }
+
+// unused colors to show in the picker: presets left out of the picker are skipped
+fun colorsToOffer(unusedColors: List<AdaptiveColor>): List<AdaptiveColor> =
+    unusedColors.filter { it !is PresetColor || it in AdaptiveColor.pickerColors }

@@ -58,6 +58,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
 import com.isaakhanimann.journal.data.room.experiences.entities.CustomColor
+import com.isaakhanimann.journal.data.room.experiences.entities.colorsToOffer
 import com.isaakhanimann.journal.data.room.experiences.entities.hexOf
 
 @Preview
@@ -143,6 +144,7 @@ fun ColorDialog(
     selectedColor: AdaptiveColor = AdaptiveColor.BLUE
 ) {
     var isPickingCustomColor by remember { mutableStateOf(false) }
+    val offeredColors = colorsToOffer(otherColors)
     if (isPickingCustomColor) {
         CustomColorDialog(
             initialColor = selectedColor,
@@ -170,12 +172,12 @@ fun ColorDialog(
                     Text("Custom color…")
                 }
                 Spacer(modifier = Modifier.height(12.dp))
-                if (otherColors.isEmpty()) {
+                if (offeredColors.isEmpty()) {
                     Text(text = "No unused colors")
                 } else {
                     Text(text = "Not yet used")
                     Spacer(modifier = Modifier.height(2.dp))
-                    CircleColorButtons(colors = otherColors) {
+                    CircleColorButtons(colors = offeredColors) {
                         onChangeOfColor(it)
                         dismiss()
                     }

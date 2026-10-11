@@ -31,6 +31,20 @@ sealed interface AdaptiveColor {
     companion object {
         val entries: List<PresetColor> get() = PresetColor.entries
 
+        // the presets the color picker offers; the others still read, for journals that already use them
+        val pickerColors: List<PresetColor> get() = PresetColor.entries.filter { it.isPreferred || it in pickerExtras }
+
+        private val pickerExtras = setOf(
+            PresetColor.CORAL,
+            PresetColor.AUBURN,
+            PresetColor.OLIVE,
+            PresetColor.FOREST_GREEN,
+            PresetColor.ROYAL_BLUE,
+            PresetColor.DARK_VIOLET,
+            PresetColor.MAGENTA,
+            PresetColor.MAROON,
+        )
+
         fun fromName(name: String): AdaptiveColor? =
             PresetColor.entries.firstOrNull { it.name == name } ?: CustomColor.fromName(name)
 
