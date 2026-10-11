@@ -19,6 +19,7 @@
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
 import android.graphics.Paint
+import android.text.format.DateFormat
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -44,6 +45,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.inset
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
@@ -133,6 +135,7 @@ fun AllTimelines(
     val currentOnSelectedTimeChange by rememberUpdatedState(onSelectedTimeChange)
     val density = LocalDensity.current
     val axisLabelSize = MaterialTheme.typography.labelMedium.fontSize
+    val is24HourFormat = DateFormat.is24HourFormat(LocalContext.current)
     val axisLabelTextPaint = remember(density) {
         Paint().apply {
             color =
@@ -266,7 +269,8 @@ fun AllTimelines(
             pixelsPerSec = pixelsPerSec,
             canvasWidth = canvasWidth,
             canvasHeight = canvasWithLabelsHeight,
-            textPaint = axisLabelTextPaint
+            textPaint = axisLabelTextPaint,
+            is24HourFormat = is24HourFormat
         )
         if (model.plannedIngestionTime != null) {
             drawPreviewLabel(textMeasurer, isDarkTheme)
@@ -567,11 +571,16 @@ fun DrawScope.drawAxis(
     pixelsPerSec: Float,
     canvasWidth: Float,
     canvasHeight: Float,
-    textPaint: Paint
+    textPaint: Paint,
+    is24HourFormat: Boolean
 ) {
+    // the widest label plus a gap, so 12 hour labels like "12 PM" don't overlap
+    val widestLabel = if (is24HourFormat) "00" else "12 PM"
     val fullHours = axisDrawable.getFullHours(
         pixelsPerSec = pixelsPerSec,
-        widthInPixels = canvasWidth
+        widthInPixels = canvasWidth,
+        is24HourFormat = is24HourFormat,
+        minWidthPerLabel = maxOf(80f, textPaint.measureText(widestLabel) * 1.5f)
     )
     drawContext.canvas.nativeCanvas.apply {
         fullHours.forEach { fullHour ->

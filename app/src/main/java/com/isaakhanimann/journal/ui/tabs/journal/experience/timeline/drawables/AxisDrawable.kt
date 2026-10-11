@@ -23,7 +23,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
-import kotlin.math.roundToLong
+import kotlin.math.ceil
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -31,11 +31,16 @@ data class AxisDrawable(
     val startTime: Instant,
     val widthInSeconds: Float
 ) {
-    fun getFullHours(pixelsPerSec: Float, widthInPixels: Float): List<FullHour> {
+    // labels follow the phone's 12 or 24 hour setting, and skip hours when they wouldn't fit
+    fun getFullHours(
+        pixelsPerSec: Float,
+        widthInPixels: Float,
+        is24HourFormat: Boolean = true,
+        minWidthPerLabel: Float = 80f
+    ): List<FullHour> {
         val widthInWholeHours = widthInSeconds.toLong().toDuration(DurationUnit.SECONDS).inWholeHours
         val widthPerHour = widthInPixels / widthInWholeHours
-        val minWidthPerHour = 80.0
-        var stepSize = (minWidthPerHour / widthPerHour).roundToLong()
+        var stepSize = ceil(minWidthPerLabel / widthPerHour).toLong()
         if (stepSize == 0.toLong()) {
             stepSize = 1
         }
@@ -48,7 +53,7 @@ data class AxisDrawable(
             val distanceInSec = Duration.between(startTime, it).seconds
             FullHour(
                 distanceFromStart = distanceInSec * pixelsPerSec,
-                label = it.getStringOfPattern("HH")
+                label = it.getStringOfPattern(if (is24HourFormat) "HH" else "h a")
             )
         }
     }
