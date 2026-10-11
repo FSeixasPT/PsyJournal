@@ -107,6 +107,8 @@ fun SettingsPreview() {
         saveAreSubstanceHeightsIndependent = {},
         areRoutesMerged = true,
         saveAreRoutesMerged = {},
+        isDurationRangeShown = true,
+        saveIsDurationRangeShown = {},
         isLiveAutoStart = false,
         saveIsLiveAutoStart = {},
         isLiveShownOnLockScreen = false,
@@ -143,6 +145,8 @@ fun SettingsScreen(
         saveAreSubstanceHeightsIndependent = viewModel::saveAreSubstanceHeightsIndependent,
         areRoutesMerged = viewModel.areRoutesMergedFlow.collectAsState().value,
         saveAreRoutesMerged = viewModel::saveAreRoutesMerged,
+        isDurationRangeShown = viewModel.isDurationRangeShownFlow.collectAsState().value,
+        saveIsDurationRangeShown = viewModel::saveIsDurationRangeShown,
         isLiveAutoStart = viewModel.isLiveAutoStartFlow.collectAsState().value,
         saveIsLiveAutoStart = viewModel::saveIsLiveAutoStart,
         isLiveShownOnLockScreen = viewModel.isLiveShownOnLockScreenFlow.collectAsState().value,
@@ -171,6 +175,8 @@ fun SettingsScreen(
     saveAreSubstanceHeightsIndependent: (Boolean) -> Unit,
     areRoutesMerged: Boolean,
     saveAreRoutesMerged: (Boolean) -> Unit,
+    isDurationRangeShown: Boolean,
+    saveIsDurationRangeShown: (Boolean) -> Unit,
     isLiveAutoStart: Boolean,
     saveIsLiveAutoStart: (Boolean) -> Unit,
     isLiveShownOnLockScreen: Boolean,
@@ -266,6 +272,13 @@ fun SettingsScreen(
                     info = "When enabled, ingestions of the same substance through different routes (e.g. insufflated and oral ketamine) are shown as one combined line. Each route keeps its own onset and duration, and doses are made comparable using each route's common dose range, so the line shows the combined effect rather than the combined amount. Routes without dose ranges in the database are always shown separately.",
                     checked = areRoutesMerged,
                     onCheckedChange = saveAreRoutesMerged
+                )
+                HorizontalDivider()
+                SwitchWithInfoRow(
+                    title = "Show duration range",
+                    info = "Shades the area between the shortest and the longest durations known for each route, so you can see how much the timing can vary. The line itself is the estimate for your dose. Only timelines with complete durations have a range.",
+                    checked = isDurationRangeShown,
+                    onCheckedChange = saveIsDurationRangeShown
                 )
                 HorizontalDivider()
                 SwitchWithInfoRow(

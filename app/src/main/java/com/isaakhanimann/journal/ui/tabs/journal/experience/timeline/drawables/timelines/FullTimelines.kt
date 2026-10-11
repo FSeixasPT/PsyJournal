@@ -42,6 +42,8 @@ data class FullTimelines(
     val startTimeGraph: Instant,
     // the full durations of each line, in the same order; List<WeightedLine>.toFullTimelines computes them
     private val durationsPerLine: List<FullDurations>,
+    // also compute the band between the shortest and the longest possible curve
+    private val isRangeShown: Boolean = false,
 ) : TimelineDrawable {
 
     data class WeightedLineRelativeToFirst(
@@ -90,6 +92,9 @@ data class FullTimelines(
 
     override val endOfLineRelativeToStartInSeconds: Float
 
+    // null unless the range is shown
+    val rangeBand: DurationRangeBand?
+
     init {
         require(durationsPerLine.size == weightedLines.size) { "every line needs its durations" }
         val timeRangeLineSegments = weightedLines.zip(durationsPerLine).flatMap { (line, durations) ->
@@ -109,41 +114,11 @@ data class FullTimelines(
                 )
             }
         val lineSegments = weightedRelatives.flatMap { relative ->
-            val result = mutableListOf<LineSegment>()
-            val onsetAndComeupWeight = 0.5f
-            val onsetEndX =
-                relative.startTimeRelativeToGroupInSeconds + relative.durations.onset.interpolateAtValueInSeconds(
-                    onsetAndComeupWeight
-                )
-            val comeupStartPoint = Point(x = onsetEndX, y = 0f)
-            val comeupEndX =
-                onsetEndX + relative.durations.comeup.interpolateAtValueInSeconds(onsetAndComeupWeight)
-            val peakStartPoint = Point(x = comeupEndX, y = relative.height)
-            result.add(
-                LineSegment(
-                    start = comeupStartPoint,
-                    end = peakStartPoint
-                )
+            pointLineSegments(
+                relative = relative,
+                onsetAndComeupWeight = 0.5f,
+                peakAndOffsetWeight = relative.horizontalWeight
             )
-            val peakEndX =
-                comeupEndX + (relative.durations.peak.interpolateAtValueInSeconds(relative.horizontalWeight))
-            val peakEndPoint = Point(x = peakEndX, y = relative.height)
-            result.add(
-                LineSegment(
-                    start = peakStartPoint,
-                    end = peakEndPoint
-                )
-            )
-            val offsetEndX =
-                peakEndX + relative.durations.offset.interpolateAtValueInSeconds(relative.horizontalWeight)
-            val offsetEndPoint = Point(x = offsetEndX, y = 0f)
-            result.add(
-                LineSegment(
-                    start = peakEndPoint,
-                    end = offsetEndPoint
-                )
-            )
-            return@flatMap result
         } + timeRangeLineSegments
         val linePoints = lineSegments.flatMap { lineSegment ->
             listOf(lineSegment.start.x, lineSegment.end.x)
@@ -174,7 +149,16 @@ data class FullTimelines(
         val sortedPoints = pointsWithHeight.sortedBy { it.x }
         this.finalPoints = sortedPoints
         this.nonNormalisedHeight = sortedPoints.maxOfOrNull { it.y } ?: 0.01f
-        this.endOfLineRelativeToStartInSeconds = finalPoints.maxOfOrNull { it.x }
+        this.rangeBand = if (isRangeShown) {
+            durationRangeBand(
+                shortest = curveWithAllWeights(weightedRelatives, weight = 0f),
+                longest = curveWithAllWeights(weightedRelatives, weight = 1f),
+                maxHeight = nonNormalisedHeight
+            )
+        } else {
+            null
+        }
+        this.endOfLineRelativeToStartInSeconds = (finalPoints.map { it.x } + rangeBand?.upper.orEmpty().map { it.x }).maxOrNull()
             ?: durationsPerLine.maxOfOrNull { it.onset.maxInSeconds + it.comeup.maxInSeconds + it.peak.maxInSeconds + it.offset.maxInSeconds }
             ?: 0f
     }
@@ -199,7 +183,47 @@ data class FullTimelines(
         return candidates.maxBy { it.y }
     }
 
-    private fun getLineSegments(weightedLine: WeightedLine, durations: FullDurations): List<LineSegment> {
+    // the summed curve if every phase of every line took the same part of its range, 0 for the shortest and 1 for the longest
+    private fun curveWithAllWeights(weightedRelatives: List<WeightedLineRelativeToFirst>, weight: Float): List<Point> {
+        val segments = weightedRelatives.flatMap {
+            pointLineSegments(relative = it, onsetAndComeupWeight = weight, peakAndOffsetWeight = weight)
+        } + weightedLines.zip(durationsPerLine).flatMap { (line, durations) ->
+            getLineSegments(weightedLine = line, durations = durations, weightOfAllPhases = weight)
+        }
+        val xs = (weightedRelatives.map { it.startTimeRelativeToGroupInSeconds } +
+                segments.flatMap { listOf(it.start.x, it.end.x) }).distinct().sorted()
+        return xs.map { x ->
+            Point(x = x, y = segments.sumOf { if (it.isInside(x)) it.heightAt(x).toDouble() else 0.0 }.toFloat())
+        }
+    }
+
+    private fun pointLineSegments(
+        relative: WeightedLineRelativeToFirst,
+        onsetAndComeupWeight: Float,
+        peakAndOffsetWeight: Float,
+    ): List<LineSegment> {
+        val onsetEndX = relative.startTimeRelativeToGroupInSeconds +
+                relative.durations.onset.interpolateAtValueInSeconds(onsetAndComeupWeight)
+        val comeupStartPoint = Point(x = onsetEndX, y = 0f)
+        val comeupEndX = onsetEndX + relative.durations.comeup.interpolateAtValueInSeconds(onsetAndComeupWeight)
+        val peakStartPoint = Point(x = comeupEndX, y = relative.height)
+        val peakEndX = comeupEndX + relative.durations.peak.interpolateAtValueInSeconds(peakAndOffsetWeight)
+        val peakEndPoint = Point(x = peakEndX, y = relative.height)
+        val offsetEndX = peakEndX + relative.durations.offset.interpolateAtValueInSeconds(peakAndOffsetWeight)
+        val offsetEndPoint = Point(x = offsetEndX, y = 0f)
+        return listOf(
+            LineSegment(start = comeupStartPoint, end = peakStartPoint),
+            LineSegment(start = peakStartPoint, end = peakEndPoint),
+            LineSegment(start = peakEndPoint, end = offsetEndPoint),
+        )
+    }
+
+    private fun getLineSegments(
+        weightedLine: WeightedLine,
+        durations: FullDurations,
+        // set for the edges of the range band, to use the same part of every phase's range
+        weightOfAllPhases: Float? = null,
+    ): List<LineSegment> {
         if (weightedLine.endTime == null) {
             return emptyList()
         }
@@ -208,14 +232,15 @@ data class FullTimelines(
         val endX =
             Duration.between(startTimeGraph, weightedLine.endTime).seconds.toFloat()
         val rangeInSeconds = endX - startX
-        val onsetInSeconds = durations.onset.interpolateAtValueInSeconds(0.5f)
-        val comeupInSeconds = durations.comeup.interpolateAtValueInSeconds(0.5f)
+        val onsetInSeconds = durations.onset.interpolateAtValueInSeconds(weightOfAllPhases ?: 0.5f)
+        val comeupInSeconds = durations.comeup.interpolateAtValueInSeconds(weightOfAllPhases ?: 0.5f)
 
         var horizontalWeightToUse = 0.5f
         if (rangeInSeconds < durations.peak.minInSeconds) {
             // if the range is short enough we use the same duration as for point ingestion
             horizontalWeightToUse = weightedLine.horizontalWeight
         }
+        if (weightOfAllPhases != null) horizontalWeightToUse = weightOfAllPhases
         val peakInSeconds = durations.peak.interpolateAtValueInSeconds(horizontalWeightToUse)
         val offsetInSeconds = durations.offset.interpolateAtValueInSeconds(horizontalWeightToUse)
 
@@ -365,6 +390,9 @@ data class FullTimelines(
             )
             return
         }
+        rangeBand?.let { band ->
+            drawRangeBand(drawScope, band, canvasHeight, pixelsPerSec, color)
+        }
         drawScope.drawPath(
             path = path,
             color = color,
@@ -398,6 +426,27 @@ data class FullTimelines(
     }
 }
 
+// a faint fill between the shortest and the longest possible curve, below the curve itself
+private fun FullTimelines.drawRangeBand(
+    drawScope: DrawScope,
+    band: DurationRangeBand,
+    canvasHeight: Float,
+    pixelsPerSec: Float,
+    color: Color,
+) {
+    val edge = band.upper + band.lower.reversed()
+    if (edge.isEmpty()) return
+    fun yOf(point: FullTimelines.Point) = canvasHeight - point.y / referenceHeight * canvasHeight
+    val path = Path().apply {
+        moveTo(x = edge.first().x * pixelsPerSec, y = yOf(edge.first()))
+        for (point in edge.drop(1)) lineTo(x = point.x * pixelsPerSec, y = yOf(point))
+        close()
+    }
+    drawScope.drawPath(path = path, color = color.copy(alpha = rangeBandAlpha))
+}
+
+private const val rangeBandAlpha = 0.15f
+
 data class FullDurations(
     val onset: FullDurationRange,
     val comeup: FullDurationRange,
@@ -413,8 +462,13 @@ fun RoaDuration.toFullDurations(): FullDurations? {
     return FullDurations(onset = fullOnset, comeup = fullComeup, peak = fullPeak, offset = fullOffset)
 }
 
-fun List<WeightedLine>.toFullTimelines(startTimeGraph: Instant): FullTimelines? {
+fun List<WeightedLine>.toFullTimelines(startTimeGraph: Instant, isRangeShown: Boolean = false): FullTimelines? {
     if (isEmpty()) return null
     val durations = map { it.roaDuration?.toFullDurations() ?: return null }
-    return FullTimelines(weightedLines = this, startTimeGraph = startTimeGraph, durationsPerLine = durations)
+    return FullTimelines(
+        weightedLines = this,
+        startTimeGraph = startTimeGraph,
+        durationsPerLine = durations,
+        isRangeShown = isRangeShown
+    )
 }

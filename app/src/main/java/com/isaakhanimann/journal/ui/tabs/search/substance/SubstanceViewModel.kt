@@ -38,6 +38,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -98,7 +99,7 @@ class SubstanceViewModel @Inject constructor(
         }
     }
 
-    val timelineDisplayOptionFlow = ingestionTimeFlow.map { ingestionTime ->
+    val timelineDisplayOptionFlow = ingestionTimeFlow.combine(userPreferences.isDurationRangeShownFlow) { ingestionTime, isDurationRangeShown ->
         val substance = substanceWithCategories.substance
         val roasWithDurationsDefined = substance.roas.filter { roa ->
             val roaDuration = roa.roaDuration
@@ -128,15 +129,16 @@ class SubstanceViewModel @Inject constructor(
             )
         }
         if (dataForEffectLines.isEmpty()) {
-            return@map TimelineDisplayOption.NotWorthDrawing
+            return@combine TimelineDisplayOption.NotWorthDrawing
         } else {
             val model = AllTimelinesModel(
                 dataForLines = dataForEffectLines,
                 dataForRatings = emptyList(),
                 timedNotes = emptyList(),
-                areSubstanceHeightsIndependent = false
+                areSubstanceHeightsIndependent = false,
+                isDurationRangeShown = isDurationRangeShown
             )
-            return@map TimelineDisplayOption.Shown(model)
+            return@combine TimelineDisplayOption.Shown(model)
         }
     }.flowOn(Dispatchers.Default)
         .stateIn(

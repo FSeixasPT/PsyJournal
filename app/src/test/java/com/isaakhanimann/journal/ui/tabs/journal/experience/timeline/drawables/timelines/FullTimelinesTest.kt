@@ -83,4 +83,66 @@ class FullTimelinesTest {
         val incomplete = slow.copy(peak = null)
         assertNull(listOf(line(0, fast), line(0, incomplete)).toFullTimelines(start))
     }
+
+    // rises 10-20 min, then 20-40 min at its peak and 20-40 min to fall
+    private val ranged = RoaDuration(
+        onset = DurationRange(10f, 20f, DurationUnits.MINUTES),
+        comeup = DurationRange(10f, 20f, DurationUnits.MINUTES),
+        peak = DurationRange(20f, 40f, DurationUnits.MINUTES),
+        offset = DurationRange(20f, 40f, DurationUnits.MINUTES),
+        total = null,
+        afterglow = null
+    )
+
+    @Test
+    fun rangeBandSpansTheShortestAndLongestCurve() {
+        val band = listOf(line(0, ranged)).toFullTimelines(start, isRangeShown = true)!!.rangeBand!!
+        // shortest: rises 10-20, peak until 40, falls until 60; longest: rises 20-40, peak until 80, falls until 120
+        assertEquals(0f, band.lowerAt(seconds(15)), 0.001f)
+        assertEquals(0.5f, band.upperAt(seconds(15)), 0.001f)
+        assertEquals(0.5f, band.lowerAt(seconds(30)), 0.001f)
+        assertEquals(1f, band.upperAt(seconds(30)), 0.001f)
+        assertEquals(0.5f, band.lowerAt(seconds(50)), 0.001f)
+        assertEquals(0f, band.lowerAt(seconds(100)), 0.001f)
+        assertEquals(0.5f, band.upperAt(seconds(100)), 0.001f)
+    }
+
+    @Test
+    fun rangeBandOfRedosesAddsUp() {
+        val band = listOf(line(0, ranged), line(0, ranged)).toFullTimelines(start, isRangeShown = true)!!.rangeBand!!
+        assertEquals(1f, band.lowerAt(seconds(30)), 0.001f)
+        assertEquals(2f, band.upperAt(seconds(30)), 0.001f)
+    }
+
+    @Test
+    fun rangeBandNeverReachesAboveTheCurvesHighestPoint() {
+        // the longest curves of two ingestions 45 min apart overlap more than their average curves do
+        val timelines = listOf(line(0, ranged), line(45, ranged)).toFullTimelines(start, isRangeShown = true)!!
+        val band = timelines.rangeBand!!
+        (0..150).forEach { minute ->
+            assertEquals(true, band.upperAt(seconds(minute)) <= timelines.nonNormalisedHeight + 0.001f)
+        }
+    }
+
+    @Test
+    fun timelineIsWideEnoughForTheLongestCurveOnlyWhenTheRangeIsShown() {
+        assertEquals(seconds(120), listOf(line(0, ranged)).toFullTimelines(start, isRangeShown = true)!!.endOfLineRelativeToStartInSeconds, 0.001f)
+        // the average curve: 15 + 15 + 30 + 30 min
+        assertEquals(seconds(90), listOf(line(0, ranged)).toFullTimelines(start)!!.endOfLineRelativeToStartInSeconds, 0.001f)
+    }
+
+    @Test
+    fun noRangeBandUnlessShown() {
+        assertNull(listOf(line(0, ranged)).toFullTimelines(start)!!.rangeBand)
+    }
+
+    @Test
+    fun rangeBandFollowsTheCurvesWhereTheyCross() {
+        val rising = listOf(FullTimelines.Point(0f, 0f), FullTimelines.Point(10f, 1f))
+        val falling = listOf(FullTimelines.Point(0f, 1f), FullTimelines.Point(10f, 0f))
+        val band = durationRangeBand(rising, falling, maxHeight = 1f)
+        assertEquals(0.5f, band.lowerAt(5f), 0.001f)
+        assertEquals(0.25f, band.lowerAt(2.5f), 0.001f)
+        assertEquals(0.75f, band.upperAt(2.5f), 0.001f)
+    }
 }

@@ -97,11 +97,14 @@ class ExperienceViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000)
         )
 
-    // both chart settings in one flow, because the timeline flow already combines six flows
-    private val chartSettingsFlow =
-        areSubstanceHeightsIndependentFlow.combine(areRoutesMergedFlow) { areSubstanceHeightsIndependent, areRoutesMerged ->
-            Pair(areSubstanceHeightsIndependent, areRoutesMerged)
-        }
+    // the chart settings in one flow, because the timeline flow already combines six flows
+    private val chartSettingsFlow = combine(
+        areSubstanceHeightsIndependentFlow,
+        areRoutesMergedFlow,
+        userPreferences.isDurationRangeShownFlow
+    ) { areSubstanceHeightsIndependent, areRoutesMerged, isDurationRangeShown ->
+        Triple(areSubstanceHeightsIndependent, areRoutesMerged, isDurationRangeShown)
+    }
 
     val isTimelineHiddenFlow = userPreferences.isTimelineHiddenFlow.stateIn(
         initialValue = true,
@@ -279,7 +282,7 @@ class ExperienceViewModel @Inject constructor(
         ingestionsWithAssociatedDataFlow,
         isTimelineHiddenFlow,
         chartSettingsFlow
-    ) { ingestions, isTimelineHidden, (areSubstanceHeightsIndependent, areRoutesMerged) ->
+    ) { ingestions, isTimelineHidden, (areSubstanceHeightsIndependent, areRoutesMerged, isDurationRangeShown) ->
         val otherIngestions =
             ingestions.filter { it.ingestionWithCompanionAndCustomUnit.ingestion.consumerName != null }
         val groupedByConsumer =
@@ -304,7 +307,8 @@ class ExperienceViewModel @Inject constructor(
                         dataForRatings = emptyList(),
                         timedNotes = emptyList(),
                         areSubstanceHeightsIndependent = areSubstanceHeightsIndependent,
-                        areRoutesMerged = areRoutesMerged
+                        areRoutesMerged = areRoutesMerged,
+                        isDurationRangeShown = isDurationRangeShown
                     )
                     TimelineDisplayOption.Shown(model)
                 } else {
@@ -437,7 +441,7 @@ class ExperienceViewModel @Inject constructor(
         timedNotesSortedFlow,
         ingestionElementsFlow,
         chartSettingsFlow
-    ) { dataForEffectLines, isTimelineHidden, ratings, timedNotesSorted, ingestionElements, (areSubstanceHeightsIndependent, areRoutesMerged) ->
+    ) { dataForEffectLines, isTimelineHidden, ratings, timedNotesSorted, ingestionElements, (areSubstanceHeightsIndependent, areRoutesMerged, isDurationRangeShown) ->
         if (isTimelineHidden) {
             return@combine TimelineDisplayOption.Hidden
         } else if (dataForEffectLines.isEmpty()) {
@@ -467,7 +471,8 @@ class ExperienceViewModel @Inject constructor(
                     dataForRatings = dataForRatings,
                     timedNotes = dataForTimedNotes,
                     areSubstanceHeightsIndependent = areSubstanceHeightsIndependent,
-                    areRoutesMerged = areRoutesMerged
+                    areRoutesMerged = areRoutesMerged,
+                    isDurationRangeShown = isDurationRangeShown
                 )
                 return@combine TimelineDisplayOption.Shown(model)
             } else {

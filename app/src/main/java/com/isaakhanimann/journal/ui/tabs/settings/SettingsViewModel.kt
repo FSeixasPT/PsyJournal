@@ -77,6 +77,10 @@ class SettingsViewModel @Inject constructor(
         userPreferences.saveAreRoutesMerged(value)
     }
 
+    fun saveIsDurationRangeShown(value: Boolean) = viewModelScope.launch {
+        userPreferences.saveIsDurationRangeShown(value)
+    }
+
     fun saveIsTimelineHidden(value: Boolean) = viewModelScope.launch {
         userPreferences.saveIsTimelineHidden(value)
     }
@@ -94,6 +98,12 @@ class SettingsViewModel @Inject constructor(
     )
 
     val areRoutesMergedFlow = userPreferences.areRoutesMergedFlow.stateIn(
+        initialValue = true,
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000)
+    )
+
+    val isDurationRangeShownFlow = userPreferences.isDurationRangeShownFlow.stateIn(
         initialValue = true,
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000)

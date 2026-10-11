@@ -175,8 +175,11 @@ class TimelineScreenViewModel @Inject constructor(
         ratingsFlow,
         timedNotesFlow,
         areSubstanceHeightsIndependentFlow,
-        areRoutesMergedFlow
-    ) { dataForEffectLines, ratings, timedNotesSorted, areSubstanceHeightsIndependent, areRoutesMerged ->
+        // combine takes at most five flows with their own types
+        areRoutesMergedFlow.combine(userPreferences.isDurationRangeShownFlow) { areRoutesMerged, isDurationRangeShown ->
+            Pair(areRoutesMerged, isDurationRangeShown)
+        }
+    ) { dataForEffectLines, ratings, timedNotesSorted, areSubstanceHeightsIndependent, (areRoutesMerged, isDurationRangeShown) ->
 
         val newRatings = if (consumerName == YOU) ratings else emptyList()
         val newTimedNotes = if (consumerName == YOU) timedNotesSorted else emptyList()
@@ -208,7 +211,8 @@ class TimelineScreenViewModel @Inject constructor(
                     dataForRatings = dataForRatings,
                     timedNotes = dataForTimedNotes,
                     areSubstanceHeightsIndependent = areSubstanceHeightsIndependent,
-                    areRoutesMerged = areRoutesMerged
+                    areRoutesMerged = areRoutesMerged,
+                    isDurationRangeShown = isDurationRangeShown
                 )
                 return@combine TimelineDisplayOption.Shown(model)
             } else {

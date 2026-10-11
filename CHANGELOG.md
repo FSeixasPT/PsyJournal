@@ -6,6 +6,10 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ## Unreleased
 
+### Added
+
+- **Duration range on the timeline.** A faint shaded area around each curve shows how much the timing can vary, from the shortest to the longest durations known for the route. It appears on the experience, fullscreen and substance timelines, and can be turned off in Settings with "Show duration range".
+
 ### Changed
 
 - **Thinner lines in the live notification's chart**, so the small chart is easier to read.
