@@ -53,6 +53,7 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
         val KEY_HIDE_DOSAGE_DOTS = booleanPreferencesKey("key_hide_dosage_dots")
         val KEY_ARE_SUBSTANCE_HEIGHTS_INDEPENDENT = booleanPreferencesKey("KEY_ARE_SUBSTANCE_HEIGHTS_INDEPENDENT")
         val KEY_ARE_ROUTES_MERGED = booleanPreferencesKey("KEY_ARE_ROUTES_MERGED")
+        val KEY_IS_DURATION_RANGE_SHOWN = booleanPreferencesKey("KEY_IS_DURATION_RANGE_SHOWN")
         val KEY_PINNED_REDOSE = stringPreferencesKey("KEY_PINNED_REDOSE")
         val KEY_CHOSEN_PLAN = stringPreferencesKey("KEY_CHOSEN_PLAN")
         val KEY_HIDDEN_ROUTES = stringSetPreferencesKey("KEY_HIDDEN_ROUTES")
@@ -139,6 +140,17 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
     val areSubstanceHeightsIndependentFlow: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[PreferencesKeys.KEY_ARE_SUBSTANCE_HEIGHTS_INDEPENDENT] ?: false
+        }
+
+    suspend fun saveIsDurationRangeShown(value: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.KEY_IS_DURATION_RANGE_SHOWN] = value
+        }
+    }
+
+    val isDurationRangeShownFlow: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.KEY_IS_DURATION_RANGE_SHOWN] ?: false
         }
 
     suspend fun saveAreRoutesMerged(value: Boolean) {

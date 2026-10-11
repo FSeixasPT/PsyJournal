@@ -38,8 +38,11 @@ class GroupDrawable(
     val areSubstanceHeightsIndependent: Boolean,
     // the real ingestions of a group that contains a planned ingestion, drawn solid below the dashed preview
     previewBaselineLines: List<WeightedLine>? = null,
+    // shade the area between the shortest and the longest possible curve
+    isRangeShown: Boolean = false,
 ) : TimelineDrawable {
-    val previewBaseline: FullTimelines? = previewBaselineLines?.toFullTimelines(startTimeGraph = startTimeGraph)
+    val previewBaseline: FullTimelines? =
+        previewBaselineLines?.toFullTimelines(startTimeGraph = startTimeGraph, isRangeShown = isRangeShown)
 
     private val timelineDrawables: List<TimelineDrawable>
     private val timeRangeDrawables: List<TimeRangeDrawable>
@@ -84,7 +87,7 @@ class GroupDrawable(
         this.timeRangeDrawables = timeRangeDrawables
 
         timelineDrawables = if (weightedLines.isNotEmpty()) {
-            val fulls = weightedLines.toFullTimelines(startTimeGraph = startTimeGraph)
+            val fulls = weightedLines.toFullTimelines(startTimeGraph = startTimeGraph, isRangeShown = isRangeShown)
             if (fulls != null) {
                 listOf(fulls)
             } else if (weightedLinesForPointIngestions.isNotEmpty()) {

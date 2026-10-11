@@ -39,6 +39,8 @@ class AllTimelinesModel(
     private val areRoutesMerged: Boolean = false,
     // set if this model is a preview of a planned ingestion that is not logged
     private val plannedLine: DataForOneEffectLine? = null,
+    // shade the area between the shortest and the longest possible duration
+    private val isDurationRangeShown: Boolean = false,
 ) {
     val plannedIngestionTime: Instant? get() = plannedLine?.startTime
 
@@ -124,7 +126,8 @@ class AllTimelinesModel(
                     group.weightedLines - plannedWeightedLine
                 } else {
                     null
-                }
+                },
+                isRangeShown = isDurationRangeShown
             )
         }
         val overallMaxHeight = groupDrawables.maxOfOrNull { it.nonNormalisedHeight } ?: 1f
@@ -175,7 +178,8 @@ class AllTimelinesModel(
             timedNotes = timedNotes,
             areSubstanceHeightsIndependent = areSubstanceHeightsIndependent,
             areRoutesMerged = areRoutesMerged,
-            plannedLine = line
+            plannedLine = line,
+            isDurationRangeShown = isDurationRangeShown
         )
     }
 
