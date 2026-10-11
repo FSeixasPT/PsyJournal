@@ -21,13 +21,24 @@ package com.isaakhanimann.journal.ui.tabs.settings.colors
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
 import com.isaakhanimann.journal.data.room.experiences.entities.SubstanceCompanion
 
-// the substances the "+" button can add: not configured yet and matching the search
+// the substances the "+" button can add: not configured yet and matching the search,
+// the exact match first, then names starting with the search, each group alphabetical
 fun substancesToAdd(allNames: List<String>, configured: List<SubstanceCompanion>, query: String): List<String> {
     val configuredNames = configured.map { it.substanceName }.toSet()
+    val search = query.trim()
     return allNames
         .distinct()
-        .filter { it !in configuredNames && it.contains(query.trim(), ignoreCase = true) }
-        .sortedWith(String.CASE_INSENSITIVE_ORDER)
+        .filter { it !in configuredNames && it.contains(search, ignoreCase = true) }
+        .sortedWith(
+            compareBy<String> { name ->
+                when {
+                    search.isEmpty() -> 0
+                    name.equals(search, ignoreCase = true) -> 0
+                    name.startsWith(search, ignoreCase = true) -> 1
+                    else -> 2
+                }
+            }.then(String.CASE_INSENSITIVE_ORDER)
+        )
 }
 
 // a color no other substance uses, preferring the ones picked for good contrast, like when logging an ingestion
