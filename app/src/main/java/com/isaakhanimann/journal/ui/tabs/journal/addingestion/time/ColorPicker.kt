@@ -35,12 +35,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -55,6 +57,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
+import com.isaakhanimann.journal.data.room.experiences.entities.CustomColor
+import com.isaakhanimann.journal.data.room.experiences.entities.hexOf
 
 @Preview
 @Composable
@@ -104,6 +108,7 @@ fun ColorPicker(
         ColorDialog(
             dismiss = { isColorPickerVisible = false },
             onChangeOfColor = onChangeOfColor,
+            selectedColor = selectedColor,
             alreadyUsedColors = alreadyUsedColors,
             otherColors = otherColors,
             removeExplanation = removeExplanation,
@@ -134,8 +139,18 @@ fun ColorDialog(
     alreadyUsedColors: List<AdaptiveColor>,
     otherColors: List<AdaptiveColor>,
     removeExplanation: String? = null,
-    onRemove: (() -> Unit)? = null
+    onRemove: (() -> Unit)? = null,
+    selectedColor: AdaptiveColor = AdaptiveColor.BLUE
 ) {
+    var isPickingCustomColor by remember { mutableStateOf(false) }
+    if (isPickingCustomColor) {
+        CustomColorDialog(
+            initialColor = selectedColor,
+            dismiss = dismiss,
+            onPick = onChangeOfColor
+        )
+        return
+    }
     AlertDialog(
         onDismissRequest = dismiss,
         title = {
@@ -149,6 +164,12 @@ fun ColorDialog(
                     Text(text = removeExplanation, style = MaterialTheme.typography.bodySmall)
                     Spacer(modifier = Modifier.height(12.dp))
                 }
+                OutlinedButton(onClick = { isPickingCustomColor = true }, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Outlined.Palette, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Custom color…")
+                }
+                Spacer(modifier = Modifier.height(12.dp))
                 if (otherColors.isEmpty()) {
                     Text(text = "No unused colors")
                 } else {
@@ -220,7 +241,9 @@ fun CircleColorButtons(
                     .clickable(
                         onClick = { onTapOnColor(color) }
                     )
-                    .semantics { contentDescription = color.name }
+                    .semantics {
+                        contentDescription = if (color is CustomColor) "Custom ${hexOf(color.rgb)}" else color.name
+                    }
             ) {}
         }
     }

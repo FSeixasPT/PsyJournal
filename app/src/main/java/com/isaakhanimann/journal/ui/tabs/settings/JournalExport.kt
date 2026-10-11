@@ -19,6 +19,7 @@
 package com.isaakhanimann.journal.ui.tabs.settings
 
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
+import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColorSerializer
 import com.isaakhanimann.journal.data.room.experiences.entities.CustomSubstance
 import com.isaakhanimann.journal.data.room.experiences.entities.ShulginRatingOption
 import com.isaakhanimann.journal.data.room.experiences.entities.StomachFullness
@@ -103,6 +104,7 @@ data class TimedNoteSerializable(
     @Serializable(with= InstantSerializer::class) var creationDate: Instant,
     @Serializable(with= InstantSerializer::class) var time: Instant,
     var note: String,
+    @Serializable(with = AdaptiveColorSerializer::class)
     var color: AdaptiveColor,
     var isPartOfTimeline: Boolean
 )

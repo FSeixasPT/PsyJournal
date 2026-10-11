@@ -28,6 +28,7 @@ import kotlinx.serialization.Serializable
 data class SubstanceCompanion(
     @PrimaryKey(autoGenerate = false)
     val substanceName: String,
+    @Serializable(with = AdaptiveColorSerializer::class)
     var color: AdaptiveColor,
     // false hides the substance from the timelines of every experience
     @ColumnInfo(defaultValue = "1")
