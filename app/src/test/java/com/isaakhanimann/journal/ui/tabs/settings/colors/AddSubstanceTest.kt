@@ -39,6 +39,18 @@ class AddSubstanceTest {
     }
 
     @Test
+    fun theExactMatchComesFirst() {
+        val names = listOf("1P-LSD", "LSD", "1cP-LSD")
+        assertEquals(listOf("LSD", "1cP-LSD", "1P-LSD"), substancesToAdd(names, configured, query = "lsd"))
+    }
+
+    @Test
+    fun namesStartingWithTheSearchComeBeforeOtherMatches() {
+        val names = listOf("2-Fluorodeschloroketamine", "Methoxetamine", "Ketamine")
+        assertEquals(listOf("Ketamine", "2-Fluorodeschloroketamine"), substancesToAdd(names, configured, query = "keta"))
+    }
+
+    @Test
     fun aNameIsOfferedOnceEvenIfItIsBothAPsychonautWikiAndACustomSubstance() {
         assertEquals(listOf("LSD"), substancesToAdd(listOf("LSD", "LSD"), configured, query = ""))
     }
