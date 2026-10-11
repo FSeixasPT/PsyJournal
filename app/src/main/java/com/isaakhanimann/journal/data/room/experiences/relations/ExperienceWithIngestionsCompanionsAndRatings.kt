@@ -24,6 +24,7 @@ import com.isaakhanimann.journal.data.room.experiences.entities.Experience
 import com.isaakhanimann.journal.data.room.experiences.entities.Ingestion
 import com.isaakhanimann.journal.data.room.experiences.entities.ShulginRating
 import com.isaakhanimann.journal.data.room.experiences.entities.ShulginRatingOption
+import com.isaakhanimann.journal.data.room.experiences.entities.TimedNote
 import java.time.Instant
 
 data class ExperienceWithIngestionsCompanionsAndRatings(
@@ -37,10 +38,18 @@ data class ExperienceWithIngestionsCompanionsAndRatings(
         entity = ShulginRating::class,
         parentColumn = "id",
         entityColumn = "experienceId"
-    ) val ratings: List<ShulginRating>
+    ) val ratings: List<ShulginRating>,
+    @Relation(
+        entity = TimedNote::class,
+        parentColumn = "id",
+        entityColumn = "experienceId"
+    ) val timedNotes: List<TimedNote> = emptyList()
 ) {
     val sortInstant: Instant get() = ingestionsWithCompanions.firstOrNull()?.ingestion?.time ?: experience.creationDate
     private val highestRatingOption: ShulginRatingOption? get() = ratings.maxOfOrNull { it.option }
     private val overallRatingOption: ShulginRatingOption? get() = ratings.firstOrNull { it.time == null }?.option
     val rating: ShulginRatingOption? get() = overallRatingOption ?: highestRatingOption
+
+    // the written notes of the experience count as one note, next to its timed notes
+    val noteCount: Int get() = timedNotes.size + if (experience.text.isNotBlank()) 1 else 0
 }

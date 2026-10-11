@@ -31,10 +31,13 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Medication
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -45,6 +48,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -76,10 +82,28 @@ fun ExperienceRow(
         val experience = experienceWithIngestionsCompanionsAndRatings.experience
         ColorRectangle(ingestions = ingestions)
         Column {
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text(
                     text = experience.title,
                     style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                val noteCount = experienceWithIngestionsCompanionsAndRatings.noteCount
+                if (noteCount > 0) {
+                    CountWithIcon(
+                        imageVector = Icons.Outlined.Description,
+                        count = noteCount,
+                        contentDescription = if (noteCount == 1) "1 note" else "$noteCount notes"
+                    )
+                }
+                CountWithIcon(
+                    imageVector = Icons.Outlined.Medication,
+                    count = ingestions.size,
+                    contentDescription = if (ingestions.size == 1) "1 ingestion" else "${ingestions.size} ingestions"
                 )
                 if (experience.isFavorite) {
                     Icon(imageVector = Icons.Filled.Star, contentDescription = "Is favorite")
@@ -139,6 +163,20 @@ fun ExperienceRow(
                 }
             }
         }
+    }
+}
+
+// a small, faded icon with a number, so the details don't compete with the title
+@Composable
+private fun CountWithIcon(imageVector: ImageVector, count: Int, contentDescription: String) {
+    val color = MaterialTheme.colorScheme.onSurfaceVariant
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        modifier = Modifier.semantics(mergeDescendants = true) { this.contentDescription = contentDescription }
+    ) {
+        Icon(imageVector = imageVector, contentDescription = null, tint = color, modifier = Modifier.size(16.dp))
+        Text(text = count.toString(), style = MaterialTheme.typography.labelMedium, color = color)
     }
 }
 
