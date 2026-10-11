@@ -32,6 +32,7 @@ import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
 import com.isaakhanimann.journal.data.room.experiences.entities.Experience
 import com.isaakhanimann.journal.data.room.experiences.entities.Ingestion
 import com.isaakhanimann.journal.data.room.experiences.entities.SubstanceCompanion
+import com.isaakhanimann.journal.ui.tabs.search.substance.companionWithColor
 import com.isaakhanimann.journal.data.room.experiences.relations.ExperienceWithIngestions
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.ui.main.navigation.graphs.FinishIngestionRoute
@@ -275,8 +276,9 @@ class FinishIngestionScreenViewModel @Inject constructor(
 
     // returns the id of the experience the ingestion was saved in
     private suspend fun createAndSaveIngestion(): Int {
-        val substanceCompanion = SubstanceCompanion(
+        val substanceCompanion = companionWithColor(
             substanceName,
+            existing = experienceRepo.getSubstanceCompanionFlow(substanceName).first(),
             color = selectedColor
         )
         val oldIdToUse = selectedExperienceFlow.firstOrNull()?.experience?.id

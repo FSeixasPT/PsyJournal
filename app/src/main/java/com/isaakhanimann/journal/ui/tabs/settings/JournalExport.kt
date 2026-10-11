@@ -69,7 +69,8 @@ data class CustomUnitSerializable (
 data class RatingSerializable(
     @Serializable(with= ShulginRatingOptionSerializer::class) val option: ShulginRatingOption,
     @Serializable(with= InstantSerializer::class) var time: Instant? = null,
-    @Serializable(with= InstantSerializer::class) var creationDate: Instant? = Instant.now()
+    @Serializable(with= InstantSerializer::class) var creationDate: Instant? = Instant.now(),
+    var isPartOfTimeline: Boolean = true
 )
 
 @Serializable
@@ -86,7 +87,8 @@ data class IngestionSerializable(
     var notes: String? = null,
     var stomachFullness: StomachFullness? = null,
     var consumerName: String? = null,
-    var customUnitId: Int? = null
+    var customUnitId: Int? = null,
+    var isPartOfTimeline: Boolean = true
 )
 
 @Serializable

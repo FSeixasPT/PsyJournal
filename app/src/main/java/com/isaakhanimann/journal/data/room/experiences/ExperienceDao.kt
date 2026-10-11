@@ -379,7 +379,8 @@ interface ExperienceDao {
                     notes = ingestionSerializable.notes,
                     stomachFullness = ingestionSerializable.stomachFullness,
                     consumerName = ingestionSerializable.consumerName,
-                    customUnitId = ingestionSerializable.customUnitId
+                    customUnitId = ingestionSerializable.customUnitId,
+                    isPartOfTimeline = ingestionSerializable.isPartOfTimeline
                 )
                 insert(newIngestion)
             }
@@ -399,7 +400,8 @@ interface ExperienceDao {
                     time = ratingSerializable.time,
                     creationDate = ratingSerializable.creationDate,
                     option = ratingSerializable.option,
-                    experienceId = experienceID
+                    experienceId = experienceID,
+                    isPartOfTimeline = ratingSerializable.isPartOfTimeline
                 )
                 insert(newRating)
             }

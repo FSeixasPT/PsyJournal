@@ -67,6 +67,21 @@ class SubstanceColorsViewModel @Inject constructor(
         }
     }
 
+    fun updateIsPartOfTimeline(isPartOfTimeline: Boolean, substanceName: String) {
+        viewModelScope.launch {
+            val updatedList = _substanceCompanionsFlow.value.map { companion ->
+                if (companion.substanceName == substanceName) {
+                    companion.copy(isPartOfTimeline = isPartOfTimeline).also {
+                        experienceRepository.update(it)
+                    }
+                } else {
+                    companion
+                }
+            }
+            _substanceCompanionsFlow.value = updatedList
+        }
+    }
+
     val alreadyUsedColorsFlow: StateFlow<List<AdaptiveColor>> =
         _substanceCompanionsFlow.map { companions ->
             companions.map { it.color }.distinct()

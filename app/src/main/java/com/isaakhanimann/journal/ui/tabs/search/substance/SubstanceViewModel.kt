@@ -24,7 +24,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
-import com.isaakhanimann.journal.data.room.experiences.entities.SubstanceCompanion
+import kotlinx.coroutines.flow.first
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepository
 import com.isaakhanimann.journal.ui.main.navigation.graphs.SubstanceRoute
@@ -88,7 +88,13 @@ class SubstanceViewModel @Inject constructor(
     )
 
     fun changeJournalColor(color: AdaptiveColor) = viewModelScope.launch {
-        experienceRepo.update(SubstanceCompanion(substanceName, color))
+        val existing = experienceRepo.getSubstanceCompanionFlow(substanceName).first()
+        experienceRepo.update(companionWithColor(substanceName, existing, color))
+    }
+
+    fun changeIsPartOfTimeline(isPartOfTimeline: Boolean) = viewModelScope.launch {
+        val existing = experienceRepo.getSubstanceCompanionFlow(substanceName).first() ?: return@launch
+        experienceRepo.update(existing.copy(isPartOfTimeline = isPartOfTimeline))
     }
 
     val ingestionTimeFlow = MutableStateFlow(LocalDateTime.now())

@@ -28,7 +28,7 @@ import org.junit.Test
 class JournalColorTest {
     private val companions = listOf(
         SubstanceCompanion("MDMA", AdaptiveColor.PINK),
-        SubstanceCompanion("2C-B", AdaptiveColor.BLUE),
+        SubstanceCompanion("2C-B", AdaptiveColor.BLUE, isPartOfTimeline = false),
     )
 
     @Test
@@ -43,5 +43,28 @@ class JournalColorTest {
     @Test
     fun aSubstanceNeverLoggedHasNoChoice() {
         assertNull(journalColorChoice(companions, "LSD"))
+    }
+
+    @Test
+    fun theChoiceShowsWhetherTheSubstanceIsHiddenFromTimelines() {
+        assertEquals(true, journalColorChoice(companions, "MDMA")?.isPartOfTimeline)
+        assertEquals(false, journalColorChoice(companions, "2C-B")?.isPartOfTimeline)
+    }
+
+    @Test
+    fun changingTheColorKeepsTheSubstanceHidden() {
+        val hidden = SubstanceCompanion("2C-B", AdaptiveColor.BLUE, isPartOfTimeline = false)
+        assertEquals(
+            SubstanceCompanion("2C-B", AdaptiveColor.RED, isPartOfTimeline = false),
+            companionWithColor("2C-B", existing = hidden, color = AdaptiveColor.RED)
+        )
+    }
+
+    @Test
+    fun aNewSubstanceIsShownInTimelines() {
+        assertEquals(
+            SubstanceCompanion("LSD", AdaptiveColor.RED, isPartOfTimeline = true),
+            companionWithColor("LSD", existing = null, color = AdaptiveColor.RED)
+        )
     }
 }

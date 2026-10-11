@@ -19,6 +19,7 @@
 package com.isaakhanimann.journal.ui.tabs.settings.colors
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,6 +30,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -36,6 +38,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -54,6 +58,7 @@ fun SubstanceColorsScreen(
     SubstanceColorsScreenContent(
         substanceCompanions = viewModel.substanceCompanionsFlow.collectAsState().value,
         updateColor = viewModel::updateColor,
+        updateIsPartOfTimeline = viewModel::updateIsPartOfTimeline,
         alreadyUsedColors = viewModel.alreadyUsedColorsFlow.collectAsState().value,
         otherColors = viewModel.otherColorsFlow.collectAsState().value
     )
@@ -86,12 +91,13 @@ fun SubstanceColorsScreenPreview() {
 fun SubstanceColorsScreenContent(
     substanceCompanions: List<SubstanceCompanion>,
     updateColor: (color: AdaptiveColor, substanceName: String) -> Unit,
+    updateIsPartOfTimeline: (isPartOfTimeline: Boolean, substanceName: String) -> Unit = { _, _ -> },
     alreadyUsedColors: List<AdaptiveColor>,
     otherColors: List<AdaptiveColor>
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Substance colors") })
+            TopAppBar(title = { Text("Substance colors and timelines") })
         },
     ) { padding ->
         LazyColumn(
@@ -100,6 +106,13 @@ fun SubstanceColorsScreenContent(
                 .padding(horizontal = horizontalPadding)
                 .fillMaxSize()
         ) {
+            item {
+                Text(
+                    text = "Turn a substance off to hide it from the timelines of all experiences. Its ingestions stay in your journal.",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
             items(substanceCompanions) { substanceCompanion ->
                 Row(
                     modifier = Modifier
@@ -108,9 +121,21 @@ fun SubstanceColorsScreenContent(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = substanceCompanion.substanceName,
-                        style = MaterialTheme.typography.titleMedium
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = substanceCompanion.substanceName,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        if (!substanceCompanion.isPartOfTimeline) {
+                            Text(text = "Hidden from timelines", style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                    Switch(
+                        checked = substanceCompanion.isPartOfTimeline,
+                        onCheckedChange = { updateIsPartOfTimeline(it, substanceCompanion.substanceName) },
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .semantics { contentDescription = "Show ${substanceCompanion.substanceName} in timelines" }
                     )
                     ColorPicker(
                         selectedColor = substanceCompanion.color,

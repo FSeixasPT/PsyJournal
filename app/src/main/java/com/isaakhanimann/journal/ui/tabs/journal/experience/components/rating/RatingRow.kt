@@ -28,19 +28,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 import com.isaakhanimann.journal.data.room.experiences.entities.ShulginRating
 
 @Composable
 fun TimedRatingRow(
     modifier: Modifier = Modifier,
     ratingSign: String,
+    isPartOfTimeline: Boolean = true,
     timeText: @Composable () -> Unit
 ) {
     RatingRow(
         modifier = modifier,
-        ratingSign = ratingSign,
-        content = timeText
-    )
+        ratingSign = ratingSign
+    ) {
+        if (isPartOfTimeline) {
+            timeText()
+        } else {
+            Row(horizontalArrangement = Arrangement.spacedBy(15.dp), verticalAlignment = Alignment.Bottom) {
+                timeText()
+                Text(text = "(Not in timeline)", style = MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
 }
 
 @Composable

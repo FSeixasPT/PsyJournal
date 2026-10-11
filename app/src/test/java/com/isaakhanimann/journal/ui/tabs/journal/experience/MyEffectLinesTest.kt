@@ -18,7 +18,9 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
 import com.isaakhanimann.journal.data.room.experiences.entities.Ingestion
+import com.isaakhanimann.journal.data.room.experiences.entities.SubstanceCompanion
 import com.isaakhanimann.journal.data.room.experiences.relations.IngestionWithCompanionAndCustomUnit
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.data.substances.classes.Category
@@ -39,12 +41,19 @@ class MyEffectLinesTest {
         override fun getSubstanceWithCategories(substanceName: String): SubstanceWithCategories? = null
     }
 
-    private fun ingestion(name: String, time: String, consumer: String? = null) = IngestionWithCompanionAndCustomUnit(
+    private fun ingestion(
+        name: String,
+        time: String,
+        consumer: String? = null,
+        dose: Double = 10.0,
+        isPartOfTimeline: Boolean = true,
+        companion: SubstanceCompanion? = null,
+    ) = IngestionWithCompanionAndCustomUnit(
         ingestion = Ingestion(
             substanceName = name,
             time = Instant.parse(time),
             administrationRoute = AdministrationRoute.ORAL,
-            dose = 10.0,
+            dose = dose,
             isDoseAnEstimate = false,
             estimatedDoseStandardDeviation = null,
             units = "mg",
@@ -52,9 +61,10 @@ class MyEffectLinesTest {
             notes = null,
             stomachFullness = null,
             consumerName = consumer,
-            customUnitId = null
+            customUnitId = null,
+            isPartOfTimeline = isPartOfTimeline
         ),
-        substanceCompanion = null,
+        substanceCompanion = companion,
         customUnit = null
     )
 
@@ -69,5 +79,44 @@ class MyEffectLinesTest {
             NoSubstances
         )
         assertEquals(listOf("A", "B"), lines.map { it.substanceName })
+    }
+
+    @Test
+    fun hiddenIngestionsAreLeftOut() {
+        val lines = myEffectLines(
+            listOf(
+                ingestion("A", "2026-01-01T20:00:00Z"),
+                ingestion("B", "2026-01-01T21:00:00Z", isPartOfTimeline = false),
+            ),
+            NoSubstances
+        )
+        assertEquals(listOf("A"), lines.map { it.substanceName })
+    }
+
+    @Test
+    fun substancesHiddenFromEveryExperienceAreLeftOut() {
+        val hidden = SubstanceCompanion("B", AdaptiveColor.BLUE, isPartOfTimeline = false)
+        val lines = myEffectLines(
+            listOf(
+                ingestion("A", "2026-01-01T20:00:00Z", companion = SubstanceCompanion("A", AdaptiveColor.RED)),
+                ingestion("B", "2026-01-01T21:00:00Z", companion = hidden),
+                ingestion("B", "2026-01-01T22:00:00Z", companion = hidden),
+            ),
+            NoSubstances
+        )
+        assertEquals(listOf("A"), lines.map { it.substanceName })
+    }
+
+    @Test
+    fun hidingARedoseKeepsTheHeightOfTheOtherDoses() {
+        // without dose ranges a dose's height is relative to the average dose: 10 / ((10 + 30) / 2)
+        val lines = myEffectLines(
+            listOf(
+                ingestion("A", "2026-01-01T20:00:00Z", dose = 10.0),
+                ingestion("A", "2026-01-01T21:00:00Z", dose = 30.0, isPartOfTimeline = false),
+            ),
+            NoSubstances
+        )
+        assertEquals(listOf(0.5f), lines.map { it.height })
     }
 }

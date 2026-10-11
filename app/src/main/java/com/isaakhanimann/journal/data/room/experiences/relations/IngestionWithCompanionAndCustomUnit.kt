@@ -50,6 +50,9 @@ data class IngestionWithCompanionAndCustomUnit(
         } ?: return ingestion.dose
     }
 
+    // shown in timelines unless the ingestion or its whole substance is hidden
+    val isPartOfTimeline: Boolean get() = ingestion.isPartOfTimeline && substanceCompanion?.isPartOfTimeline != false
+
     val isEstimate: Boolean get() = ingestion.isDoseAnEstimate || customUnit?.isEstimate ?: false
 
     val pureDoseStandardDeviation: Double?

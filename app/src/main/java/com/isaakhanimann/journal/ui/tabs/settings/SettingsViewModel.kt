@@ -174,7 +174,8 @@ class SettingsViewModel @Inject constructor(
                             notes = ingestion.notes,
                             stomachFullness = ingestion.stomachFullness,
                             consumerName = ingestion.consumerName,
-                            customUnitId = ingestion.customUnitId
+                            customUnitId = ingestion.customUnitId,
+                            isPartOfTimeline = ingestion.isPartOfTimeline
                         )
                     },
                     location = if (location != null) {
@@ -190,7 +191,8 @@ class SettingsViewModel @Inject constructor(
                         RatingSerializable(
                             option = rating.option,
                             time = rating.time,
-                            creationDate = rating.creationDate
+                            creationDate = rating.creationDate,
+                            isPartOfTimeline = rating.isPartOfTimeline
                         )
                     },
                     timedNotes = it.timedNotes.map { timedNote ->

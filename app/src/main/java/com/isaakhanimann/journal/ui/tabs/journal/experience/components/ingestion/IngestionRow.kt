@@ -73,7 +73,14 @@ fun IngestionRow(
     ) {
         VerticalLine(color = ingestionWithCompanionAndCustomUnit.substanceCompanion?.color ?: AdaptiveColor.RED)
         Column {
-            time()
+            if (ingestionWithCompanionAndCustomUnit.isPartOfTimeline) {
+                time()
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(15.dp), verticalAlignment = Alignment.Bottom) {
+                    time()
+                    Text(text = "(Not in timeline)", style = MaterialTheme.typography.bodySmall)
+                }
+            }
             val title = if (customUnit != null) {
                 "${ingestion.substanceName}, ${customUnit.name}"
             } else {

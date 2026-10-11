@@ -21,6 +21,9 @@ package com.isaakhanimann.journal.ui.tabs.journal.experience.rating
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +45,9 @@ fun TimePickerSectionPreview() {
 fun TimePickerSection(
     selectedTime: LocalDateTime,
     onTimeChange: (LocalDateTime) -> Unit,
+    // shows a switch to hide the rating from the timeline when not null
+    isPartOfTimeline: Boolean? = null,
+    onChangeIsPartOfTimeline: (Boolean) -> Unit = {},
 ) {
     CardWithTitle(title = "Time") {
         Column(
@@ -60,6 +66,15 @@ fun TimePickerSection(
                 timeString = selectedTime.getShortTimeText(),
                 modifier = Modifier.fillMaxWidth()
             )
+            if (isPartOfTimeline != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "Show in timeline", modifier = Modifier.weight(1f))
+                    Switch(checked = isPartOfTimeline, onCheckedChange = onChangeIsPartOfTimeline)
+                }
+            }
         }
     }
 }
