@@ -240,6 +240,7 @@ class ExperienceRepository @Inject constructor(private val experienceDao: Experi
             .conflate()
 
     fun getAllSubstanceCompanionsFlow() = experienceDao.getAllSubstanceCompanionsFlow()
+    fun getLoggedSubstanceNamesFlow() = experienceDao.getLoggedSubstanceNamesFlow()
         .flowOn(Dispatchers.IO)
         .conflate()
 

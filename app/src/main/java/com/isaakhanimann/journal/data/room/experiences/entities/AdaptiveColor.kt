@@ -20,7 +20,89 @@ package com.isaakhanimann.journal.data.room.experiences.entities
 
 import androidx.compose.ui.graphics.Color
 
-enum class AdaptiveColor {
+// a color of the journal: one of the presets, or a custom color the user picked
+sealed interface AdaptiveColor {
+    fun getComposeColor(isDarkTheme: Boolean): Color
+    val isPreferred: Boolean
+
+    // stored in the database and in backups: the preset's name or CUSTOM:#RRGGBB
+    val name: String
+
+    companion object {
+        val entries: List<PresetColor> get() = PresetColor.entries
+
+        // the presets the color picker offers; the others still read, for journals that already use them
+        val pickerColors: List<PresetColor> get() = PresetColor.entries.filter { it.isPreferred || it in pickerExtras }
+
+        private val pickerExtras = setOf(
+            PresetColor.CORAL,
+            PresetColor.AUBURN,
+            PresetColor.OLIVE,
+            PresetColor.FOREST_GREEN,
+            PresetColor.ROYAL_BLUE,
+            PresetColor.DARK_VIOLET,
+            PresetColor.MAGENTA,
+            PresetColor.MAROON,
+        )
+
+        fun fromName(name: String): AdaptiveColor? =
+            PresetColor.entries.firstOrNull { it.name == name } ?: CustomColor.fromName(name)
+
+        val RED: AdaptiveColor = PresetColor.RED
+        val ORANGE: AdaptiveColor = PresetColor.ORANGE
+        val YELLOW: AdaptiveColor = PresetColor.YELLOW
+        val GREEN: AdaptiveColor = PresetColor.GREEN
+        val MINT: AdaptiveColor = PresetColor.MINT
+        val TEAL: AdaptiveColor = PresetColor.TEAL
+        val CYAN: AdaptiveColor = PresetColor.CYAN
+        val BLUE: AdaptiveColor = PresetColor.BLUE
+        val INDIGO: AdaptiveColor = PresetColor.INDIGO
+        val PURPLE: AdaptiveColor = PresetColor.PURPLE
+        val PINK: AdaptiveColor = PresetColor.PINK
+        val BROWN: AdaptiveColor = PresetColor.BROWN
+        val FIRE_ENGINE_RED: AdaptiveColor = PresetColor.FIRE_ENGINE_RED
+        val CORAL: AdaptiveColor = PresetColor.CORAL
+        val TOMATO: AdaptiveColor = PresetColor.TOMATO
+        val CINNABAR: AdaptiveColor = PresetColor.CINNABAR
+        val RUST: AdaptiveColor = PresetColor.RUST
+        val ORANGE_RED: AdaptiveColor = PresetColor.ORANGE_RED
+        val AUBURN: AdaptiveColor = PresetColor.AUBURN
+        val SADDLE_BROWN: AdaptiveColor = PresetColor.SADDLE_BROWN
+        val DARK_ORANGE: AdaptiveColor = PresetColor.DARK_ORANGE
+        val DARK_GOLD: AdaptiveColor = PresetColor.DARK_GOLD
+        val KHAKI: AdaptiveColor = PresetColor.KHAKI
+        val BRONZE: AdaptiveColor = PresetColor.BRONZE
+        val GOLD: AdaptiveColor = PresetColor.GOLD
+        val OLIVE: AdaptiveColor = PresetColor.OLIVE
+        val OLIVE_DRAB: AdaptiveColor = PresetColor.OLIVE_DRAB
+        val DARK_OLIVE_GREEN: AdaptiveColor = PresetColor.DARK_OLIVE_GREEN
+        val MOSS_GREEN: AdaptiveColor = PresetColor.MOSS_GREEN
+        val LIME_GREEN: AdaptiveColor = PresetColor.LIME_GREEN
+        val LIME: AdaptiveColor = PresetColor.LIME
+        val FOREST_GREEN: AdaptiveColor = PresetColor.FOREST_GREEN
+        val SEA_GREEN: AdaptiveColor = PresetColor.SEA_GREEN
+        val JUNGLE_GREEN: AdaptiveColor = PresetColor.JUNGLE_GREEN
+        val LIGHT_SEA_GREEN: AdaptiveColor = PresetColor.LIGHT_SEA_GREEN
+        val DARK_TURQUOISE: AdaptiveColor = PresetColor.DARK_TURQUOISE
+        val DODGER_BLUE: AdaptiveColor = PresetColor.DODGER_BLUE
+        val ROYAL_BLUE: AdaptiveColor = PresetColor.ROYAL_BLUE
+        val DEEP_LAVENDER: AdaptiveColor = PresetColor.DEEP_LAVENDER
+        val BLUE_VIOLET: AdaptiveColor = PresetColor.BLUE_VIOLET
+        val DARK_VIOLET: AdaptiveColor = PresetColor.DARK_VIOLET
+        val HELIOTROPE: AdaptiveColor = PresetColor.HELIOTROPE
+        val BYZANTIUM: AdaptiveColor = PresetColor.BYZANTIUM
+        val MAGENTA: AdaptiveColor = PresetColor.MAGENTA
+        val DARK_MAGENTA: AdaptiveColor = PresetColor.DARK_MAGENTA
+        val FUCHSIA: AdaptiveColor = PresetColor.FUCHSIA
+        val DEEP_PINK: AdaptiveColor = PresetColor.DEEP_PINK
+        val GRAYISH_MAGENTA: AdaptiveColor = PresetColor.GRAYISH_MAGENTA
+        val HOT_PINK: AdaptiveColor = PresetColor.HOT_PINK
+        val JAZZBERRY_JAM: AdaptiveColor = PresetColor.JAZZBERRY_JAM
+        val MAROON: AdaptiveColor = PresetColor.MAROON
+    }
+}
+
+enum class PresetColor : AdaptiveColor {
     RED {
         override fun getComposeColor(isDarkTheme: Boolean): Color {
             return if (isDarkTheme) {
@@ -583,6 +665,6 @@ enum class AdaptiveColor {
         override val isPreferred = false
     };
 
-    abstract fun getComposeColor(isDarkTheme: Boolean): Color
-    abstract val isPreferred: Boolean
+    abstract override fun getComposeColor(isDarkTheme: Boolean): Color
+    abstract override val isPreferred: Boolean
 }

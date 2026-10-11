@@ -60,6 +60,18 @@ class SubstanceColorsViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000)
         )
 
+    val loggedSubstanceNamesFlow: StateFlow<Set<String>> =
+        experienceRepository.getLoggedSubstanceNamesFlow().map { it.toSet() }.stateIn(
+            initialValue = emptySet(),
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000)
+        )
+
+    fun removeSubstance(substanceName: String) = viewModelScope.launch {
+        val companion = _substanceCompanionsFlow.value.firstOrNull { it.substanceName == substanceName } ?: return@launch
+        experienceRepository.delete(companion)
+    }
+
     fun addSubstance(substanceName: String) = viewModelScope.launch {
         experienceRepository.insert(newCompanion(substanceName, _substanceCompanionsFlow.value))
     }

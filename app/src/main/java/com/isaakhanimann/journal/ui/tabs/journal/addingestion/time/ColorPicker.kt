@@ -27,18 +27,22 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -53,6 +57,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
+import com.isaakhanimann.journal.data.room.experiences.entities.CustomColor
+import com.isaakhanimann.journal.data.room.experiences.entities.colorsToOffer
+import com.isaakhanimann.journal.data.room.experiences.entities.hexOf
 
 @Preview
 @Composable
@@ -74,7 +81,10 @@ fun ColorPicker(
     selectedColor: AdaptiveColor,
     onChangeOfColor: (AdaptiveColor) -> Unit,
     alreadyUsedColors: List<AdaptiveColor>,
-    otherColors: List<AdaptiveColor>
+    otherColors: List<AdaptiveColor>,
+    // shows a remove button with this explanation when not null; onRemove null keeps it disabled
+    removeExplanation: String? = null,
+    onRemove: (() -> Unit)? = null
 ) {
     val isDarkTheme = isSystemInDarkTheme()
     var isColorPickerVisible by remember {
@@ -99,8 +109,11 @@ fun ColorPicker(
         ColorDialog(
             dismiss = { isColorPickerVisible = false },
             onChangeOfColor = onChangeOfColor,
+            selectedColor = selectedColor,
             alreadyUsedColors = alreadyUsedColors,
-            otherColors = otherColors
+            otherColors = otherColors,
+            removeExplanation = removeExplanation,
+            onRemove = onRemove
         )
     }
 }
@@ -125,8 +138,21 @@ fun ColorDialog(
     dismiss: () -> Unit,
     onChangeOfColor: (AdaptiveColor) -> Unit,
     alreadyUsedColors: List<AdaptiveColor>,
-    otherColors: List<AdaptiveColor>
+    otherColors: List<AdaptiveColor>,
+    removeExplanation: String? = null,
+    onRemove: (() -> Unit)? = null,
+    selectedColor: AdaptiveColor = AdaptiveColor.BLUE
 ) {
+    var isPickingCustomColor by remember { mutableStateOf(false) }
+    val offeredColors = colorsToOffer(otherColors)
+    if (isPickingCustomColor) {
+        CustomColorDialog(
+            initialColor = selectedColor,
+            dismiss = dismiss,
+            onPick = onChangeOfColor
+        )
+        return
+    }
     AlertDialog(
         onDismissRequest = dismiss,
         title = {
@@ -136,12 +162,22 @@ fun ColorDialog(
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState())
             ) {
-                if (otherColors.isEmpty()) {
+                if (removeExplanation != null) {
+                    Text(text = removeExplanation, style = MaterialTheme.typography.bodySmall)
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+                OutlinedButton(onClick = { isPickingCustomColor = true }, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Outlined.Palette, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Custom color…")
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                if (offeredColors.isEmpty()) {
                     Text(text = "No unused colors")
                 } else {
                     Text(text = "Not yet used")
                     Spacer(modifier = Modifier.height(2.dp))
-                    CircleColorButtons(colors = otherColors) {
+                    CircleColorButtons(colors = offeredColors) {
                         onChangeOfColor(it)
                         dismiss()
                     }
@@ -159,10 +195,26 @@ fun ColorDialog(
         },
         confirmButton = {
             TextButton(
-                modifier = Modifier.fillMaxWidth(),
+                // alone it spans the dialog; next to Remove it takes its own width
+                modifier = if (removeExplanation == null) Modifier.fillMaxWidth() else Modifier,
                 onClick = dismiss
             ) {
                 Text("Cancel", textAlign = TextAlign.Center)
+            }
+        },
+        dismissButton = if (removeExplanation == null) null else {
+            {
+                TextButton(
+                    onClick = {
+                        onRemove?.invoke()
+                        dismiss()
+                    },
+                    enabled = onRemove != null
+                ) {
+                    Icon(Icons.Outlined.Delete, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Remove")
+                }
             }
         },
     )
@@ -191,7 +243,9 @@ fun CircleColorButtons(
                     .clickable(
                         onClick = { onTapOnColor(color) }
                     )
-                    .semantics { contentDescription = color.name }
+                    .semantics {
+                        contentDescription = if (color is CustomColor) "Custom ${hexOf(color.rgb)}" else color.name
+                    }
             ) {}
         }
     }
