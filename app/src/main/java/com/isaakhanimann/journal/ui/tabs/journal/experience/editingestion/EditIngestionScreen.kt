@@ -82,6 +82,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.isaakhanimann.journal.data.room.experiences.entities.CustomUnit
+import com.isaakhanimann.journal.data.substances.AdministrationRoute
+import com.isaakhanimann.journal.ui.tabs.settings.colors.SubstancePickerSheet
 import com.isaakhanimann.journal.ui.YOU
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.dose.StandardDeviationExplanation
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.time.IngestionTimePickerOption
@@ -131,6 +133,12 @@ fun EditIngestionScreen(
         onChangeConsumerName = viewModel::onChangeConsumerName,
         isPartOfTimeline = viewModel.isPartOfTimeline,
         onChangeIsPartOfTimeline = { viewModel.isPartOfTimeline = it },
+        substanceName = viewModel.substanceNameFlow.collectAsState().value,
+        onChangeSubstance = viewModel::onChangeSubstance,
+        allSubstanceNames = viewModel.allSubstanceNamesFlow.collectAsState().value,
+        route = viewModel.routeFlow.collectAsState().value,
+        onChangeRoute = viewModel::onChangeRoute,
+        routeOptions = viewModel.routeOptionsFlow.collectAsState().value,
         consumerNamesSorted = viewModel.sortedConsumerNamesFlow.collectAsState().value,
         customUnit = viewModel.customUnit,
         onCustomUnitChange = viewModel::onChangeCustomUnit,
@@ -214,6 +222,12 @@ fun EditIngestionScreen(
     onChangeConsumerName: (String) -> Unit,
     isPartOfTimeline: Boolean = true,
     onChangeIsPartOfTimeline: (Boolean) -> Unit = {},
+    substanceName: String = "",
+    onChangeSubstance: (String) -> Unit = {},
+    allSubstanceNames: List<String> = emptyList(),
+    route: AdministrationRoute = AdministrationRoute.ORAL,
+    onChangeRoute: (AdministrationRoute) -> Unit = {},
+    routeOptions: List<AdministrationRoute> = AdministrationRoute.entries,
     consumerNamesSorted: List<String>,
     customUnit: CustomUnit?,
     onCustomUnitChange: (CustomUnit?) -> Unit,
@@ -289,6 +303,14 @@ fun EditIngestionScreen(
                 .padding(horizontal = horizontalPadding)
         ) {
             Spacer(modifier = Modifier.height(3.dp))
+            SubstanceAndRouteCard(
+                substanceName = substanceName,
+                onChangeSubstance = onChangeSubstance,
+                allSubstanceNames = allSubstanceNames,
+                route = route,
+                onChangeRoute = onChangeRoute,
+                routeOptions = routeOptions
+            )
             val focusManager = LocalFocusManager.current
             val title = customUnit?.let {
                 "Dose ${it.name}"
@@ -606,5 +628,56 @@ fun EditIngestionScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SubstanceAndRouteCard(
+    substanceName: String,
+    onChangeSubstance: (String) -> Unit,
+    allSubstanceNames: List<String>,
+    route: AdministrationRoute,
+    onChangeRoute: (AdministrationRoute) -> Unit,
+    routeOptions: List<AdministrationRoute>,
+) {
+    var isPickingSubstance by rememberSaveable { mutableStateOf(false) }
+    CardWithTitle(title = "Substance and route") {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = substanceName,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f)
+            )
+            TextButton(onClick = { isPickingSubstance = true }) {
+                Text("Change")
+            }
+        }
+        var isShowingRoutes by remember { mutableStateOf(false) }
+        Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
+            OutlinedButton(onClick = { isShowingRoutes = true }, modifier = Modifier.fillMaxWidth()) {
+                Text(text = route.displayText)
+            }
+            DropdownMenu(expanded = isShowingRoutes, onDismissRequest = { isShowingRoutes = false }) {
+                routeOptions.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option.displayText) },
+                        onClick = {
+                            onChangeRoute(option)
+                            isShowingRoutes = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+    if (isPickingSubstance) {
+        SubstancePickerSheet(
+            substanceNames = allSubstanceNames.filter { it != substanceName },
+            onDismiss = { isPickingSubstance = false },
+            onPick = {
+                onChangeSubstance(it)
+                isPickingSubstance = false
+            }
+        )
     }
 }
