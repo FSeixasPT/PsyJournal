@@ -104,7 +104,7 @@ class SettingsViewModel @Inject constructor(
     )
 
     val isDurationRangeShownFlow = userPreferences.isDurationRangeShownFlow.stateIn(
-        initialValue = true,
+        initialValue = false,
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000)
     )

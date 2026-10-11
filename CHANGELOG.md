@@ -8,7 +8,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ### Added
 
-- **Duration range on the timeline.** The shading now spans the shortest to the longest durations known for the route, instead of filling the area below the curve, so it shows how much the timing can vary. It appears on the experience, fullscreen and substance timelines, and can be turned off in Settings with "Show duration range".
+- **Duration range on the timeline.** Turn on "Show duration range" in Settings to shade the area between the shortest and the longest durations known for the route, instead of the area below the curve, so you can see how much the timing can vary. It applies to the experience, fullscreen and substance timelines.
 
 ### Changed
 

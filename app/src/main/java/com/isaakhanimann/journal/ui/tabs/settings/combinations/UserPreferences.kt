@@ -150,7 +150,7 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
 
     val isDurationRangeShownFlow: Flow<Boolean> = dataStore.data
         .map { preferences ->
-            preferences[PreferencesKeys.KEY_IS_DURATION_RANGE_SHOWN] ?: true
+            preferences[PreferencesKeys.KEY_IS_DURATION_RANGE_SHOWN] ?: false
         }
 
     suspend fun saveAreRoutesMerged(value: Boolean) {
