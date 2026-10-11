@@ -207,7 +207,7 @@ fun SettingsScreen(
                 HorizontalDivider()
                 SettingsButton(
                     imageVector = Icons.Outlined.Palette,
-                    text = "Substance colors and timelines"
+                    text = "Substance colors and visibility"
                 ) {
                     navigateToSubstanceColors()
                 }

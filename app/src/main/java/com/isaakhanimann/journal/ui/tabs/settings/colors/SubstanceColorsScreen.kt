@@ -18,24 +18,38 @@
 
 package com.isaakhanimann.journal.ui.tabs.settings.colors
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -52,15 +66,14 @@ import com.isaakhanimann.journal.ui.theme.horizontalPadding
 fun SubstanceColorsScreen(
     viewModel: SubstanceColorsViewModel = hiltViewModel(),
 ) {
-    LaunchedEffect(Unit) {
-        viewModel.deleteUnusedSubstanceCompanions()
-    }
     SubstanceColorsScreenContent(
         substanceCompanions = viewModel.substanceCompanionsFlow.collectAsState().value,
         updateColor = viewModel::updateColor,
         updateIsPartOfTimeline = viewModel::updateIsPartOfTimeline,
         alreadyUsedColors = viewModel.alreadyUsedColorsFlow.collectAsState().value,
-        otherColors = viewModel.otherColorsFlow.collectAsState().value
+        otherColors = viewModel.otherColorsFlow.collectAsState().value,
+        allSubstanceNames = viewModel.allSubstanceNamesFlow.collectAsState().value,
+        addSubstance = viewModel::addSubstance
     )
 }
 
@@ -72,7 +85,7 @@ fun SubstanceColorsScreenPreview() {
     SubstanceColorsScreenContent(
         substanceCompanions = listOf(
             SubstanceCompanion(substanceName = "Substance 1", color = AdaptiveColor.AUBURN),
-            SubstanceCompanion(substanceName = "Substance 2", color = AdaptiveColor.BLUE),
+            SubstanceCompanion(substanceName = "Substance 2", color = AdaptiveColor.BLUE, isPartOfTimeline = false),
             SubstanceCompanion(
                 substanceName = "Substance with longer 3",
                 color = AdaptiveColor.YELLOW
@@ -82,7 +95,6 @@ fun SubstanceColorsScreenPreview() {
         updateColor = { _, _ -> },
         alreadyUsedColors = alreadyUsedColors,
         otherColors = otherColors
-
     )
 }
 
@@ -93,22 +105,32 @@ fun SubstanceColorsScreenContent(
     updateColor: (color: AdaptiveColor, substanceName: String) -> Unit,
     updateIsPartOfTimeline: (isPartOfTimeline: Boolean, substanceName: String) -> Unit = { _, _ -> },
     alreadyUsedColors: List<AdaptiveColor>,
-    otherColors: List<AdaptiveColor>
+    otherColors: List<AdaptiveColor>,
+    allSubstanceNames: List<String> = emptyList(),
+    addSubstance: (substanceName: String) -> Unit = {}
 ) {
+    var isAddingSubstance by rememberSaveable { mutableStateOf(false) }
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Substance colors and timelines") })
+            TopAppBar(title = { Text("Substance colors and visibility") })
         },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { isAddingSubstance = true }) {
+                Icon(Icons.Default.Add, contentDescription = "Add substance")
+            }
+        }
     ) { padding ->
         LazyColumn(
             modifier = Modifier
                 .padding(padding)
                 .padding(horizontal = horizontalPadding)
-                .fillMaxSize()
+                .fillMaxSize(),
+            // room for the add button below the last substance
+            contentPadding = PaddingValues(bottom = 88.dp)
         ) {
             item {
                 Text(
-                    text = "Turn a substance off to hide it from the timelines of all experiences. Its ingestions stay in your journal.",
+                    text = "Turn a substance off to hide it from the timelines of all experiences. Its ingestions stay in your journal. Use + to set up a substance you haven't logged yet.",
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
@@ -118,9 +140,17 @@ fun SubstanceColorsScreenContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 5.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    ColorPicker(
+                        selectedColor = substanceCompanion.color,
+                        onChangeOfColor = {
+                            updateColor(it, substanceCompanion.substanceName)
+                        },
+                        alreadyUsedColors = alreadyUsedColors,
+                        otherColors = otherColors
+                    )
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = substanceCompanion.substanceName,
@@ -133,20 +163,68 @@ fun SubstanceColorsScreenContent(
                     Switch(
                         checked = substanceCompanion.isPartOfTimeline,
                         onCheckedChange = { updateIsPartOfTimeline(it, substanceCompanion.substanceName) },
-                        modifier = Modifier
-                            .padding(horizontal = 8.dp)
-                            .semantics { contentDescription = "Show ${substanceCompanion.substanceName} in timelines" }
-                    )
-                    ColorPicker(
-                        selectedColor = substanceCompanion.color,
-                        onChangeOfColor = {
-                            updateColor(it, substanceCompanion.substanceName)
-                        },
-                        alreadyUsedColors = alreadyUsedColors,
-                        otherColors = otherColors
+                        modifier = Modifier.semantics {
+                            contentDescription = "Show ${substanceCompanion.substanceName} in timelines"
+                        }
                     )
                 }
                 HorizontalDivider()
+            }
+        }
+    }
+    if (isAddingSubstance) {
+        AddSubstanceSheet(
+            allSubstanceNames = allSubstanceNames,
+            substanceCompanions = substanceCompanions,
+            onDismiss = { isAddingSubstance = false },
+            onAdd = {
+                addSubstance(it)
+                isAddingSubstance = false
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddSubstanceSheet(
+    allSubstanceNames: List<String>,
+    substanceCompanions: List<SubstanceCompanion>,
+    onDismiss: () -> Unit,
+    onAdd: (substanceName: String) -> Unit,
+) {
+    var query by rememberSaveable { mutableStateOf("") }
+    val names = remember(allSubstanceNames, substanceCompanions, query) {
+        substancesToAdd(allSubstanceNames, substanceCompanions, query)
+    }
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            label = { Text("Search substances") },
+            singleLine = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = horizontalPadding)
+        )
+        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            items(names) { name ->
+                ListItem(
+                    headlineContent = { Text(name) },
+                    modifier = Modifier.clickable { onAdd(name) }
+                )
+            }
+            if (names.isEmpty()) {
+                item {
+                    Text(
+                        text = "No substances to add",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 16.dp)
+                    )
+                }
             }
         }
     }

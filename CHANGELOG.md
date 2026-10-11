@@ -8,7 +8,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ### Added
 
-- **Hide things from the timeline.** Turn off "Show in timeline" when editing an ingestion or a timed rating to leave it out of the timeline without deleting it; its row then says "(Not in timeline)". To hide a substance from the timelines of all experiences, turn it off on its substance page, next to its journal color, or in Settings → Substance colors and timelines. Hidden ingestions still count everywhere else, such as stats and the ingestion list.
+- **Hide things from the timeline.** Turn off "Show in timeline" when editing an ingestion or a timed rating to leave it out of the timeline without deleting it; its row then says "(Not in timeline)". To hide a substance from the timelines of all experiences, turn it off on its substance page, next to its journal color, or in Settings → Substance colors and visibility, where the + button also lets you set the color and visibility of substances you haven't logged yet. Hidden ingestions still count everywhere else, such as stats and the ingestion list.
 - **Duration, notes and ingestion counts in the journal.** Each experience row shows how many ingestions it has, how many notes if it has any (its written notes count as one, plus its timed notes) and roughly how long it lasts: the hours from your first ingestion until the effects are estimated to end.
 - **Duration range on the timeline.** Turn on "Show duration range" in Settings to shade the area between the shortest and the longest durations known for the route, instead of the area below the curve, so you can see how much the timing can vary. It applies to the experience, fullscreen and substance timelines.
 

@@ -23,6 +23,7 @@ import androidx.lifecycle.viewModelScope
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
 import com.isaakhanimann.journal.data.room.experiences.entities.SubstanceCompanion
+import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -35,6 +36,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SubstanceColorsViewModel @Inject constructor(
     private val experienceRepository: ExperienceRepository,
+    private val substanceRepository: SubstanceRepository,
 ) : ViewModel() {
 
     private val _substanceCompanionsFlow = MutableStateFlow<List<SubstanceCompanion>>(emptyList())
@@ -43,13 +45,23 @@ class SubstanceColorsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             experienceRepository.getAllSubstanceCompanionsFlow().collect {
-                _substanceCompanionsFlow.value = it
+                _substanceCompanionsFlow.value = it.sortedBy { companion -> companion.substanceName.lowercase() }
             }
         }
     }
 
-    fun deleteUnusedSubstanceCompanions() = viewModelScope.launch {
-        experienceRepository.deleteUnusedSubstanceCompanions()
+    // PsychonautWiki and custom substances, for the "+" button
+    val allSubstanceNamesFlow: StateFlow<List<String>> =
+        experienceRepository.getCustomSubstancesFlow().map { customSubstances ->
+            substanceRepository.getAllSubstances().map { it.name } + customSubstances.map { it.name }
+        }.stateIn(
+            initialValue = emptyList(),
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000)
+        )
+
+    fun addSubstance(substanceName: String) = viewModelScope.launch {
+        experienceRepository.insert(newCompanion(substanceName, _substanceCompanionsFlow.value))
     }
 
     fun updateColor(color: AdaptiveColor, substanceName: String) {
