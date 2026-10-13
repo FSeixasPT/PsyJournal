@@ -90,6 +90,16 @@ class CurvePhaseTest {
     }
 
     @Test
+    fun aRedoseDuringThePeakRisesAgainWhenItKicksIn() {
+        // the first dose peaks 21:00-22:00, the redose rises 21:10-21:40 to a higher top,
+        // so at 21:05 the line is flat below its top: peaking, not about to peak
+        val line = curve(dose(0, 1f), dose(40, 0.5f))
+        val result = line.phaseWithHint(at(65))
+        assertEquals(Phase.PEAKING, result.phase)
+        assertHint(HintKind.RISES_AGAIN, at(70), result)
+    }
+
+    @Test
     fun duringTheOffsetItIsComingDown() {
         val result = single.phaseWithHint(at(150))
         assertEquals(Phase.COMING_DOWN, result.phase)
