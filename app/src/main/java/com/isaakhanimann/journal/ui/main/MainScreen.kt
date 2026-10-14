@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.main
 
+import com.isaakhanimann.journal.ui.main.navigation.graphs.SubstanceRoute
 import com.isaakhanimann.journal.ui.main.navigation.graphs.AddIngestionRoute
 import com.isaakhanimann.journal.ui.main.navigation.graphs.ExperienceRoute
 import com.isaakhanimann.journal.ui.main.navigation.graphs.JournalScreenRoute
@@ -118,6 +119,7 @@ fun MainScreen(
                     NotificationTarget.AddIngestion -> navController.navigate(AddIngestionRoute) { launchSingleTop = true }
                     // the journal list is always at the bottom of the back stack
                     NotificationTarget.Journal -> navController.popBackStack(JournalScreenRoute, inclusive = false)
+                    is NotificationTarget.Substance -> navController.navigate(SubstanceRoute(target.substanceName)) { launchSingleTop = true }
                 }
                 onNotificationTargetHandled()
             }

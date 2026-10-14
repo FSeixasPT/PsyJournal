@@ -23,6 +23,8 @@
 
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- re-arms a running supplement routine after a restart -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".di.JournalApplication"
@@ -73,6 +75,16 @@
         <receiver
             android:name=".ui.widget.WidgetRefreshReceiver"
             android:exported="false" />
+        <receiver
+            android:name=".ui.supplements.SupplementReminderReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".ui.supplements.SupplementBootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
