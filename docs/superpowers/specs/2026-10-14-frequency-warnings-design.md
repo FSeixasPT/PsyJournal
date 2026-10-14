@@ -3,6 +3,8 @@
 Date: 2026-10-14
 Status: Design approved in chat, awaiting spec review
 
+**Update (2026-10-14, after the final review):** the add-flow warning moved from the interactions step to the last step of logging (time and experience). Quick-log chips skip the interactions step, and only the last step knows the dose's real time, the experience it joins and who took it, so the check there uses those instead of "now" and the 12-hour rule. A dose logged for someone else shows no warning. Mentions of the interactions step below are kept as history.
+
 ## Goal
 
 PsyJournal warns people when they use a substance more often than harm-reduction advice suggests, for example MDMA again less than three months after the last time. The warnings come from a small, hand-picked list of rules, each with a reason and a source. They inform and never block.

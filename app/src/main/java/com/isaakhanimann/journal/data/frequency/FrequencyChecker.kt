@@ -92,3 +92,17 @@ fun checkFrequency(
 // the app's own grouping: an experience with a dose in the last hours is the one a new dose would join
 fun currentExperienceIdsAt(at: Instant, past: List<PastIngestion>, limit: Duration): Set<Int> =
     past.filter { it.time <= at && Duration.between(it.time, at) <= limit }.map { it.experienceId }.toSet()
+
+// the check on the last step of logging, where the dose time, its experience and who took it are known:
+// the experience the dose joins is the current session, and a dose for someone else never warns
+fun warningWhenLogging(
+    rule: FrequencyRule,
+    substanceName: String,
+    at: Instant,
+    joiningExperienceId: Int?,
+    consumerName: String,
+    past: List<PastIngestion>,
+): FrequencyWarning? {
+    if (consumerName.isNotBlank()) return null
+    return checkFrequency(rule, substanceName, at, setOfNotNull(joiningExperienceId), past)
+}

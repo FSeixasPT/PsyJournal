@@ -18,6 +18,10 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.time
 
+import com.isaakhanimann.journal.data.frequency.FrequencyRuleBook
+import com.isaakhanimann.journal.data.frequency.FrequencyWarning
+import com.isaakhanimann.journal.data.frequency.PastIngestion
+import com.isaakhanimann.journal.data.frequency.warningWhenLogging
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationController
 import com.isaakhanimann.journal.ui.utils.SaveGuard
 import androidx.compose.runtime.getValue
@@ -68,6 +72,7 @@ class FinishIngestionScreenViewModel @Inject constructor(
     private val experienceRepo: ExperienceRepository,
     userPreferences: UserPreferences,
     private val liveNotificationController: LiveNotificationController,
+    private val frequencyRuleBook: FrequencyRuleBook,
     state: SavedStateHandle
 ) : ViewModel() {
     var substanceName by mutableStateOf("")
@@ -79,6 +84,16 @@ class FinishIngestionScreenViewModel @Inject constructor(
     var enteredTitle by mutableStateOf(LocalDateTime.now().getStringOfPattern("dd MMMM yyyy"))
     val isEnteredTitleOk get() = enteredTitle.isNotEmpty()
     var consumerName by mutableStateOf("")
+
+    // the user's own doses of the substances in this substance's frequency rule
+    private var pastFrequencyIngestions by mutableStateOf<List<PastIngestion>>(emptyList())
+
+    // checked here because every way of logging ends on this screen, and only here the time, the experience
+    // the dose joins and who took it are known
+    fun frequencyWarningFor(start: LocalDateTime, selectedExperience: ExperienceWithIngestions?, consumer: String): FrequencyWarning? {
+        val rule = frequencyRuleBook.ruleFor(substanceName) ?: return null
+        return warningWhenLogging(rule, substanceName, start.getInstant(), selectedExperience?.experience?.id, consumer, pastFrequencyIngestions)
+    }
 
 
     fun onChangeTimePickerOption(ingestionTimePickerOption: IngestionTimePickerOption) =
@@ -159,6 +174,9 @@ class FinishIngestionScreenViewModel @Inject constructor(
     init {
         val finishIngestionRoute = state.toRoute<FinishIngestionRoute>()
         substanceName = finishIngestionRoute.substanceName
+        frequencyRuleBook.ruleFor(substanceName)?.let { rule ->
+            viewModelScope.launch { pastFrequencyIngestions = experienceRepo.getPastIngestions(rule.substanceNames, Instant.EPOCH) }
+        }
         administrationRoute = finishIngestionRoute.administrationRoute
         dose = finishIngestionRoute.dose
         estimatedDoseStandardDeviation = finishIngestionRoute.estimatedDoseStandardDeviation

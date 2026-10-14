@@ -18,6 +18,9 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.time
 
+import com.isaakhanimann.journal.data.frequency.frequencyTitle
+import com.isaakhanimann.journal.ui.tabs.journal.addingestion.interactions.FrequencyWarningCard
+import com.isaakhanimann.journal.ui.utils.getInstant
 import com.isaakhanimann.journal.ui.utils.SaveFailedDialog
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -93,6 +96,8 @@ fun FinishIngestionScreen(
     viewModel: FinishIngestionScreenViewModel = hiltViewModel()
 ) {
     val localDateTime = viewModel.localDateTimeStartFlow.collectAsState().value
+    val selectedExperience = viewModel.selectedExperienceFlow.collectAsState().value
+    val frequencyWarning = viewModel.frequencyWarningFor(localDateTime, selectedExperience, viewModel.consumerName)
     SaveFailedDialog(viewModel.saveGuard)
     FinishIngestionScreen(
         createSaveAndDismissAfter = {
@@ -116,7 +121,7 @@ fun FinishIngestionScreen(
             viewModel.note = it
         },
         experiencesInRange = viewModel.experiencesInRangeFlow.collectAsState().value,
-        selectedExperience = viewModel.selectedExperienceFlow.collectAsState().value,
+        selectedExperience = selectedExperience,
         onChangeOfSelectedExperience = viewModel::onChangeOfSelectedExperience,
         substanceName = viewModel.substanceName,
         enteredTitle = viewModel.enteredTitle,
@@ -124,7 +129,10 @@ fun FinishIngestionScreen(
         isEnteredTitleOk = viewModel.isEnteredTitleOk,
         consumerName = viewModel.consumerName,
         onChangeOfConsumerName = viewModel::changeConsumerName,
-        consumerNamesSorted = viewModel.sortedConsumerNamesFlow.collectAsState().value
+        consumerNamesSorted = viewModel.sortedConsumerNamesFlow.collectAsState().value,
+        frequencyTitle = frequencyWarning?.let { frequencyTitle(it, localDateTime.getInstant()) },
+        frequencyReason = frequencyWarning?.rule?.reason.orEmpty(),
+        frequencySourceUrl = frequencyWarning?.sourceUrl.orEmpty(),
     )
 }
 
@@ -196,7 +204,10 @@ fun FinishIngestionScreen(
     isEnteredTitleOk: Boolean,
     consumerName: String,
     onChangeOfConsumerName: (String) -> Unit,
-    consumerNamesSorted: List<String>
+    consumerNamesSorted: List<String>,
+    frequencyTitle: String? = null,
+    frequencyReason: String = "",
+    frequencySourceUrl: String = "",
 ) {
     val focusManager = LocalFocusManager.current
     Scaffold(
@@ -235,6 +246,14 @@ fun FinishIngestionScreen(
                     .padding(horizontal = horizontalPadding)
             ) {
                 Spacer(modifier = Modifier.height(3.dp))
+                if (frequencyTitle != null) {
+                    FrequencyWarningCard(
+                        title = frequencyTitle,
+                        reason = frequencyReason,
+                        sourceUrl = frequencySourceUrl,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+                }
                 CardWithTitle(title = "Time") {
                     TimePointOrRangePicker(
                         onChangeTimePickerOption = onChangeTimePickerOption,

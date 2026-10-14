@@ -56,14 +56,12 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.isaakhanimann.journal.data.frequency.frequencyTitle
 import com.isaakhanimann.journal.data.substances.classes.InteractionType
 import com.isaakhanimann.journal.data.substances.classes.SubstanceWithCategories
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.NextFAB
 import com.isaakhanimann.journal.ui.tabs.search.substance.InteractionExplanationButton
 import com.isaakhanimann.journal.ui.tabs.search.substance.SubstanceWithCategoriesPreviewProvider
 import com.isaakhanimann.journal.ui.theme.horizontalPadding
-import java.time.Instant
 
 
 @Composable
@@ -84,10 +82,7 @@ fun CheckInteractionsScreen(
         },
         isShowingAlert = viewModel.isShowingAlert,
         alertInteractionType = viewModel.alertInteractionType,
-        alertText = viewModel.alertText,
-        frequencyTitle = viewModel.frequencyWarning?.let { frequencyTitle(it, Instant.now()) },
-        frequencyReason = viewModel.frequencyWarning?.rule?.reason.orEmpty(),
-        frequencySourceUrl = viewModel.frequencyWarning?.sourceUrl.orEmpty(),
+        alertText = viewModel.alertText
     )
 }
 
@@ -142,10 +137,7 @@ fun CheckInteractionsScreen(
     dangerousInteractions: List<String>,
     unsafeInteractions: List<String>,
     uncertainInteractions: List<String>,
-    navigateToNext: () -> Unit,
-    frequencyTitle: String? = null,
-    frequencyReason: String = "",
-    frequencySourceUrl: String = "",
+    navigateToNext: () -> Unit
 ) {
     Scaffold(
         topBar = { TopAppBar(title = { Text("$substanceName interactions") }) },
@@ -160,14 +152,6 @@ fun CheckInteractionsScreen(
                 LinearProgressIndicator(
                     progress = { 0.33f },
                     modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            if (frequencyTitle != null) {
-                FrequencyWarningCard(
-                    title = frequencyTitle,
-                    reason = frequencyReason,
-                    sourceUrl = frequencySourceUrl,
-                    modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 8.dp)
                 )
             }
             if (dangerousInteractions.isEmpty() && unsafeInteractions.isEmpty() && uncertainInteractions.isEmpty()) {
