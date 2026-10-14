@@ -1,9 +1,54 @@
 # PsyJournal
 
-PsyJournal is an Android app to make recreational drug users safer. The aim is to provide features that are attractive to users as well as useful from a harm-reduction perspective.
-This app is built natively with [Jetpack Compose](https://developer.android.com/jetpack/compose).
+PsyJournal is a harm-reduction journal for Android, for people who use drugs. Log what you take, and the app shows how the effects should unfold, warns you about risky combinations and keeps safer-use information at hand. It works fully offline, and your journal never leaves your phone.
 
 ![PsyJournal screenshots](metadata/en-US/images/presentation.png)
+
+## Get it
+
+Download the latest APK from the [releases page](https://github.com/FSeixasPT/PsyJournal/releases). It needs Android 8.0 or newer and installs next to the original PsychonautWiki Journal app. An F-Droid listing is on the way.
+
+## What it does
+
+### Keep a journal
+
+- **Log each ingestion:** the substance, route, dose and time (or a time range), whether the dose is an estimate, how full your stomach was, who took it and any notes. Doses can be in your own units, such as pills or sprays.
+- **Experiences:** ingestions taken close together are grouped into one experience, with a title, location, notes, Shulgin ratings and timed notes along the way.
+- **Find things again:** browse the journal as a list or a calendar, search it, and star favorite experiences. Each row shows how long the experience lasted and how many ingestions and notes it has.
+
+### See the effects over time
+
+- **Effect timeline:** each experience gets a chart of how intense each substance should be over time, built from PsychonautWiki's onset, come-up, peak and offset durations. A "now" line shows where you are, and dragging across the chart shows each substance's share of its peak and the equivalent dose at that moment.
+- **Plan before you redose:** preview a planned dose as a dashed line on the chart before you take it, to see how much higher and later the peak would be.
+- **Live notification and widgets:** follow the current experience from the notification shade or your home screen, with each substance's phase (coming up, peaking, coming down) and when the next one starts.
+- **Your view:** times can be clock times or relative to now or to the start, the shading can show the full range of known durations, and substances, ingestions or ratings can be hidden from the timeline without deleting them.
+
+### Stay safer
+
+- **Substance pages:** dosage ranges (threshold to heavy), durations per route, tolerance, interactions and safer-use tips, with a link to the full PsychonautWiki article.
+- **Interaction warnings:** when you log a substance, PsyJournal checks it against what you've taken recently and warns you about dangerous or unsafe combinations.
+- **Safer tab:** guides to researching a substance, drug checking services and reagent testing, dosing (including volumetric dosing), safer hallucinogen use and routes of administration.
+
+### Understand your use
+
+- **Stats:** how often you took each substance and the total doses over the last week, month, half year or year, with a chart.
+- **Substance history:** every ingestion of a substance with the time between them, next to its tolerance information.
+
+### Make it yours
+
+- **Custom substances and units** for things PsychonautWiki doesn't cover or that you measure differently.
+- **Colors:** pick each substance's color, including your own custom colors.
+- **Routes:** hide routes you never use, or merge a substance's routes into one line on the timeline.
+
+See [CHANGELOG.md](CHANGELOG.md) for what's new compared to PsychonautWiki Journal.
+
+## Not medical advice
+
+The information in PsyJournal comes from PsychonautWiki, with some from TripSit and saferparty.ch. It may be incomplete or wrong, and timelines are estimates: everyone reacts differently. PsyJournal can't make drug use safe. If you can, test your substances, start low, don't use alone, and get help in an emergency.
+
+## Privacy
+
+PsyJournal collects nothing and has no internet access: your journal stays on your device. See the [privacy policy](PRIVACY.md).
 
 ## Origin and credits
 
@@ -12,10 +57,6 @@ The original repository was archived after its last open-source (GPL-3.0) releas
 PsyJournal builds on that last open-source release and is not affiliated with or endorsed by the original author.
 
 Huge thanks to Isaak Hanimann and to everyone who contributed to the original project. The full commit history of the original project is preserved in this repository.
-
-## Privacy
-
-PsyJournal collects nothing and has no internet access: your journal stays on your device. See the [privacy policy](PRIVACY.md).
 
 ## Building and verifying releases
 
