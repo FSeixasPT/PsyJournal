@@ -13,6 +13,10 @@ PsyJournal builds on that last open-source release and is not affiliated with or
 
 Huge thanks to Isaak Hanimann and to everyone who contributed to the original project. The full commit history of the original project is preserved in this repository.
 
+## Privacy
+
+PsyJournal collects nothing and has no internet access: your journal stays on your device. See the [privacy policy](PRIVACY.md).
+
 ## Building and verifying releases
 
 Release APKs on the [releases page](https://github.com/FSeixasPT/PsyJournal/releases) are signed with this certificate:
