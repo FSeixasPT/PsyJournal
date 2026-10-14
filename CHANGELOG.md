@@ -4,28 +4,7 @@ All notable changes to PsyJournal are listed here, newest first.
 
 PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhanimann/psychonautwiki-journal-android) 11.11, the last open-source version. For changes up to 11.11, see the original project.
 
-## Unreleased
-
-### Added
-
-- **Custom colors.** The color picker is shorter, offering 20 built-in colors instead of 51 (colors already in use keep working), and has a "Custom color…" button: choose any color with hue, saturation and brightness sliders or a hex code, with a preview on light and dark backgrounds. Like the built-in colors, a custom color is made a bit lighter in dark mode or darker in light mode when it would otherwise be hard to see. Backups keep custom colors; a backup that contains one can't be imported into apps without this feature.
-- **Change the substance and route of an ingestion.** The ingestion editor has a Substance and route card: pick another substance from a searchable list, or another route (the ones PsychonautWiki documents for the substance come first). If the ingestion used a custom unit, such as sprays, its dose is converted to what the unit stood for, since the unit only belongs to its own substance and route.
-- **Hide things from the timeline.** Turn off "Show in timeline" when editing an ingestion or a timed rating to leave it out of the timeline without deleting it; its row then says "(Not in timeline)". To hide a substance from the timelines of all experiences, turn it off on its substance page, next to its journal color, or in Settings → Substance colors and visibility, where the + button also lets you set the color and visibility of substances you haven't logged yet; its search lists the exact match first. A substance you haven't logged can be removed from that list again with the Remove button in its color picker. Hidden ingestions still count everywhere else, such as stats and the ingestion list.
-- **Duration, notes and ingestion counts in the journal.** Each experience row shows how many ingestions it has, how many notes if it has any (its written notes count as one, plus its timed notes) and roughly how long it lasts: the hours from your first ingestion until the effects are estimated to end.
-- **Duration range on the timeline.** Turn on "Show duration range" in Settings to shade the area between the shortest and the longest durations known for the route, instead of the area below the curve, so you can see how much the timing can vary. It applies to the experience, fullscreen and substance timelines.
-
-### Changed
-
-- **Simpler ingestion list.** The list below an experience's timeline no longer has a date header, since each ingestion already shows its day and time.
-- **Timeline hours follow your phone's clock format.** With the 12-hour format, the hours below timelines read "1 PM" or "2 PM" instead of "13" or "14", and fewer hours are labeled on narrow charts so the labels don't overlap.
-- **Thinner lines in the live notification's chart**, so the small chart is easier to read.
-
-### Fixed
-
-- When a redose kicks in while you're peaking, the live notification and widgets say when it "rises again" instead of the contradictory "peaking · peaks in".
-- Deleting the experience that the live notification follows now removes the notification. Deleting everything or importing a journal does too.
-
-## 12.0 — 2026-10-10
+## 12.0 — 2026-10-14
 
 ### Added
 
@@ -60,6 +39,11 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 - **Merge the routes of a substance into one line.** For example, oral and insufflated ketamine can show as one line on the timeline (setting).
 - **Copy support info** in Settings → Feedback: the app version, Android version and device, to paste into a bug report.
 - **Drug checking services** in Lisbon (Kosmicare) and Toronto.
+- **Custom colors.** The color picker is shorter, offering 20 built-in colors instead of 51 (colors already in use keep working), and has a "Custom color…" button: choose any color with hue, saturation and brightness sliders or a hex code, with a preview on light and dark backgrounds. Like the built-in colors, a custom color is made a bit lighter in dark mode or darker in light mode when it would otherwise be hard to see. Backups keep custom colors; a backup that contains one can't be imported into apps without this feature.
+- **Change the substance and route of an ingestion.** The ingestion editor has a Substance and route card: pick another substance from a searchable list, or another route (the ones PsychonautWiki documents for the substance come first). If the ingestion used a custom unit, such as sprays, its dose is converted to what the unit stood for, since the unit only belongs to its own substance and route.
+- **Hide things from the timeline.** Turn off "Show in timeline" when editing an ingestion or a timed rating to leave it out of the timeline without deleting it; its row then says "(Not in timeline)". To hide a substance from the timelines of all experiences, turn it off on its substance page, next to its journal color, or in Settings → Substance colors and visibility, where the + button also lets you set the color and visibility of substances you haven't logged yet; its search lists the exact match first. A substance you haven't logged can be removed from that list again with the Remove button in its color picker. Hidden ingestions still count everywhere else, such as stats and the ingestion list.
+- **Duration, notes and ingestion counts in the journal.** Each experience row shows how many ingestions it has, how many notes if it has any (its written notes count as one, plus its timed notes) and roughly how long it lasts: the hours from your first ingestion until the effects are estimated to end.
+- **Duration range on the timeline.** Turn on "Show duration range" in Settings to shade the area between the shortest and the longest durations known for the route, instead of the area below the curve, so you can see how much the timing can vary. It applies to the experience, fullscreen and substance timelines.
 
 ### Changed
 
@@ -73,6 +57,8 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
   - Custom substances named with a common name (e.g. "Molly") or in different letter case (e.g. "mdma") are checked as that substance.
 - **After saving an ingestion, its experience opens**, also when you started from the journal list or the notification.
 - **Rebranded as PsyJournal**, with its own app id, so it can be installed next to the original app.
+- **Simpler ingestion list.** The list below an experience's timeline no longer has a date header, since each ingestion already shows its day and time.
+- **Timeline hours follow your phone's clock format.** With the 12-hour format, the hours below timelines read "1 PM" or "2 PM" instead of "13" or "14", and fewer hours are labeled on narrow charts so the labels don't overlap.
 
 ### Fixed
 
