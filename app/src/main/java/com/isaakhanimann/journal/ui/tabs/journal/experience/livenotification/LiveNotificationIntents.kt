@@ -27,6 +27,7 @@ sealed interface NotificationTarget {
     data class Experience(val experienceId: Int, val openQuickLog: Boolean) : NotificationTarget
     data object AddIngestion : NotificationTarget
     data object Journal : NotificationTarget
+    data class Substance(val substanceName: String) : NotificationTarget
 }
 
 object LiveNotificationIntents {
@@ -38,6 +39,7 @@ object LiveNotificationIntents {
     private const val EXTRA_OPEN_QUICK_LOG = "live_open_quick_log"
     private const val EXTRA_ADD_INGESTION = "live_add_ingestion"
     private const val EXTRA_OPEN_JOURNAL = "live_open_journal"
+    private const val EXTRA_OPEN_SUBSTANCE = "live_open_substance"
 
     private const val FLAGS = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
 
@@ -47,6 +49,10 @@ object LiveNotificationIntents {
             .putExtra(EXTRA_OPEN_QUICK_LOG, openQuickLog)
         return PendingIntent.getActivity(context, if (openQuickLog) 2 else 1, intent, FLAGS)
     }
+
+    // the supplement reminders open their substance's page
+    fun openSubstance(context: Context, substanceName: String): PendingIntent =
+        PendingIntent.getActivity(context, 4, mainActivityIntent(context).putExtra(EXTRA_OPEN_SUBSTANCE, substanceName), FLAGS)
 
     fun addIngestion(context: Context): PendingIntent =
         PendingIntent.getActivity(context, 3, mainActivityIntent(context).putExtra(EXTRA_ADD_INGESTION, true), FLAGS)
@@ -80,6 +86,7 @@ object LiveNotificationIntents {
 
     fun target(intent: Intent?): NotificationTarget? {
         if (intent == null) return null
+        intent.getStringExtra(EXTRA_OPEN_SUBSTANCE)?.let { return NotificationTarget.Substance(it) }
         if (intent.getBooleanExtra(EXTRA_ADD_INGESTION, false)) return NotificationTarget.AddIngestion
         if (intent.getBooleanExtra(EXTRA_OPEN_JOURNAL, false)) return NotificationTarget.Journal
         val experienceId = intent.getIntExtra(EXTRA_OPEN_EXPERIENCE_ID, -1)

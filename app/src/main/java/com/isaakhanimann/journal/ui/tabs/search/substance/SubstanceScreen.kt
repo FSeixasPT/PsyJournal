@@ -18,6 +18,9 @@
 
 package com.isaakhanimann.journal.ui.tabs.search.substance
 
+import com.isaakhanimann.journal.data.supplements.ActiveRoutine
+import com.isaakhanimann.journal.data.supplements.RoutineKind
+import java.time.Instant
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -124,6 +127,10 @@ fun SubstanceScreen(
         onChangeJournalColor = viewModel::changeJournalColor,
         onChangeIsPartOfTimeline = viewModel::changeIsPartOfTimeline,
         frequencySummary = viewModel.frequencySummaryFlow.collectAsState().value,
+        activeRoutine = viewModel.activeRoutineFlow.collectAsState().value,
+        onStartRoutine = viewModel::startRoutine,
+        onChangeRoutine = viewModel::changeRoutine,
+        onStopRoutine = viewModel::stopRoutine,
     )
 }
 
@@ -172,6 +179,10 @@ fun SubstanceScreen(
     onChangeJournalColor: (AdaptiveColor) -> Unit = {},
     onChangeIsPartOfTimeline: (Boolean) -> Unit = {},
     frequencySummary: FrequencySummary? = null,
+    activeRoutine: ActiveRoutine? = null,
+    onStartRoutine: (RoutineKind, Instant, Int) -> Unit = { _, _, _ -> },
+    onChangeRoutine: (Instant, Int) -> Unit = { _, _ -> },
+    onStopRoutine: () -> Unit = {},
 ) {
     val substance = substanceWithCategories.substance
     val uriHandler = LocalUriHandler.current
@@ -385,6 +396,17 @@ fun SubstanceScreen(
                 SectionWithTitle(title = "Frequency") {
                     FrequencySection(
                         summary = frequencySummary,
+                        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 8.dp)
+                    )
+                }
+            }
+            if (substance.name == "MDMA") {
+                SectionWithTitle(title = "Supplement routine") {
+                    SupplementRoutineSection(
+                        activeRoutine = activeRoutine,
+                        onStart = onStartRoutine,
+                        onChange = onChangeRoutine,
+                        onStop = onStopRoutine,
                         modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 8.dp)
                     )
                 }

@@ -18,6 +18,11 @@
 
 package com.isaakhanimann.journal.di
 
+import com.isaakhanimann.journal.ui.supplements.SupplementRoutineController
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import android.app.Application
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationController
 import com.isaakhanimann.journal.ui.widget.WidgetUpdater
@@ -32,9 +37,14 @@ class JournalApplication : Application() {
     @Inject
     lateinit var widgetUpdater: WidgetUpdater
 
+    @Inject
+    lateinit var supplementRoutineController: SupplementRoutineController
+
     override fun onCreate() {
         super.onCreate()
         liveNotificationController.observe()
         widgetUpdater.observe()
+        // re-arms a running supplement routine whose alarm a battery saver may have removed
+        CoroutineScope(SupervisorJob() + Dispatchers.Default).launch { supplementRoutineController.resync() }
     }
 }

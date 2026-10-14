@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import com.isaakhanimann.journal.ui.supplements.SupplementRoutineOffer
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationBlockedMessage
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationButton
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.rememberLiveNotificationToggleState
@@ -178,6 +179,9 @@ fun ExperienceScreen(
         frequencyLine = viewModel.pastFrequencyIngestionsFlow.collectAsState().value.let { past ->
             { substanceName: String -> viewModel.frequencyLineFor(substanceName, past) }
         },
+        routineOfferDose = viewModel.routineOfferDoseFlow.collectAsState().value,
+        onStartRoutine = viewModel::startRoutineFrom,
+        onDismissRoutineOffer = viewModel::dismissRoutineOffer,
         navigateToChooseDose = navigateToChooseDose,
         isQuickLogPending = viewModel::isQuickLogPending,
         onQuickLogOpened = viewModel::onQuickLogOpened,
@@ -247,6 +251,9 @@ fun ExperienceScreen(
     isTimelineHidden: Boolean,
     plannedIngestionActions: PlannedIngestionActions? = null,
     frequencyLine: (substanceName: String) -> String? = { null },
+    routineOfferDose: Instant? = null,
+    onStartRoutine: (Instant) -> Unit = {},
+    onDismissRoutineOffer: () -> Unit = {},
     navigateToChooseDose: (PlannedIngestion) -> Unit = {},
     isQuickLogPending: () -> Boolean = { false },
     onQuickLogOpened: () -> Unit = {},
@@ -298,6 +305,13 @@ fun ExperienceScreen(
                 isLiveNotificationAvailable = isLiveNotificationAvailable,
                 setLive = setLive,
             )
+            if (routineOfferDose != null) {
+                SupplementRoutineOffer(
+                    onStart = { onStartRoutine(routineOfferDose) },
+                    onDismiss = onDismissRoutineOffer,
+                    modifier = Modifier.padding(vertical = verticalCardPadding)
+                )
+            }
             if (oneExperienceScreenModel.ingestionElements.isNotEmpty()) {
                 MyIngestionList(
                     verticalCardPadding = verticalCardPadding,
