@@ -18,6 +18,9 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import com.isaakhanimann.journal.data.supplements.RoutineKind
+import com.isaakhanimann.journal.data.supplements.routineOfferDose
+import com.isaakhanimann.journal.ui.supplements.SupplementRoutineController
 import com.isaakhanimann.journal.data.frequency.FrequencyRuleBook
 import com.isaakhanimann.journal.data.frequency.PastIngestion
 import com.isaakhanimann.journal.data.frequency.checkFrequency
@@ -84,6 +87,7 @@ class ExperienceViewModel @Inject constructor(
     combinationSettingsStorage: CombinationSettingsStorage,
     plannedIngestionHelper: PlannedIngestionHelper,
     private val frequencyRuleBook: FrequencyRuleBook,
+    private val routineController: SupplementRoutineController,
     private val liveNotificationController: LiveNotificationController,
     private val state: SavedStateHandle
 ) : ViewModel() {
@@ -175,6 +179,22 @@ class ExperienceViewModel @Inject constructor(
 
     val plannedIngestionActions: PlannedIngestionActions =
         plannedIngestionHelper.actionsFor(experienceId, viewModelScope)
+
+    // the after-dose supplement reminders are offered for a recent MDMA dose of the user's own
+    // lazy, because the flows it combines are declared further down
+    val routineOfferDoseFlow: StateFlow<Instant?> by lazy { combine(
+        ingestionsWithCompanionsFlow,
+        routineController.activeRoutineFlow,
+        userPreferences.dismissedRoutineOffersFlow,
+        currentTimeFlow
+    ) { ingestions, routine, dismissed, now ->
+        val ownMdma = ingestions.map { it.ingestion }.filter { it.consumerName == null && it.substanceName == "MDMA" }.map { it.time }
+        routineOfferDose(ownMdma, now, isRoutineRunning = routine != null, isDismissed = experienceId in dismissed)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null) }
+
+    fun startRoutineFrom(dose: Instant) = viewModelScope.launch { routineController.start(RoutineKind.REGULAR, dose, 250) }
+
+    fun dismissRoutineOffer() = viewModelScope.launch { userPreferences.dismissRoutineOffer(experienceId) }
 
     // own ingestions of every substance with a frequency rule, for the line under the redose preview
     val pastFrequencyIngestionsFlow: StateFlow<List<PastIngestion>> = experienceRepo.getPastIngestionsFlow(
