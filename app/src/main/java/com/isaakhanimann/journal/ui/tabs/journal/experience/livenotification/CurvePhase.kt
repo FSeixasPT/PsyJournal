@@ -93,7 +93,8 @@ fun CurveLine.phaseWithHint(now: Instant): PhaseWithHint {
                 change == null -> null
                 isZero(heightAt(change)) -> TimeHint(HintKind.ENDS, change)
                 phaseAt(change) == Phase.COMING_DOWN -> TimeHint(HintKind.COMES_DOWN, change)
-                else -> endOfRiseAfter(change)?.let { TimeHint(HintKind.PEAKS, it) }
+                // a redose kicking in: when it starts matters, and "peaking, peaks in" would contradict itself
+                else -> TimeHint(HintKind.RISES_AGAIN, change)
             }
         }
 

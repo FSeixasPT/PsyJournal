@@ -22,6 +22,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ### Fixed
 
+- When a redose kicks in while you're peaking, the live notification and widgets say when it "rises again" instead of the contradictory "peaking · peaks in".
 - Deleting the experience that the live notification follows now removes the notification. Deleting everything or importing a journal does too.
 
 ## 12.0 — 2026-10-10

@@ -84,6 +84,14 @@ class LiveNotificationContentTest {
     }
 
     @Test
+    fun aRedoseKickingInDuringThePeakSaysWhenItRisesAgain() {
+        // the first dose peaks 21:00-22:00 and the redose starts rising at 21:10
+        val content = content(listOf(line(), line(minutesAfterStart = 40)), at(65)).lines.single()
+        assertEquals("TestSubstance · peaking · 50% · rises again in 5 min", content.text)
+        assertEquals("TestSubstance 50% peaking · rises again in 5 min", content.compactText)
+    }
+
+    @Test
     fun regularTimesAreClockTimes() {
         val text = content(listOf(line()), at(90), SavedTimeDisplayOption.REGULAR).lines.single().text
         assertEquals("TestSubstance · peaking · 100% · comes down " + plannedTimeText(at(120), at(90), at(0), TimeDisplayOption.REGULAR), text)
