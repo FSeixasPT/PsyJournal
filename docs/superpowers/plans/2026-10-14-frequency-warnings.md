@@ -838,6 +838,6 @@ git commit -m "Mention frequency warnings in the redose preview"
 - [ ] **Step 2:** Log MDMA in a new experience dated 5 weeks ago, then start logging MDMA now: the interactions step shows "Last MDMA session was 5 weeks ago" with the reason and a Source link; "Next" continues. Log the redose in the same experience 2 hours later: no card.
 - [ ] **Step 3:** Open MDMA in the Drugs tab: the Frequency section shows the last session, "Recommended gap: 3 months" and the OK-again date.
 - [ ] **Step 4:** Log mushrooms 3 days ago, then start logging LSD: "Last psychedelic session: Psilocybin mushrooms, 3 days ago". Start logging 2C-B: no card.
-- [ ] **Step 5:** Log ketamine in an experience 2 days ago but set "Consumed by" to another person; then start logging ketamine twice more in separate experiences: the someone-else ingestion must not be counted (the database query filters `consumerName IS NULL`; unit tests can't reach it).
+- [ ] **Step 5:** Log ketamine for yourself in an experience 4 days ago, and ketamine 2 days ago in another experience with "Consumed by" set to another person. Start logging ketamine now: no warning (only 1 own session in 7 days), because the other person's ingestion must not count (the database query filters `consumerName IS NULL`; unit tests can't reach it).
 - [ ] **Step 6:** In an experience, open "Preview next ingestion" and pick a substance within its gap: the extra line appears.
 - [ ] **Step 7:** Delete the test experiences afterwards so the user's emulator journal is as before.
