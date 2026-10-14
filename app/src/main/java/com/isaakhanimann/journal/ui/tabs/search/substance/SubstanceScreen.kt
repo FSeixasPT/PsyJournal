@@ -81,6 +81,7 @@ import com.isaakhanimann.journal.ui.tabs.journal.addingestion.time.TimePickerBut
 import com.isaakhanimann.journal.ui.tabs.journal.experience.TimelineDisplayOption
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.TimeDisplayOption
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.AllTimelines
+import com.isaakhanimann.journal.data.frequency.FrequencySummary
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.ToleranceSection
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.dose.RoaDoseView
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.duration.RoaDurationView
@@ -122,6 +123,7 @@ fun SubstanceScreen(
         journalColor = viewModel.journalColorFlow.collectAsState().value,
         onChangeJournalColor = viewModel::changeJournalColor,
         onChangeIsPartOfTimeline = viewModel::changeIsPartOfTimeline,
+        frequencySummary = viewModel.frequencySummaryFlow.collectAsState().value,
     )
 }
 
@@ -169,6 +171,7 @@ fun SubstanceScreen(
     journalColor: JournalColorChoice? = null,
     onChangeJournalColor: (AdaptiveColor) -> Unit = {},
     onChangeIsPartOfTimeline: (Boolean) -> Unit = {},
+    frequencySummary: FrequencySummary? = null,
 ) {
     val substance = substanceWithCategories.substance
     val uriHandler = LocalUriHandler.current
@@ -376,6 +379,14 @@ fun SubstanceScreen(
                         )
                         VerticalSpace()
                     }
+                }
+            }
+            if (frequencySummary != null) {
+                SectionWithTitle(title = "Frequency") {
+                    FrequencySection(
+                        summary = frequencySummary,
+                        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 8.dp)
+                    )
                 }
             }
             if (substance.toxicities.isNotEmpty()) {

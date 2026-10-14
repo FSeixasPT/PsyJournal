@@ -22,6 +22,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.isaakhanimann.journal.data.frequency.FrequencyRuleBook
+import com.isaakhanimann.journal.data.frequency.FrequencySummary
+import com.isaakhanimann.journal.data.frequency.PastIngestion
+import com.isaakhanimann.journal.data.frequency.frequencySummaryOf
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
 import kotlinx.coroutines.flow.first
@@ -38,11 +42,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -51,12 +57,21 @@ class SubstanceViewModel @Inject constructor(
     substanceRepo: SubstanceRepository,
     private val experienceRepo: ExperienceRepository,
     private val userPreferences: UserPreferences,
+    frequencyRuleBook: FrequencyRuleBook,
     state: SavedStateHandle,
 ) : ViewModel() {
 
     val substanceName = state.toRoute<SubstanceRoute>().substanceName
 
     val substanceWithCategories = substanceRepo.getSubstanceWithCategories(substanceName)!!
+
+    // null for substances without a frequency rule
+    val frequencySummaryFlow: StateFlow<FrequencySummary?> =
+        frequencyRuleBook.ruleFor(substanceName)?.let { rule ->
+            experienceRepo.getPastIngestionsFlow(rule.substanceNames, Instant.now().minus(frequencyRuleBook.longestWindow))
+                .map<List<PastIngestion>, FrequencySummary?> { frequencySummaryOf(rule, substanceName, it, Instant.now()) }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+        } ?: MutableStateFlow(null)
 
     val customUnitsFlow = experienceRepo.getUnArchivedCustomUnitsFlow(substanceName).stateIn(
         initialValue = emptyList(),
