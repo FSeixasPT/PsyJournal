@@ -25,16 +25,22 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.isaakhanimann.journal.data.frequency.FrequencyRuleBook
+import com.isaakhanimann.journal.data.frequency.FrequencyWarning
+import com.isaakhanimann.journal.data.frequency.checkFrequency
+import com.isaakhanimann.journal.data.frequency.currentExperienceIdsAt
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
 import com.isaakhanimann.journal.data.room.experiences.entities.Ingestion
 import com.isaakhanimann.journal.data.substances.classes.InteractionType
 import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepository
 import com.isaakhanimann.journal.ui.main.navigation.graphs.CheckInteractionsRoute
+import com.isaakhanimann.journal.ui.tabs.journal.addingestion.time.hourLimitToSeparateIngestions
 import com.isaakhanimann.journal.ui.tabs.settings.combinations.CombinationSettingsStorage
 import com.isaakhanimann.journal.ui.utils.getTimeDifferenceText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
@@ -45,6 +51,7 @@ class CheckInteractionsViewModel @Inject constructor(
     private val experienceRepo: ExperienceRepository,
     private val combinationSettingsStorage: CombinationSettingsStorage,
     private val interactionChecker: InteractionChecker,
+    private val frequencyRuleBook: FrequencyRuleBook,
     state: SavedStateHandle,
 ) : ViewModel() {
     private val checkInteractionsRoute = state.toRoute<CheckInteractionsRoute>()
@@ -56,6 +63,7 @@ class CheckInteractionsViewModel @Inject constructor(
 
     var isSearchingForInteractions by mutableStateOf(true)
     var isShowingAlert by mutableStateOf(false)
+    var frequencyWarning by mutableStateOf<FrequencyWarning?>(null)
     var alertInteractionType by mutableStateOf<InteractionType?>(null)
     var alertText by mutableStateOf("")
     private var latestIngestionsOfEverySubstanceSinceTwoDays: List<Ingestion> = emptyList()
@@ -66,6 +74,13 @@ class CheckInteractionsViewModel @Inject constructor(
             latestIngestionsOfEverySubstanceSinceTwoDays =
                 experienceRepo.getLatestIngestionOfEverySubstanceSinceDate(twoDaysAgo)
             checkInteractionsAndMaybeShowAlert()
+            frequencyRuleBook.ruleFor(substanceName)?.let { rule ->
+                val now = Instant.now()
+                val past = experienceRepo.getPastIngestions(rule.substanceNames, now.minus(frequencyRuleBook.longestWindow))
+                // a dose now would join an experience with a dose in the last hours, so that one doesn't count
+                val current = currentExperienceIdsAt(now, past, Duration.ofHours(hourLimitToSeparateIngestions))
+                frequencyWarning = checkFrequency(rule, substanceName, now, current, past)
+            }
             isSearchingForInteractions = false
         }
     }

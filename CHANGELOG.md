@@ -4,6 +4,12 @@ All notable changes to PsyJournal are listed here, newest first.
 
 PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhanimann/psychonautwiki-journal-android) 11.11, the last open-source version. For changes up to 11.11, see the original project.
 
+## Unreleased
+
+### Added
+
+- **Frequency warnings.** When you log MDMA or MDA less than 3 months after your last session, a psychedelic before your tolerance from the last one (of any psychedelic) has reset, or ketamine for the third time in a week, PsyJournal tells you how long ago the last session was and why spacing them out matters, with a source. Redoses within the same experience don't count, and neither do ingestions you log for someone else. The substance page shows when you last took it and the recommended gap, and the redose preview mentions it too.
+
 ## 12.0 — 2026-10-14
 
 ### Added

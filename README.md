@@ -27,6 +27,7 @@ Download the latest APK from the [releases page](https://github.com/FSeixasPT/Ps
 
 - **Substance pages:** dosage ranges (threshold to heavy), durations per route, tolerance, interactions and safer-use tips, with a link to the full PsychonautWiki article.
 - **Interaction warnings:** when you log a substance, PsyJournal checks it against what you've taken recently and warns you about dangerous or unsafe combinations.
+- **Frequency warnings:** PsyJournal tells you when you take MDMA, a psychedelic or ketamine again sooner than harm-reduction advice recommends, counting sessions rather than redoses.
 - **Safer tab:** guides to researching a substance, drug checking services and reagent testing, dosing (including volumetric dosing), safer hallucinogen use and routes of administration.
 
 ### Understand your use
