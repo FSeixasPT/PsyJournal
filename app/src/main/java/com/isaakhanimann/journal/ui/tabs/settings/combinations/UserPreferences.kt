@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.settings.combinations
 
+import com.isaakhanimann.journal.data.supplements.ActiveRoutine
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveExperience
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -63,6 +64,8 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
         val KEY_LIVE_AUTO_START = booleanPreferencesKey("KEY_LIVE_AUTO_START")
         val KEY_PLAN_CHIP_SHOWN = booleanPreferencesKey("KEY_PLAN_CHIP_SHOWN")
         val KEY_LIVE_SHOW_ON_LOCK_SCREEN = booleanPreferencesKey("KEY_LIVE_SHOW_ON_LOCK_SCREEN")
+        val KEY_ACTIVE_ROUTINE = stringPreferencesKey("KEY_ACTIVE_ROUTINE")
+        val KEY_DISMISSED_ROUTINE_OFFERS = stringSetPreferencesKey("KEY_DISMISSED_ROUTINE_OFFERS")
     }
 
     suspend fun saveTimeDisplayOption(value: SavedTimeDisplayOption) {
@@ -262,5 +265,30 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
 
     suspend fun saveIsLiveShownOnLockScreen(value: Boolean) {
         dataStore.edit { preferences -> preferences[PreferencesKeys.KEY_LIVE_SHOW_ON_LOCK_SCREEN] = value }
+    }
+
+    val activeRoutineFlow: Flow<ActiveRoutine?> = dataStore.data
+        .map { preferences -> ActiveRoutine.fromPreferenceString(preferences[PreferencesKeys.KEY_ACTIVE_ROUTINE]) }
+        .distinctUntilChanged()
+
+    suspend fun saveActiveRoutine(value: ActiveRoutine?) {
+        dataStore.edit { preferences ->
+            if (value == null) {
+                preferences.remove(PreferencesKeys.KEY_ACTIVE_ROUTINE)
+            } else {
+                preferences[PreferencesKeys.KEY_ACTIVE_ROUTINE] = value.toPreferenceString()
+            }
+        }
+    }
+
+    // experiences where the after-dose reminders were declined
+    val dismissedRoutineOffersFlow: Flow<Set<Int>> = dataStore.data
+        .map { preferences -> preferences[PreferencesKeys.KEY_DISMISSED_ROUTINE_OFFERS].orEmpty().mapNotNull { it.toIntOrNull() }.toSet() }
+
+    suspend fun dismissRoutineOffer(experienceId: Int) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.KEY_DISMISSED_ROUTINE_OFFERS] =
+                preferences[PreferencesKeys.KEY_DISMISSED_ROUTINE_OFFERS].orEmpty() + experienceId.toString()
+        }
     }
 }
