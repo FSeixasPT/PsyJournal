@@ -18,6 +18,9 @@
 
 package com.isaakhanimann.journal.ui.tabs.search.substance
 
+import com.isaakhanimann.journal.data.supplements.ActiveRoutine
+import com.isaakhanimann.journal.data.supplements.RoutineKind
+import com.isaakhanimann.journal.ui.supplements.SupplementRoutineController
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -58,12 +61,23 @@ class SubstanceViewModel @Inject constructor(
     private val experienceRepo: ExperienceRepository,
     private val userPreferences: UserPreferences,
     frequencyRuleBook: FrequencyRuleBook,
+    private val routineController: SupplementRoutineController,
     state: SavedStateHandle,
 ) : ViewModel() {
 
     val substanceName = state.toRoute<SubstanceRoute>().substanceName
 
     val substanceWithCategories = substanceRepo.getSubstanceWithCategories(substanceName)!!
+
+    val activeRoutineFlow: StateFlow<ActiveRoutine?> =
+        routineController.activeRoutineFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    fun startRoutine(kind: RoutineKind, doseTime: Instant, mlPerHour: Int) =
+        viewModelScope.launch { routineController.start(kind, doseTime, mlPerHour) }
+
+    fun changeRoutine(doseTime: Instant, mlPerHour: Int) = viewModelScope.launch { routineController.change(doseTime, mlPerHour) }
+
+    fun stopRoutine() = viewModelScope.launch { routineController.stop() }
 
     // null for substances without a frequency rule
     val frequencySummaryFlow: StateFlow<FrequencySummary?> =

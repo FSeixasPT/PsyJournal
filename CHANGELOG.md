@@ -8,6 +8,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ### Added
 
+- **Supplement routine reminders.** On the MDMA page, plan when you'll take it and PsyJournal reminds you each hour what to take in RollSafe's supplement routine, from 4 hours before to 7 hours after, or its minimal version. Each reminder also says roughly how much water you should have had by then (more if you're dancing), with a reminder that too much water is dangerous, and the last one says when 5-HTP is OK again. If you log MDMA without a routine, the experience offers to start the after-dose part.
 - **Frequency warnings.** When you log MDMA or MDA less than 3 months after your last session, a psychedelic before your tolerance from the last one (of any psychedelic) has reset, or ketamine for the third time in a week, PsyJournal tells you how long ago the last session was and why spacing them out matters, with a source. Redoses within the same experience don't count, and neither do ingestions you log for someone else. The substance page shows when you last took it and the recommended gap, and the redose preview mentions it too.
 
 ## 12.0 — 2026-10-14
