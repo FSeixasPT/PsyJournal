@@ -18,6 +18,8 @@
 
 package com.isaakhanimann.journal.ui.supplements
 
+import com.isaakhanimann.journal.data.supplements.initialLastPostedAt
+import com.isaakhanimann.journal.data.supplements.nextCheckpoint
 import android.app.AlarmManager
 import android.content.Context
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
@@ -57,25 +59,34 @@ class SupplementRoutineController @Inject constructor(
 
     fun canPost(): Boolean = notifier.canPost()
 
-    // steps already past when starting are never shown
+    // steps more than half an hour past when starting are never shown; one from the last half hour,
+    // such as the dose step when starting right after the dose, is shown straight away
     suspend fun start(kind: RoutineKind, doseTime: Instant, mlPerHour: Int) = mutex.withLock {
         val now = Instant.now()
-        userPreferences.saveActiveRoutine(ActiveRoutine(kind, doseTime, mlPerHour, lastPostedAt = now))
-        armNext(now)
+        notifier.cancel()
+        userPreferences.saveActiveRoutine(ActiveRoutine(kind, doseTime, mlPerHour, initialLastPostedAt(kind, doseTime, now)))
+        syncLocked()
     }
 
     suspend fun change(doseTime: Instant, mlPerHour: Int) = mutex.withLock {
         val current = userPreferences.activeRoutineFlow.first() ?: return@withLock
         val now = Instant.now()
-        userPreferences.saveActiveRoutine(current.copy(doseTime = doseTime, mlPerHour = mlPerHour, lastPostedAt = now))
-        armNext(now)
+        userPreferences.saveActiveRoutine(
+            current.copy(doseTime = doseTime, mlPerHour = mlPerHour, lastPostedAt = initialLastPostedAt(current.kind, doseTime, now))
+        )
+        syncLocked()
     }
 
     suspend fun stop() = mutex.withLock { stopLocked() }
 
-    // the alarm, a restart or a late Doze wake-up: show the most recent due step once, then arm the next
-    suspend fun onAlarm() = mutex.withLock {
-        val routine = userPreferences.activeRoutineFlow.first() ?: return@withLock
+    suspend fun onAlarm() = mutex.withLock { syncLocked() }
+
+    // when the app starts: a battery saver or force-stop may have removed the alarm
+    suspend fun resync() = mutex.withLock { syncLocked() }
+
+    // the alarm, a restart, a late Doze wake-up or a checkpoint: show the most recent due step once, then arm the next
+    private suspend fun syncLocked() {
+        val routine = userPreferences.activeRoutineFlow.first() ?: return
         val now = Instant.now()
         stepToPost(routine.kind, routine.doseTime, now, routine.lastPostedAt)?.let { step ->
             // a redose pushes the 5-HTP date later
@@ -89,6 +100,7 @@ class SupplementRoutineController @Inject constructor(
             userPreferences.saveActiveRoutine(routine.copy(lastPostedAt = stepTime(routine.doseTime, step)))
         }
         if (isFinished(routine.kind, routine.doseTime, now)) {
+            // also ends a routine that was started or changed with every step already past
             userPreferences.saveActiveRoutine(null)
             cancelAlarm()
         } else {
@@ -106,10 +118,10 @@ class SupplementRoutineController @Inject constructor(
     private suspend fun armNext(now: Instant) {
         val routine = userPreferences.activeRoutineFlow.first() ?: return
         val next = remainingSteps(routine.kind, routine.doseTime, now).firstOrNull() ?: return
-        // inexact, so no exact-alarm permission is needed; RollSafe's timing doesn't need to be exact
+        // inexact, so no exact-alarm permission is needed; checkpoints keep Android's delay to a few minutes
         alarmManager().setAndAllowWhileIdle(
             AlarmManager.RTC_WAKEUP,
-            stepTime(routine.doseTime, next).toEpochMilli(),
+            nextCheckpoint(now, stepTime(routine.doseTime, next)).toEpochMilli(),
             SupplementReminderReceiver.alarmIntent(context)
         )
     }

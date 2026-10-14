@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.search.substance
 
+import com.isaakhanimann.journal.data.supplements.isRoutineActive
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -118,15 +119,17 @@ fun SupplementRoutineSection(
     var isSheetOpen by remember { mutableStateOf(false) }
     var isBlocked by remember { mutableStateOf(false) }
     val gate = rememberNotificationGate(onBlocked = { isBlocked = true })
+    // a stored routine whose last step has passed counts as over
+    val routine = activeRoutine?.takeIf { isRoutineActive(it, Instant.now()) }
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        if (activeRoutine == null) {
+        if (routine == null) {
             Text(
                 "Hourly reminders for RollSafe's supplement routine, with how much water to drink.",
                 style = MaterialTheme.typography.bodyMedium
             )
             OutlinedButton(onClick = { isSheetOpen = true }) { Text("Plan…") }
         } else {
-            RunningRoutine(activeRoutine)
+            RunningRoutine(routine)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { isSheetOpen = true }) { Text("Change") }
                 OutlinedButton(onClick = onStop) { Text("Stop") }
@@ -138,13 +141,13 @@ fun SupplementRoutineSection(
     }
     if (isSheetOpen) {
         RoutinePlanSheet(
-            activeRoutine = activeRoutine,
+            activeRoutine = routine,
             onDismiss = { isSheetOpen = false },
             onConfirm = { kind, dose, rate ->
                 isSheetOpen = false
                 gate {
                     isBlocked = false
-                    if (activeRoutine != null && kind == activeRoutine.kind) onChange(dose, rate) else onStart(kind, dose, rate)
+                    if (routine != null && kind == routine.kind) onChange(dose, rate) else onStart(kind, dose, rate)
                 }
             }
         )
@@ -246,6 +249,8 @@ private fun RoutinePlanSheet(
             )
             TextButton(onClick = { uriHandler.openUri(ROLLSAFE_URL) }) { Text("RollSafe") }
             Button(
+                // a routine with every step past would never remind anything
+                enabled = remainingSteps(kind, doseInstant, Instant.now()).isNotEmpty(),
                 onClick = {
                     if (activeRoutine != null && activeRoutine.kind != kind) {
                         isConfirmingReplace = true

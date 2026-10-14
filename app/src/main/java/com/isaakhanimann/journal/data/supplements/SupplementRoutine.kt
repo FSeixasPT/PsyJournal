@@ -87,3 +87,24 @@ fun waterTotalMl(doseTime: Instant, at: Instant, mlPerHour: Int): Int? {
     val hoursSinceDose = Duration.between(doseTime, at).toMinutes() / 60.0
     return ((hoursSinceDose * mlPerHour) / 250.0).roundToInt() * 250
 }
+
+// Android may deliver an inexact alarm up to 75% of its delay late, so far steps get halfway checkpoints:
+// even a late checkpoint lands before its step, and steps end up at most a few minutes late
+fun nextCheckpoint(now: Instant, stepAt: Instant, directWithin: Duration = Duration.ofMinutes(15)): Instant {
+    val untilStep = Duration.between(now, stepAt)
+    return if (untilStep > directWithin) now.plus(untilStep.dividedBy(2)) else stepAt
+}
+
+// a step from the last half hour is still shown when starting, so starting right after the dose
+// shows the dose step; older steps stay skipped
+fun initialLastPostedAt(kind: RoutineKind, doseTime: Instant, now: Instant, grace: Duration = Duration.ofMinutes(30)): Instant {
+    val recent = stepsOf(kind).lastOrNull { step ->
+        val time = stepTime(doseTime, step)
+        !time.isAfter(now) && Duration.between(time, now) <= grace
+    }
+    return recent?.let { stepTime(doseTime, it).minusSeconds(1) } ?: now
+}
+
+// a stored routine whose last step has passed is over, even if no alarm came to clear it
+fun isRoutineActive(routine: ActiveRoutine?, now: Instant): Boolean =
+    routine != null && !isFinished(routine.kind, routine.doseTime, now)

@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import com.isaakhanimann.journal.data.supplements.isRoutineActive
 import com.isaakhanimann.journal.data.supplements.RoutineKind
 import com.isaakhanimann.journal.data.supplements.routineOfferDose
 import com.isaakhanimann.journal.ui.supplements.SupplementRoutineController
@@ -189,7 +190,7 @@ class ExperienceViewModel @Inject constructor(
         currentTimeFlow
     ) { ingestions, routine, dismissed, now ->
         val ownMdma = ingestions.map { it.ingestion }.filter { it.consumerName == null && it.substanceName == "MDMA" }.map { it.time }
-        routineOfferDose(ownMdma, now, isRoutineRunning = routine != null, isDismissed = experienceId in dismissed)
+        routineOfferDose(ownMdma, now, isRoutineRunning = isRoutineActive(routine, now), isDismissed = experienceId in dismissed)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null) }
 
     fun startRoutineFrom(dose: Instant) = viewModelScope.launch { routineController.start(RoutineKind.REGULAR, dose, 250) }
