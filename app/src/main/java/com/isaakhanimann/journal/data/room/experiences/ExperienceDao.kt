@@ -62,6 +62,13 @@ interface ExperienceDao {
     )
     suspend fun getLatestIngestionOfEverySubstanceSinceDate(instant: Instant): List<Ingestion>
 
+    // the user's own ingestions of some substances, for the frequency warnings
+    @Query("SELECT * FROM ingestion WHERE consumerName IS NULL AND substanceName IN (:substanceNames) AND time > :instant ORDER BY time DESC")
+    suspend fun getOwnIngestionsSince(substanceNames: List<String>, instant: Instant): List<Ingestion>
+
+    @Query("SELECT * FROM ingestion WHERE consumerName IS NULL AND substanceName IN (:substanceNames) AND time > :instant ORDER BY time DESC")
+    fun getOwnIngestionsSinceFlow(substanceNames: List<String>, instant: Instant): Flow<List<Ingestion>>
+
     @Transaction
     @Query("SELECT * FROM experience ORDER BY sortDate")
     suspend fun getAllExperiencesWithIngestionsTimedNotesAndRatingsSorted(): List<ExperienceWithIngestionsTimedNotesAndRatings>

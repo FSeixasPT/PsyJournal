@@ -175,6 +175,9 @@ fun ExperienceScreen(
         areDosageDotsHidden = viewModel.areDosageDotsHiddenFlow.collectAsState().value,
         isTimelineHidden = viewModel.isTimelineHiddenFlow.collectAsState().value,
         plannedIngestionActions = viewModel.plannedIngestionActions,
+        frequencyLine = viewModel.pastFrequencyIngestionsFlow.collectAsState().value.let { past ->
+            { substanceName: String -> viewModel.frequencyLineFor(substanceName, past) }
+        },
         navigateToChooseDose = navigateToChooseDose,
         isQuickLogPending = viewModel::isQuickLogPending,
         onQuickLogOpened = viewModel::onQuickLogOpened,
@@ -243,6 +246,7 @@ fun ExperienceScreen(
     areDosageDotsHidden: Boolean,
     isTimelineHidden: Boolean,
     plannedIngestionActions: PlannedIngestionActions? = null,
+    frequencyLine: (substanceName: String) -> String? = { null },
     navigateToChooseDose: (PlannedIngestion) -> Unit = {},
     isQuickLogPending: () -> Boolean = { false },
     onQuickLogOpened: () -> Unit = {},
@@ -286,6 +290,7 @@ fun ExperienceScreen(
                 isOralDisclaimerHidden = isOralDisclaimerHidden,
                 onChangeIsOralDisclaimerHidden = onChangeIsOralDisclaimerHidden,
                 plannedIngestionActions = plannedIngestionActions,
+                frequencyLine = frequencyLine,
                 navigateToChooseDose = navigateToChooseDose,
                 isQuickLogPending = isQuickLogPending,
                 onQuickLogOpened = onQuickLogOpened,
@@ -685,6 +690,7 @@ private fun MyTimelineSection(
     isOralDisclaimerHidden: Boolean,
     onChangeIsOralDisclaimerHidden: (Boolean) -> Unit,
     plannedIngestionActions: PlannedIngestionActions?,
+    frequencyLine: (substanceName: String) -> String?,
     navigateToChooseDose: (PlannedIngestion) -> Unit,
     isQuickLogPending: () -> Boolean,
     onQuickLogOpened: () -> Unit,
@@ -751,6 +757,7 @@ private fun MyTimelineSection(
                             selectedTime = selectedTime,
                             timeDisplayOption = timeDisplayOption,
                             onChangeDetails = { navigateToChooseDose(it) },
+                            frequencyLine = frequencyLine,
                             isLogPending = isQuickLogPending,
                             onLogOpened = onQuickLogOpened,
                             modifier = Modifier.padding(top = 4.dp)

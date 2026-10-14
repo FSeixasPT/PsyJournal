@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.data.room.experiences
 
+import com.isaakhanimann.journal.data.frequency.PastIngestion
 import com.isaakhanimann.journal.data.room.experiences.entities.CustomSubstance
 import com.isaakhanimann.journal.data.room.experiences.entities.CustomUnit
 import com.isaakhanimann.journal.data.room.experiences.entities.Experience
@@ -37,6 +38,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -188,6 +190,13 @@ class ExperienceRepository @Inject constructor(private val experienceDao: Experi
 
     suspend fun getLatestIngestionOfEverySubstanceSinceDate(instant: Instant): List<Ingestion> =
         experienceDao.getLatestIngestionOfEverySubstanceSinceDate(instant)
+
+    suspend fun getPastIngestions(substanceNames: Set<String>, since: Instant): List<PastIngestion> =
+        experienceDao.getOwnIngestionsSince(substanceNames.toList(), since).map { PastIngestion(it.substanceName, it.time, it.experienceId) }
+
+    fun getPastIngestionsFlow(substanceNames: Set<String>, since: Instant): Flow<List<PastIngestion>> =
+        experienceDao.getOwnIngestionsSinceFlow(substanceNames.toList(), since)
+            .map { list -> list.map { PastIngestion(it.substanceName, it.time, it.experienceId) } }
 
     suspend fun getAllExperiencesWithIngestionsTimedNotesAndRatingsSorted(): List<ExperienceWithIngestionsTimedNotesAndRatings> =
         experienceDao.getAllExperiencesWithIngestionsTimedNotesAndRatingsSorted()

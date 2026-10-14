@@ -186,6 +186,8 @@ fun PlannedIngestionSection(
     // opens the quick-log dialog for the pinned plan once, when coming from the notification
     isLogPending: () -> Boolean = { false },
     onLogOpened: () -> Unit = {},
+    // e.g. tolerance from a psychedelic a few days ago, null when no frequency rule applies
+    frequencyLine: (substanceName: String) -> String? = { null },
 ) {
     var isEditing by remember { mutableStateOf(false) }
     // the planned ingestion and its color when ✓ was tapped, so the dialog logs exactly what it shows
@@ -264,13 +266,13 @@ fun PlannedIngestionSection(
                 }
                 "Peak after redose: $equivalents equivalent ${timeText(peak.time)}"
             }
-            listOfNotNull(fractionLine, peakLine)
+            listOfNotNull(fractionLine, peakLine, state.planned?.let { frequencyLine(it.substanceName) })
         } else {
             // a substance not taken yet in this experience: when its effects would happen, to plan the overlap
             listOfNotNull(model.plannedEffectTimes?.let {
                 val peaks = plannedTimeRangeText(it.peakStart, it.peakEnd, state.now, experienceStart, chipOption)
                 "If taken now: starts ${timeText(it.start)} · peaks $peaks · ends ${timeText(it.end)}"
-            })
+            }, state.planned?.let { frequencyLine(it.substanceName) })
         }
         AnimatedVisibility(visible = lines.isNotEmpty()) {
             // keeps the last text while it collapses

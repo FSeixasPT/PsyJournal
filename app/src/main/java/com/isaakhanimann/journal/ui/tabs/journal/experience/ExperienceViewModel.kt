@@ -18,6 +18,10 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import com.isaakhanimann.journal.data.frequency.FrequencyRuleBook
+import com.isaakhanimann.journal.data.frequency.PastIngestion
+import com.isaakhanimann.journal.data.frequency.checkFrequency
+import com.isaakhanimann.journal.data.frequency.frequencyPreviewLine
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.QuickLogRequest
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.hasActiveEffects
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationController
@@ -79,6 +83,7 @@ class ExperienceViewModel @Inject constructor(
     private val userPreferences: UserPreferences,
     combinationSettingsStorage: CombinationSettingsStorage,
     plannedIngestionHelper: PlannedIngestionHelper,
+    private val frequencyRuleBook: FrequencyRuleBook,
     private val liveNotificationController: LiveNotificationController,
     private val state: SavedStateHandle
 ) : ViewModel() {
@@ -170,6 +175,19 @@ class ExperienceViewModel @Inject constructor(
 
     val plannedIngestionActions: PlannedIngestionActions =
         plannedIngestionHelper.actionsFor(experienceId, viewModelScope)
+
+    // own ingestions of every substance with a frequency rule, for the line under the redose preview
+    val pastFrequencyIngestionsFlow: StateFlow<List<PastIngestion>> = experienceRepo.getPastIngestionsFlow(
+        frequencyRuleBook.rules.flatMap { it.substanceNames }.toSet(),
+        Instant.now().minus(frequencyRuleBook.longestWindow)
+    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // this experience is the current session, so redoses in it don't count
+    fun frequencyLineFor(substanceName: String, past: List<PastIngestion>): String? {
+        val rule = frequencyRuleBook.ruleFor(substanceName) ?: return null
+        val now = Instant.now()
+        return checkFrequency(rule, substanceName, now, setOf(experienceId), past)?.let { frequencyPreviewLine(it, now) }
+    }
 
     fun saveIsFavorite(isFavorite: Boolean) {
         viewModelScope.launch {
