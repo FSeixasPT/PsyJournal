@@ -47,4 +47,30 @@ class RoutineOfferTest {
         val dose = now.minus(Duration.ofMinutes(30))
         assertNull(routineOfferDose(listOf(dose), now, isRoutineRunning = false, isDismissed = false, isSuggestionOn = false))
     }
+
+    @Test
+    fun startingFromTheMenuUsesTheLatestOwnMdmaDoseHoweverOld() {
+        val old = now.minus(Duration.ofHours(5))
+        val older = now.minus(Duration.ofHours(6))
+        assertEquals(8 to old, latestDose(listOf(7 to older, 8 to old)))
+        assertNull(latestDose(emptyList()))
+    }
+
+    @Test
+    fun menuItemIsHiddenWithoutADoseWhileThisRoutineRunsOrOnceItWouldBeOver() {
+        val dose = now.minus(Duration.ofHours(1))
+        val mine = ActiveRoutine(RoutineKind.REGULAR, dose, 250, now, linkedIngestionId = 8)
+        assertNull(routineMenuState(emptyList(), null, now))
+        assertNull(routineMenuState(listOf(8 to dose), mine, now))
+        assertNull(routineMenuState(listOf(8 to now.minus(Duration.ofHours(8))), null, now))
+    }
+
+    @Test
+    fun menuItemAsksBeforeReplacingAnotherExperiencesRoutine() {
+        val dose = now.minus(Duration.ofHours(1))
+        // planned from the MDMA page for a dose in 5 hours, so not about this experience's dose
+        val other = ActiveRoutine(RoutineKind.REGULAR, now.plus(Duration.ofHours(5)), 250, null)
+        assertEquals(false, routineMenuState(listOf(8 to dose), null, now))
+        assertEquals(true, routineMenuState(listOf(8 to dose), other, now))
+    }
 }

@@ -18,6 +18,9 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import com.isaakhanimann.journal.data.supplements.latestDose
+import com.isaakhanimann.journal.data.supplements.routineMenuState
+import com.isaakhanimann.journal.data.room.experiences.entities.Ingestion
 import com.isaakhanimann.journal.data.supplements.ActiveRoutine
 import com.isaakhanimann.journal.data.supplements.RoutineStep
 import com.isaakhanimann.journal.data.supplements.routineBelongsTo
@@ -230,6 +233,22 @@ class ExperienceViewModel @Inject constructor(
     }
 
     fun neverSuggestRoutine() = viewModelScope.launch { userPreferences.saveIsRoutineSuggested(false) }
+
+    // the + menu can start the routine also after the offer was dismissed or turned off
+    val routineMenuFlow: StateFlow<Boolean?> by lazy {
+        combine(ingestionsWithCompanionsFlow, routineController.activeRoutineFlow, currentTimeFlow) { ingestions, routine, now ->
+            routineMenuState(ownMdmaOf(ingestions.map { it.ingestion }), routine, now)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    }
+
+    // linked to that dose, so deleting it stops the routine; steps long past are skipped as usual
+    fun startRoutineFromLatestDose() = viewModelScope.launch {
+        val (id, time) = latestDose(ownMdmaOf(ingestionsWithCompanionsFlow.value.map { it.ingestion })) ?: return@launch
+        routineController.start(RoutineKind.REGULAR, time, 250, linkedIngestionId = id)
+    }
+
+    private fun ownMdmaOf(ingestions: List<Ingestion>): List<Pair<Int, Instant>> =
+        ingestions.filter { it.consumerName == null && it.substanceName == "MDMA" }.map { it.id to it.time }
 
     // own ingestions of every substance with a frequency rule, for the line under the redose preview
     val pastFrequencyIngestionsFlow: StateFlow<List<PastIngestion>> = experienceRepo.getPastIngestionsFlow(
