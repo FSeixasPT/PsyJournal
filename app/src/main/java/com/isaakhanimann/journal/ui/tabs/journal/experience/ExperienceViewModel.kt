@@ -19,6 +19,7 @@
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
 import com.isaakhanimann.journal.data.supplements.latestDose
+import com.isaakhanimann.journal.data.supplements.isRoutineOfferDismissed
 import com.isaakhanimann.journal.data.supplements.routineMenuState
 import com.isaakhanimann.journal.data.room.experiences.entities.Ingestion
 import com.isaakhanimann.journal.data.supplements.ActiveRoutine
@@ -193,13 +194,17 @@ class ExperienceViewModel @Inject constructor(
     val routineOfferDoseFlow: StateFlow<Instant?> by lazy { combine(
         ingestionsWithCompanionsFlow,
         routineController.activeRoutineFlow,
-        userPreferences.dismissedRoutineOffersFlow,
+        userPreferences.dismissedRoutineDosesFlow,
         userPreferences.isRoutineSuggestedFlow,
         currentTimeFlow
     ) { ingestions, routine, dismissed, isSuggested, now ->
-        val ownMdma = ingestions.map { it.ingestion }.filter { it.consumerName == null && it.substanceName == "MDMA" }.map { it.time }
+        val ownMdma = ownMdmaOf(ingestions.map { it.ingestion })
         routineOfferDose(
-            ownMdma, now, isRoutineRunning = isRoutineActive(routine, now), isDismissed = experienceId in dismissed, isSuggestionOn = isSuggested
+            ownMdma.map { it.second },
+            now,
+            isRoutineRunning = isRoutineActive(routine, now),
+            isDismissed = isRoutineOfferDismissed(ownMdma, dismissed),
+            isSuggestionOn = isSuggested
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null) }
 
@@ -211,7 +216,10 @@ class ExperienceViewModel @Inject constructor(
         routineController.start(RoutineKind.REGULAR, dose, 250, linkedIngestionId = offeredIngestionId(ownMdma, Instant.now()))
     }
 
-    fun dismissRoutineOffer() = viewModelScope.launch { userPreferences.dismissRoutineOffer(experienceId) }
+    fun dismissRoutineOffer() = viewModelScope.launch { dismissThisExperiencesDoses() }
+
+    private suspend fun dismissThisExperiencesDoses() =
+        userPreferences.dismissRoutineOffer(ownMdmaOf(ingestionsWithCompanionsFlow.value.map { it.ingestion }).map { it.first })
 
     // the running routine, when it belongs to this experience
     val routineForExperienceFlow: StateFlow<ActiveRoutine?> by lazy {
@@ -229,7 +237,7 @@ class ExperienceViewModel @Inject constructor(
     // stopped from this experience's card, so it isn't offered here again either
     fun stopRoutine() = viewModelScope.launch {
         routineController.stop()
-        userPreferences.dismissRoutineOffer(experienceId)
+        dismissThisExperiencesDoses()
     }
 
     fun neverSuggestRoutine() = viewModelScope.launch { userPreferences.saveIsRoutineSuggested(false) }
