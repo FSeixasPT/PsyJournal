@@ -20,6 +20,7 @@ package com.isaakhanimann.journal.ui.supplements
 
 import com.isaakhanimann.journal.data.supplements.routineExperienceId
 import com.isaakhanimann.journal.data.supplements.stepsOf
+import com.isaakhanimann.journal.data.supplements.resumedRoutine
 import com.isaakhanimann.journal.data.supplements.routineNotice
 import com.isaakhanimann.journal.data.supplements.withStepDone
 import android.util.Log
@@ -96,12 +97,15 @@ class SupplementRoutineController @Inject constructor(
     fun canPost(): Boolean = notifier.canPost()
 
     // steps more than half an hour past when starting are never shown; one from the last half hour,
-    // such as the dose step when starting right after the dose, is shown straight away
+    // such as the dose step when starting right after the dose, is shown straight away;
+    // starting again for the dose of the routine that was just stopped resumes it instead
     suspend fun start(kind: RoutineKind, doseTime: Instant, mlPerHour: Int, linkedIngestionId: Int? = null) = mutex.withLock {
         val now = Instant.now()
         notifier.cancel()
+        val resumed = resumedRoutine(userPreferences.getStoppedRoutine(), kind, doseTime, linkedIngestionId, now)
+        userPreferences.saveStoppedRoutine(null)
         userPreferences.saveActiveRoutine(
-            initialLastPostedAt(kind, doseTime, now).let { skipped ->
+            resumed ?: initialLastPostedAt(kind, doseTime, now).let { skipped ->
                 ActiveRoutine(kind, doseTime, mlPerHour, skipped, linkedIngestionId, skippedBefore = skipped)
             }
         )
@@ -197,6 +201,7 @@ class SupplementRoutineController @Inject constructor(
     }
 
     private suspend fun stopLocked() {
+        userPreferences.activeRoutineFlow.first()?.let { userPreferences.saveStoppedRoutine(it) }
         userPreferences.saveActiveRoutine(null)
         cancelAlarm()
         notifier.cancel()

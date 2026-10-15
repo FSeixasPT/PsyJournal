@@ -34,6 +34,7 @@ import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteOverride
 import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibility
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.time.Instant
 import javax.inject.Inject
@@ -65,6 +66,7 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
         val KEY_PLAN_CHIP_SHOWN = booleanPreferencesKey("KEY_PLAN_CHIP_SHOWN")
         val KEY_LIVE_SHOW_ON_LOCK_SCREEN = booleanPreferencesKey("KEY_LIVE_SHOW_ON_LOCK_SCREEN")
         val KEY_ACTIVE_ROUTINE = stringPreferencesKey("KEY_ACTIVE_ROUTINE")
+        val KEY_STOPPED_ROUTINE = stringPreferencesKey("KEY_STOPPED_ROUTINE")
         // held experience ids, which can be reused; replaced by the dismissed doses and cleared on the next dismissal
         val KEY_DISMISSED_ROUTINE_OFFERS = stringSetPreferencesKey("KEY_DISMISSED_ROUTINE_OFFERS")
         val KEY_DISMISSED_ROUTINE_DOSES = stringSetPreferencesKey("KEY_DISMISSED_ROUTINE_DOSES")
@@ -273,6 +275,20 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
     val activeRoutineFlow: Flow<ActiveRoutine?> = dataStore.data
         .map { preferences -> ActiveRoutine.fromPreferenceString(preferences[PreferencesKeys.KEY_ACTIVE_ROUTINE]) }
         .distinctUntilChanged()
+
+    // the last routine that was stopped, so starting it again for the same dose can resume it
+    suspend fun getStoppedRoutine(): ActiveRoutine? =
+        ActiveRoutine.fromPreferenceString(dataStore.data.first()[PreferencesKeys.KEY_STOPPED_ROUTINE])
+
+    suspend fun saveStoppedRoutine(value: ActiveRoutine?) {
+        dataStore.edit { preferences ->
+            if (value == null) {
+                preferences.remove(PreferencesKeys.KEY_STOPPED_ROUTINE)
+            } else {
+                preferences[PreferencesKeys.KEY_STOPPED_ROUTINE] = value.toPreferenceString()
+            }
+        }
+    }
 
     suspend fun saveActiveRoutine(value: ActiveRoutine?) {
         dataStore.edit { preferences ->

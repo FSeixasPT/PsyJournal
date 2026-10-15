@@ -56,3 +56,21 @@ data class ActiveRoutine(
 
 fun shouldStopForDeletedDose(routine: ActiveRoutine?, linkedDoseExists: Boolean): Boolean =
     routine?.linkedIngestionId != null && !linkedDoseExists
+
+// starting again for the dose of the last stopped routine resumes it: its ticks and the steps skipped when
+// it first started are kept, steps that came due while it was stopped count as missed, and only a step
+// from the last half hour that it hadn't shown yet is shown; another dose (or none stopped) starts fresh
+fun resumedRoutine(
+    stopped: ActiveRoutine?,
+    kind: RoutineKind,
+    doseTime: Instant,
+    linkedIngestionId: Int?,
+    now: Instant,
+): ActiveRoutine? {
+    if (stopped == null || stopped.kind != kind || stopped.doseTime != doseTime || stopped.linkedIngestionId != linkedIngestionId) {
+        return null
+    }
+    val fresh = initialLastPostedAt(kind, doseTime, now)
+    val posted = stopped.lastPostedAt?.let { maxOf(it, fresh) } ?: fresh
+    return stopped.copy(lastPostedAt = posted)
+}
