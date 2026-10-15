@@ -102,7 +102,8 @@ class SupplementReminderNotifier @Inject constructor(
 
     companion object {
         const val CHANNEL_ID = "supplement_reminders"
-        private const val NOTIFICATION_ID = 4711
+        // not the live notification's 4711, so both can show at once
+        const val NOTIFICATION_ID = 4712
         private const val OPEN_EXPERIENCE_REQUEST_CODE = 30
     }
 }
