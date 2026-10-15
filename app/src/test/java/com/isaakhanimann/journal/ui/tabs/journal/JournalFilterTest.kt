@@ -97,4 +97,11 @@ class JournalFilterTest {
         assertEquals("1 or 3+ substances", JournalFilter(substanceCounts = setOf(SubstanceCount.THREE_OR_MORE, SubstanceCount.ONE)).summary())
         assertEquals("1, 2 or 3+ substances", JournalFilter(substanceCounts = SubstanceCount.entries.toSet()).summary())
     }
+
+    @Test
+    fun theSliderIsLabelledEveryFewHoursEndingInOrLonger() {
+        assertEquals(listOf(0f to "0", 2f to "2 h", 4f to "4 h", 6f to "6 h", 8f to "8 h", 10f to "10 h", 12f to "12 h+"), durationSliderLabels(12f))
+        // a mark too close to the end makes way for it
+        assertEquals(listOf(0f to "0", 6f to "6 h", 12f to "12 h", 18f to "18 h", 24f to "24 h", 31f to "31 h+"), durationSliderLabels(31f))
+    }
 }
