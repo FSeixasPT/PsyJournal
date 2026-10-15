@@ -191,10 +191,13 @@ class ExperienceViewModel @Inject constructor(
         ingestionsWithCompanionsFlow,
         routineController.activeRoutineFlow,
         userPreferences.dismissedRoutineOffersFlow,
+        userPreferences.isRoutineSuggestedFlow,
         currentTimeFlow
-    ) { ingestions, routine, dismissed, now ->
+    ) { ingestions, routine, dismissed, isSuggested, now ->
         val ownMdma = ingestions.map { it.ingestion }.filter { it.consumerName == null && it.substanceName == "MDMA" }.map { it.time }
-        routineOfferDose(ownMdma, now, isRoutineRunning = isRoutineActive(routine, now), isDismissed = experienceId in dismissed)
+        routineOfferDose(
+            ownMdma, now, isRoutineRunning = isRoutineActive(routine, now), isDismissed = experienceId in dismissed, isSuggestionOn = isSuggested
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null) }
 
     // linked to the offered dose, so deleting it stops the reminders
@@ -220,7 +223,13 @@ class ExperienceViewModel @Inject constructor(
     fun toggleRoutineStep(step: RoutineStep, isDone: Boolean) =
         viewModelScope.launch { routineController.markDone(step.offset.toMinutes(), isDone) }
 
-    fun stopRoutine() = viewModelScope.launch { routineController.stop() }
+    // stopped from this experience's card, so it isn't offered here again either
+    fun stopRoutine() = viewModelScope.launch {
+        routineController.stop()
+        userPreferences.dismissRoutineOffer(experienceId)
+    }
+
+    fun neverSuggestRoutine() = viewModelScope.launch { userPreferences.saveIsRoutineSuggested(false) }
 
     // own ingestions of every substance with a frequency rule, for the line under the redose preview
     val pastFrequencyIngestionsFlow: StateFlow<List<PastIngestion>> = experienceRepo.getPastIngestionsFlow(

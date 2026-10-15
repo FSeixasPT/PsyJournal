@@ -111,6 +111,8 @@ fun SettingsPreview() {
         saveIsDurationRangeShown = {},
         isLiveAutoStart = false,
         saveIsLiveAutoStart = {},
+        isRoutineSuggested = true,
+        saveIsRoutineSuggested = {},
         isLiveShownOnLockScreen = false,
         saveIsLiveShownOnLockScreen = {},
     )
@@ -149,6 +151,8 @@ fun SettingsScreen(
         saveIsDurationRangeShown = viewModel::saveIsDurationRangeShown,
         isLiveAutoStart = viewModel.isLiveAutoStartFlow.collectAsState().value,
         saveIsLiveAutoStart = viewModel::saveIsLiveAutoStart,
+        isRoutineSuggested = viewModel.isRoutineSuggestedFlow.collectAsState().value,
+        saveIsRoutineSuggested = viewModel::saveIsRoutineSuggested,
         isLiveShownOnLockScreen = viewModel.isLiveShownOnLockScreenFlow.collectAsState().value,
         saveIsLiveShownOnLockScreen = viewModel::saveIsLiveShownOnLockScreen,
     )
@@ -179,6 +183,8 @@ fun SettingsScreen(
     saveIsDurationRangeShown: (Boolean) -> Unit,
     isLiveAutoStart: Boolean,
     saveIsLiveAutoStart: (Boolean) -> Unit,
+    isRoutineSuggested: Boolean,
+    saveIsRoutineSuggested: (Boolean) -> Unit,
     isLiveShownOnLockScreen: Boolean,
     saveIsLiveShownOnLockScreen: (Boolean) -> Unit,
 ) {
@@ -293,6 +299,13 @@ fun SettingsScreen(
                     info = "When disabled, the lock screen only shows that an experience is in progress, without substance names or the chart. Details are shown after unlocking.",
                     checked = isLiveShownOnLockScreen,
                     onCheckedChange = saveIsLiveShownOnLockScreen
+                )
+                HorizontalDivider()
+                SwitchWithInfoRow(
+                    title = "Suggest MDMA supplement routine",
+                    info = "After you log MDMA, the experience offers hourly reminders for RollSafe's supplement routine. You can still plan a routine from the MDMA page when this is off.",
+                    checked = isRoutineSuggested,
+                    onCheckedChange = saveIsRoutineSuggested
                 )
             }
             CardWithTitle(title = "App data", innerPaddingHorizontal = 0.dp) {

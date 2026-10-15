@@ -43,6 +43,14 @@ class SettingsViewModel @Inject constructor(
     private val liveNotificationController: LiveNotificationController,
 ) : ViewModel() {
 
+    val isRoutineSuggestedFlow = userPreferences.isRoutineSuggestedFlow.stateIn(
+        initialValue = true,
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000)
+    )
+
+    fun saveIsRoutineSuggested(value: Boolean) = viewModelScope.launch { userPreferences.saveIsRoutineSuggested(value) }
+
     val isLiveAutoStartFlow = userPreferences.isLiveAutoStartFlow.stateIn(
         initialValue = false,
         scope = viewModelScope,
