@@ -150,7 +150,7 @@ private fun MissedSteps(routine: ActiveRoutine, now: Instant, onToggle: (Routine
     val missed = missedSteps(routine, now)
     if (missed.isEmpty()) return
     Text(
-        "Not marked done. Tick the ones you took, and don't double up to catch up.",
+        "Tick the ones you took, and don't double up to catch up.",
         style = MaterialTheme.typography.bodySmall
     )
     missed.forEach { step ->
