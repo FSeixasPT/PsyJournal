@@ -24,21 +24,21 @@ import java.util.Locale
 import kotlin.math.ceil
 
 enum class SubstanceCount(val label: String) {
-    ANY("Any"), ONE("1"), TWO("2"), THREE_OR_MORE("3+");
+    ONE("1"), TWO("2"), THREE_OR_MORE("3+");
 
     fun matches(count: Int): Boolean = when (this) {
-        ANY -> true
         ONE -> count == 1
         TWO -> count == 2
         THREE_OR_MORE -> count >= 3
     }
 }
 
-// the Journal's filter: experiences with all the chosen substances, how many substances, and the estimated
+// the Journal's filter: experiences with all the chosen substances, any of the chosen numbers of substances
+// (none chosen is any number), and the estimated
 // duration between minHours and maxHours (null for an open end); only the user's own doses count
 data class JournalFilter(
     val substances: Set<String> = emptySet(),
-    val substanceCount: SubstanceCount = SubstanceCount.ANY,
+    val substanceCounts: Set<SubstanceCount> = emptySet(),
     val minHours: Float? = null,
     val maxHours: Float? = null,
 ) {
@@ -47,7 +47,7 @@ data class JournalFilter(
     // an unknown duration only matches when the duration isn't filtered
     fun matches(ownSubstances: Set<String>, duration: Duration?): Boolean {
         if (!ownSubstances.containsAll(substances)) return false
-        if (!substanceCount.matches(ownSubstances.size)) return false
+        if (substanceCounts.isNotEmpty() && substanceCounts.none { it.matches(ownSubstances.size) }) return false
         if (minHours == null && maxHours == null) return true
         val hours = duration?.toMinutes()?.div(60f) ?: return false
         return (minHours == null || hours >= minHours) && (maxHours == null || hours <= maxHours)
@@ -57,10 +57,11 @@ data class JournalFilter(
     fun summary(): String? {
         val parts = mutableListOf<String>()
         if (substances.isNotEmpty()) parts += substances.joinToString(", ")
-        when (substanceCount) {
-            SubstanceCount.ANY -> {}
-            SubstanceCount.ONE -> parts += "1 substance"
-            else -> parts += "${substanceCount.label} substances"
+        // e.g. "1 or 3+ substances"
+        val counts = substanceCounts.sorted().map { it.label }
+        if (counts.isNotEmpty()) {
+            val joined = if (counts.size == 1) counts.single() else counts.dropLast(1).joinToString(", ") + " or " + counts.last()
+            parts += if (counts == listOf("1")) "1 substance" else "$joined substances"
         }
         when {
             minHours != null && maxHours != null -> parts += "${hoursText(minHours)}–${hoursText(maxHours)} h"
