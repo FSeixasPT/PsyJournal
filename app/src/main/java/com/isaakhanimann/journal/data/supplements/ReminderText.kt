@@ -39,6 +39,12 @@ fun reminderTitle(step: RoutineStep, doseTime: Instant, formatTime: (Instant) ->
     return "MDMA routine · $whenText ($at)"
 }
 
+// a step on the routine's card: "+3 h (2:13 PM) · ALA 300 mg · Vitamin C 500 mg"
+fun stepLine(step: RoutineStep, doseTime: Instant, formatTime: (Instant) -> String): String {
+    val whenText = reminderTitle(step, doseTime, formatTime).removePrefix("MDMA routine · ")
+    return listOfNotNull(whenText, takeLine(step)?.removePrefix("Take: ")).joinToString(" · ")
+}
+
 private fun Supplement.text() = "$name $amount"
 
 fun takeLine(step: RoutineStep): String? {

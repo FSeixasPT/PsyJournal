@@ -52,12 +52,10 @@ import com.isaakhanimann.journal.data.supplements.StepStatus
 import com.isaakhanimann.journal.data.supplements.currentStep
 import com.isaakhanimann.journal.data.supplements.missedSteps
 import com.isaakhanimann.journal.data.supplements.notMarkedCount
-import com.isaakhanimann.journal.data.supplements.reminderTitle
+import com.isaakhanimann.journal.data.supplements.stepLine
 import com.isaakhanimann.journal.data.supplements.remainingSteps
 import com.isaakhanimann.journal.data.supplements.stepStatus
-import com.isaakhanimann.journal.data.supplements.stepTime
 import com.isaakhanimann.journal.data.supplements.stepsOf
-import com.isaakhanimann.journal.data.supplements.takeLine
 import com.isaakhanimann.journal.data.supplements.waterSoFarText
 import kotlinx.coroutines.delay
 import java.time.Instant
@@ -88,11 +86,10 @@ fun rememberTickingNow(): Instant {
 fun RoutineSummary(routine: ActiveRoutine, now: Instant, onToggle: (RoutineStep, Boolean) -> Unit) {
     // the step to take now comes first, with its checkbox, until it's marked done
     currentStep(routine, now)?.let { current ->
-        val title = reminderTitle(current, routine.doseTime, ::clockText).removePrefix("MDMA routine · ")
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Checkbox(checked = false, onCheckedChange = { onToggle(current, it) })
             Text(
-                "Now: $title · ${takeLine(current)?.removePrefix("Take: ").orEmpty()}",
+                "Now: ${stepLine(current, routine.doseTime, ::clockText)}",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = notMarkedColor
@@ -100,9 +97,8 @@ fun RoutineSummary(routine: ActiveRoutine, now: Instant, onToggle: (RoutineStep,
         }
     }
     remainingSteps(routine.kind, routine.doseTime, now).firstOrNull()?.let { next ->
-        val title = reminderTitle(next, routine.doseTime, ::clockText).removePrefix("MDMA routine · ")
         Text(
-            "Next: $title · ${takeLine(next)?.removePrefix("Take: ").orEmpty()}",
+            "Next: ${stepLine(next, routine.doseTime, ::clockText)}",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold
         )
@@ -134,7 +130,7 @@ fun RoutineSchedule(routine: ActiveRoutine, now: Instant, onToggle: (RoutineStep
                 Checkbox(checked = status == StepStatus.DONE, onCheckedChange = { onToggle(step, it) })
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        "${clockText(stepTime(routine.doseTime, step))}  ${takeLine(step)?.removePrefix("Take: ").orEmpty()}",
+                        stepLine(step, routine.doseTime, ::clockText),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     when (status) {
@@ -161,7 +157,7 @@ private fun MissedSteps(routine: ActiveRoutine, now: Instant, onToggle: (Routine
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Checkbox(checked = false, onCheckedChange = { onToggle(step, it) })
             Text(
-                "${clockText(stepTime(routine.doseTime, step))}  ${takeLine(step)?.removePrefix("Take: ").orEmpty()}",
+                stepLine(step, routine.doseTime, ::clockText),
                 style = MaterialTheme.typography.bodyMedium,
                 color = notMarkedColor
             )

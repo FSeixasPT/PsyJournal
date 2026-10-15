@@ -74,4 +74,11 @@ class ReminderTextTest {
         assertEquals("No 5-HTP until 24 h after your last MDMA dose (from D26).", result.last())
         assertEquals(redose.plus(Duration.ofHours(24)), fiveHtpFrom(redose))
     }
+
+    @Test
+    fun stepLinesSayWhenRelativeToTheDoseAndWhatToTake() {
+        assertEquals("+3 h (T180) · ALA 300 mg · Vitamin C 500 mg", stepLine(step(RoutineKind.REGULAR, 3), dose, time))
+        assertEquals("with your dose (T0) · ALA 300 mg · Vitamin C 500 mg", stepLine(step(RoutineKind.REGULAR, 0), dose, time))
+        assertEquals("3 h before (T-180) · ALCAR 1000 mg", stepLine(step(RoutineKind.MINIMAL, -3), dose, time))
+    }
 }
