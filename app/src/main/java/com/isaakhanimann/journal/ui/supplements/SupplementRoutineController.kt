@@ -20,6 +20,7 @@ package com.isaakhanimann.journal.ui.supplements
 
 import com.isaakhanimann.journal.data.supplements.routineExperienceId
 import com.isaakhanimann.journal.data.supplements.stepsOf
+import com.isaakhanimann.journal.data.supplements.routineNotice
 import com.isaakhanimann.journal.data.supplements.withStepDone
 import android.util.Log
 import com.isaakhanimann.journal.data.supplements.shouldStopForDeletedDose
@@ -41,8 +42,6 @@ import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
 import com.isaakhanimann.journal.data.supplements.ActiveRoutine
 import com.isaakhanimann.journal.data.supplements.RoutineKind
 import com.isaakhanimann.journal.data.supplements.isFinished
-import com.isaakhanimann.journal.data.supplements.reminderLines
-import com.isaakhanimann.journal.data.supplements.reminderTitle
 import com.isaakhanimann.journal.data.supplements.remainingSteps
 import com.isaakhanimann.journal.data.supplements.stepTime
 import com.isaakhanimann.journal.data.supplements.stepToPost
@@ -127,11 +126,19 @@ class SupplementRoutineController @Inject constructor(
     // from the app's checkboxes, or the Done button of a reminder (which names the routine's dose time,
     // so a button left over from another routine does nothing)
     suspend fun markDone(offsetMinutes: Long, isDone: Boolean, forDoseTime: Instant? = null) = mutex.withLock {
-        val routine = userPreferences.activeRoutineFlow.first() ?: return@withLock
+        val routine = userPreferences.activeRoutineFlow.first()
+        if (routine == null) {
+            // Done on the last reminder, after the routine ended
+            if (forDoseTime != null) notifier.cancel()
+            return@withLock
+        }
         if (forDoseTime != null && forDoseTime != routine.doseTime) return@withLock
         val step = stepsOf(routine.kind).firstOrNull { it.offset.toMinutes() == offsetMinutes } ?: return@withLock
-        userPreferences.saveActiveRoutine(routine.withStepDone(step, isDone))
-        if (forDoseTime != null) notifier.cancel()
+        val updated = routine.withStepDone(step, isDone)
+        userPreferences.saveActiveRoutine(updated)
+        // ticked in the app or from the reminder: the notification moves on to the next step, quietly
+        val now = Instant.now()
+        if (!isFinished(updated.kind, updated.doseTime, now)) showLocked(updated, now, alert = false, ongoing = true)
     }
 
     suspend fun onAlarm() = mutex.withLock { syncLocked() }
@@ -139,7 +146,8 @@ class SupplementRoutineController @Inject constructor(
     // when the app starts: a battery saver or force-stop may have removed the alarm
     suspend fun resync() = mutex.withLock { syncLocked() }
 
-    // the alarm, a restart, a late Doze wake-up or a checkpoint: show the most recent due step once, then arm the next
+    // the alarm, a restart, a late Doze wake-up or a checkpoint: a newly due step alerts once, otherwise the
+    // notification is refreshed quietly (the water so far changes); then the next alarm is armed
     private suspend fun syncLocked() {
         val routine = userPreferences.activeRoutineFlow.first() ?: return
         // also when the dose was deleted while the app wasn't running
@@ -149,22 +157,13 @@ class SupplementRoutineController @Inject constructor(
             return
         }
         val now = Instant.now()
-        stepToPost(routine.kind, routine.doseTime, now, routine.lastPostedAt)?.let { step ->
-            // a redose pushes the 5-HTP date later
-            val lastMdma = experienceRepo.getPastIngestions(setOf("MDMA"), routine.doseTime.minus(Duration.ofHours(2)))
-                .maxOfOrNull { it.time }?.takeIf { it.isAfter(routine.doseTime) } ?: routine.doseTime
-            val ownDoses = experienceRepo.getOwnDoses(setOf("MDMA"), routine.doseTime.minus(Duration.ofHours(5)))
-            notifier.post(
-                doseTime = routine.doseTime,
-                offsetMinutes = step.offset.toMinutes(),
-                experienceId = routineExperienceId(routine, ownDoses),
-                title = reminderTitle(step, routine.doseTime, ::formatTime),
-                lines = reminderLines(routine.kind, step, routine.doseTime, routine.mlPerHour, lastMdma, ::formatTime, ::formatDayTime),
-                showDetailsOnLockScreen = userPreferences.isLiveShownOnLockScreenFlow.first()
-            )
-            userPreferences.saveActiveRoutine(routine.copy(lastPostedAt = stepTime(routine.doseTime, step)))
-        }
-        if (isFinished(routine.kind, routine.doseTime, now)) {
+        val newlyDue = stepToPost(routine.kind, routine.doseTime, now, routine.lastPostedAt)
+        val current = newlyDue?.let { routine.copy(lastPostedAt = stepTime(routine.doseTime, it)) } ?: routine
+        if (newlyDue != null) userPreferences.saveActiveRoutine(current)
+        val isOver = isFinished(routine.kind, routine.doseTime, now)
+        // once over, only the last step's reminder is left, and it can be swiped away
+        if (!isOver || newlyDue != null) showLocked(current, now, alert = newlyDue != null, ongoing = !isOver)
+        if (isOver) {
             // also ends a routine that was started or changed with every step already past
             userPreferences.saveActiveRoutine(null)
             cancelAlarm()
@@ -172,6 +171,29 @@ class SupplementRoutineController @Inject constructor(
             // a second later, so the step just shown isn't armed again
             armNext(now.plusSeconds(1))
         }
+    }
+
+    private suspend fun showLocked(routine: ActiveRoutine, now: Instant, alert: Boolean, ongoing: Boolean) {
+        // a redose pushes the 5-HTP date later
+        val lastMdma = experienceRepo.getPastIngestions(setOf("MDMA"), routine.doseTime.minus(Duration.ofHours(2)))
+            .maxOfOrNull { it.time }?.takeIf { it.isAfter(routine.doseTime) } ?: routine.doseTime
+        val notice = routineNotice(routine, now, lastMdma, ::formatTime, ::formatDayTime)
+        if (notice == null) {
+            notifier.cancel()
+            return
+        }
+        val ownDoses = experienceRepo.getOwnDoses(setOf("MDMA"), routine.doseTime.minus(Duration.ofHours(5)))
+        notifier.post(
+            doseTime = routine.doseTime,
+            offsetMinutes = notice.step.offset.toMinutes(),
+            experienceId = routineExperienceId(routine, ownDoses),
+            title = notice.title,
+            lines = notice.lines,
+            showDetailsOnLockScreen = userPreferences.isLiveShownOnLockScreenFlow.first(),
+            isDue = notice.isDue,
+            alert = alert && notice.isDue,
+            ongoing = ongoing
+        )
     }
 
     private suspend fun stopLocked() {

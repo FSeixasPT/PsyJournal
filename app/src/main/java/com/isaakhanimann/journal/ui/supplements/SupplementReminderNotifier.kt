@@ -36,7 +36,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// unlike the silent live notification, these remind: they make a sound and vibrate
+// one notification for the whole routine: it quietly shows the next step, and makes a sound and vibrates
+// when a step is due
 @Singleton
 class SupplementReminderNotifier @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -50,14 +51,18 @@ class SupplementReminderNotifier @Inject constructor(
     }
 
     @SuppressLint("MissingPermission") // canPost() checks the permission
-    // opens the routine's experience, or the MDMA page before the dose is logged
+    // opens the routine's experience, or the MDMA page before the dose is logged; Done only for a due step;
+    // ongoing while the routine runs, so only the last reminder can be swiped away on older Android
     fun post(
         doseTime: Instant,
         offsetMinutes: Long,
         experienceId: Int?,
         title: String,
         lines: List<String>,
-        showDetailsOnLockScreen: Boolean
+        showDetailsOnLockScreen: Boolean,
+        isDue: Boolean = true,
+        alert: Boolean = true,
+        ongoing: Boolean = false,
     ) {
         if (!canPost()) return
         ensureChannel()
@@ -66,12 +71,14 @@ class SupplementReminderNotifier @Inject constructor(
             .setSmallIcon(R.drawable.ic_live_timeline)
             .setContentTitle("PsyJournal reminder")
             .build()
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_live_timeline)
             .setContentTitle(title)
             .setContentText(lines.firstOrNull())
             .setStyle(NotificationCompat.BigTextStyle().bigText(lines.joinToString("\n")))
-            .setAutoCancel(true)
+            .setAutoCancel(!ongoing)
+            .setOngoing(ongoing)
+            .setSilent(!alert)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setContentIntent(
                 if (experienceId != null) {
@@ -81,12 +88,11 @@ class SupplementReminderNotifier @Inject constructor(
                     LiveNotificationIntents.openSubstance(context, "MDMA")
                 }
             )
-            .addAction(0, "Done", SupplementReminderReceiver.doneIntent(context, doseTime, offsetMinutes))
-            .addAction(0, "Stop routine", SupplementReminderReceiver.stopIntent(context))
             .setVisibility(if (showDetailsOnLockScreen) NotificationCompat.VISIBILITY_PUBLIC else NotificationCompat.VISIBILITY_PRIVATE)
             .setPublicVersion(publicVersion)
-            .build()
-        NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification)
+        if (isDue) builder.addAction(0, "Done", SupplementReminderReceiver.doneIntent(context, doseTime, offsetMinutes))
+        builder.addAction(0, "Stop routine", SupplementReminderReceiver.stopIntent(context))
+        NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, builder.build())
     }
 
     fun cancel() {
