@@ -50,3 +50,8 @@ fun routineMenuState(ownMdma: List<Pair<Int, Instant>>, routine: ActiveRoutine?,
     val running = routine?.takeIf { isRoutineActive(it, now) } ?: return false
     return if (routineBelongsTo(running, ownMdma)) null else true
 }
+
+// "No thanks" and the card's X are remembered for the experience's MDMA doses, not its id: a new experience
+// can get the id of a deleted one, but never its doses, and a redose in the same experience stays dismissed
+fun isRoutineOfferDismissed(ownMdma: List<Pair<Int, Instant>>, dismissedDoses: Set<Int>): Boolean =
+    ownMdma.any { (id, _) -> id in dismissedDoses }

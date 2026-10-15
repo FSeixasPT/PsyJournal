@@ -65,7 +65,9 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
         val KEY_PLAN_CHIP_SHOWN = booleanPreferencesKey("KEY_PLAN_CHIP_SHOWN")
         val KEY_LIVE_SHOW_ON_LOCK_SCREEN = booleanPreferencesKey("KEY_LIVE_SHOW_ON_LOCK_SCREEN")
         val KEY_ACTIVE_ROUTINE = stringPreferencesKey("KEY_ACTIVE_ROUTINE")
+        // held experience ids, which can be reused; replaced by the dismissed doses and cleared on the next dismissal
         val KEY_DISMISSED_ROUTINE_OFFERS = stringSetPreferencesKey("KEY_DISMISSED_ROUTINE_OFFERS")
+        val KEY_DISMISSED_ROUTINE_DOSES = stringSetPreferencesKey("KEY_DISMISSED_ROUTINE_DOSES")
         val KEY_SUGGEST_ROUTINE = booleanPreferencesKey("KEY_SUGGEST_ROUTINE")
     }
 
@@ -290,14 +292,15 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
         dataStore.edit { preferences -> preferences[PreferencesKeys.KEY_SUGGEST_ROUTINE] = value }
     }
 
-    // experiences where the after-dose reminders were declined
-    val dismissedRoutineOffersFlow: Flow<Set<Int>> = dataStore.data
-        .map { preferences -> preferences[PreferencesKeys.KEY_DISMISSED_ROUTINE_OFFERS].orEmpty().mapNotNull { it.toIntOrNull() }.toSet() }
+    // ingestion ids of MDMA doses whose after-dose reminders were declined
+    val dismissedRoutineDosesFlow: Flow<Set<Int>> = dataStore.data
+        .map { preferences -> preferences[PreferencesKeys.KEY_DISMISSED_ROUTINE_DOSES].orEmpty().mapNotNull { it.toIntOrNull() }.toSet() }
 
-    suspend fun dismissRoutineOffer(experienceId: Int) {
+    suspend fun dismissRoutineOffer(ingestionIds: Collection<Int>) {
         dataStore.edit { preferences ->
-            preferences[PreferencesKeys.KEY_DISMISSED_ROUTINE_OFFERS] =
-                preferences[PreferencesKeys.KEY_DISMISSED_ROUTINE_OFFERS].orEmpty() + experienceId.toString()
+            preferences.remove(PreferencesKeys.KEY_DISMISSED_ROUTINE_OFFERS)
+            preferences[PreferencesKeys.KEY_DISMISSED_ROUTINE_DOSES] =
+                preferences[PreferencesKeys.KEY_DISMISSED_ROUTINE_DOSES].orEmpty() + ingestionIds.map { it.toString() }
         }
     }
 }

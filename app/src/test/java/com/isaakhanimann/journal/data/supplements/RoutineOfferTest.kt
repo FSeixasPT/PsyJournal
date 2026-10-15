@@ -73,4 +73,13 @@ class RoutineOfferTest {
         assertEquals(false, routineMenuState(listOf(8 to dose), null, now))
         assertEquals(true, routineMenuState(listOf(8 to dose), other, now))
     }
+
+    @Test
+    fun dismissingIsRememberedForTheDosesNotTheExperienceId() {
+        val dose = now.minus(Duration.ofMinutes(30))
+        // a redose in the same experience stays dismissed
+        assertEquals(true, isRoutineOfferDismissed(listOf(8 to dose.minus(Duration.ofHours(1)), 9 to dose), setOf(8)))
+        // a new experience that got a deleted experience's id has new doses, so it's offered again
+        assertEquals(false, isRoutineOfferDismissed(listOf(12 to dose), setOf(8, 9)))
+    }
 }
