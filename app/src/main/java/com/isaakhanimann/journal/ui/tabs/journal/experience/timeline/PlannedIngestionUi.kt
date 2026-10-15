@@ -75,7 +75,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -280,8 +279,7 @@ fun PlannedIngestionSection(
             if (lines.isNotEmpty()) shownText = lines.joinToString("\n")
             Text(
                 text = shownText,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
