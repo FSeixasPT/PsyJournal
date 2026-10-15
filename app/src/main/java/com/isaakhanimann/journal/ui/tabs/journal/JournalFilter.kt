@@ -86,3 +86,12 @@ fun substancesByUse(experiences: List<Set<String>>): List<String> =
 // the slider's right end, in whole hours; there it means "or longer"
 fun durationSliderMax(durations: Collection<Duration>): Float =
     maxOf(12f, ceil(durations.maxOfOrNull { it.toMinutes() / 60f } ?: 0f))
+
+// labels under the duration slider, at most about six gaps apart; the right end means "or longer",
+// and a mark too close to it makes way for it
+fun durationSliderLabels(maxHours: Float): List<Pair<Float, String>> {
+    val step = listOf(1, 2, 3, 4, 6, 12, 24).firstOrNull { maxHours / it <= 6f } ?: 48
+    val marks = generateSequence(0) { it + step }.takeWhile { it < maxHours - step / 2f }
+        .map { it.toFloat() to if (it == 0) "0" else "$it h" }.toList()
+    return marks + (maxHours to "${hoursText(maxHours)} h+")
+}

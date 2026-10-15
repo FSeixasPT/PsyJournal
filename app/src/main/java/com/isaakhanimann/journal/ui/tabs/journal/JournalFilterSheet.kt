@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
@@ -135,11 +136,38 @@ fun JournalFilterSheet(
                 // the ends sit near the screen edges, where a drag would otherwise be the back gesture
                 modifier = Modifier.systemGestureExclusion(),
             )
+            SliderLabels(durationSliderLabels(sliderMaxHours), sliderMaxHours)
             Text("Uses each experience's estimated duration, like the clock in the list", style = MaterialTheme.typography.bodySmall)
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, androidx.compose.ui.Alignment.End)) {
                 TextButton(onClick = { onChange(JournalFilter()) }, enabled = filter.isActive) { Text("Clear") }
                 Button(onClick = onDismiss) { Text("Done") }
+            }
+        }
+    }
+}
+
+// each label centred under its spot on the track, kept inside the row at the ends
+@Composable
+private fun SliderLabels(labels: List<Pair<Float, String>>, maxHours: Float) {
+    // the slider's track starts this far in, where the thumb's centre sits at either end
+    val trackInset = 2.dp
+    Layout(
+        content = {
+            labels.forEach { (_, text) ->
+                Text(text, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        },
+        modifier = Modifier.fillMaxWidth()
+    ) { measurables, constraints ->
+        val placeables = measurables.map { it.measure(constraints.copy(minWidth = 0)) }
+        val width = constraints.maxWidth
+        val inset = trackInset.roundToPx()
+        layout(width, placeables.maxOfOrNull { it.height } ?: 0) {
+            placeables.zip(labels).forEach { (placeable, label) ->
+                val center = inset + (label.first / maxHours) * (width - 2 * inset)
+                val x = (center - placeable.width / 2f).roundToInt().coerceIn(0, width - placeable.width)
+                placeable.placeRelative(x, 0)
             }
         }
     }
