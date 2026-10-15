@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.supplements
 
+import java.time.Instant
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
@@ -49,7 +50,7 @@ class SupplementReminderNotifier @Inject constructor(
     }
 
     @SuppressLint("MissingPermission") // canPost() checks the permission
-    fun post(title: String, lines: List<String>, showDetailsOnLockScreen: Boolean) {
+    fun post(doseTime: Instant, offsetMinutes: Long, title: String, lines: List<String>, showDetailsOnLockScreen: Boolean) {
         if (!canPost()) return
         ensureChannel()
         // the lock screen shows this version unless details are allowed there
@@ -65,6 +66,7 @@ class SupplementReminderNotifier @Inject constructor(
             .setAutoCancel(true)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setContentIntent(LiveNotificationIntents.openSubstance(context, "MDMA"))
+            .addAction(0, "Done", SupplementReminderReceiver.doneIntent(context, doseTime, offsetMinutes))
             .addAction(0, "Stop routine", SupplementReminderReceiver.stopIntent(context))
             .setVisibility(if (showDetailsOnLockScreen) NotificationCompat.VISIBILITY_PUBLIC else NotificationCompat.VISIBILITY_PRIVATE)
             .setPublicVersion(publicVersion)

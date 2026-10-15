@@ -3,6 +3,8 @@
 Date: 2026-10-14
 Status: Design approved in chat, awaiting spec review
 
+**Updates (2026-10-15):** steps can be marked done (a Done button on each reminder, checkboxes on the MDMA page and the experience card), and past steps not marked done are highlighted; steps already past when the routine started show as skipped. The routine shows under the chart of the experience it belongs to. At the user's request only supplement steps exist: the minimal routine's water-only reminders were removed, so it ends 3 h before the dose, and the water total appears on supplement steps after the dose. A routine started from the after-logging offer stops when that dose is deleted. Starting within 30 minutes after a step still shows that step.
+
 ## Goal
 
 Someone planning to take MDMA can follow RollSafe's supplement routine without keeping track of the time themselves. PsyJournal reminds them each hour what to take and roughly how much water they should have had by then. It never pushes supplements as a substitute for safer use: the evidence is presented honestly, and the water reminders guard against drinking too much as well as too little.

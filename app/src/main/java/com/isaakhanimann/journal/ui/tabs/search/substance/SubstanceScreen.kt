@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.search.substance
 
+import com.isaakhanimann.journal.data.supplements.RoutineStep
 import com.isaakhanimann.journal.data.supplements.ActiveRoutine
 import com.isaakhanimann.journal.data.supplements.RoutineKind
 import java.time.Instant
@@ -131,6 +132,7 @@ fun SubstanceScreen(
         onStartRoutine = viewModel::startRoutine,
         onChangeRoutine = viewModel::changeRoutine,
         onStopRoutine = viewModel::stopRoutine,
+        onToggleRoutineStep = viewModel::toggleRoutineStep,
     )
 }
 
@@ -183,6 +185,7 @@ fun SubstanceScreen(
     onStartRoutine: (RoutineKind, Instant, Int) -> Unit = { _, _, _ -> },
     onChangeRoutine: (Instant, Int) -> Unit = { _, _ -> },
     onStopRoutine: () -> Unit = {},
+    onToggleRoutineStep: (RoutineStep, Boolean) -> Unit = { _, _ -> },
 ) {
     val substance = substanceWithCategories.substance
     val uriHandler = LocalUriHandler.current
@@ -407,6 +410,7 @@ fun SubstanceScreen(
                         onStart = onStartRoutine,
                         onChange = onChangeRoutine,
                         onStop = onStopRoutine,
+                        onToggleStep = onToggleRoutineStep,
                         modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 8.dp)
                     )
                 }

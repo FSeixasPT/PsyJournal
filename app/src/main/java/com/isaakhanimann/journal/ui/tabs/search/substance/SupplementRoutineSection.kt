@@ -18,6 +18,13 @@
 
 package com.isaakhanimann.journal.ui.tabs.search.substance
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import com.isaakhanimann.journal.ui.supplements.clockText
+import com.isaakhanimann.journal.data.supplements.RoutineStep
+import com.isaakhanimann.journal.ui.supplements.RoutineSchedule
+import com.isaakhanimann.journal.ui.supplements.RoutineSummary
+import com.isaakhanimann.journal.ui.supplements.rememberTickingNow
 import com.isaakhanimann.journal.data.supplements.isRoutineActive
 import android.Manifest
 import android.content.pm.PackageManager
@@ -42,27 +49,21 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.isaakhanimann.journal.data.supplements.ActiveRoutine
 import com.isaakhanimann.journal.data.supplements.ROLLSAFE_URL
 import com.isaakhanimann.journal.data.supplements.RoutineKind
-import com.isaakhanimann.journal.data.supplements.reminderTitle
 import com.isaakhanimann.journal.data.supplements.remainingSteps
 import com.isaakhanimann.journal.data.supplements.stepTime
 import com.isaakhanimann.journal.data.supplements.stepsOf
-import com.isaakhanimann.journal.data.supplements.takeLine
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.time.DatePickerButton
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.time.TimePickerButton
 import com.isaakhanimann.journal.ui.utils.getInstant
@@ -73,9 +74,6 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-
-private fun clockText(instant: Instant): String =
-    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).format(instant.atZone(ZoneId.systemDefault()))
 
 // 4 h from now, rounded up to the next quarter hour
 private fun defaultDoseTime(now: LocalDateTime = LocalDateTime.now()): LocalDateTime {
@@ -115,7 +113,9 @@ fun SupplementRoutineSection(
     onChange: (Instant, Int) -> Unit,
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
+    onToggleStep: (RoutineStep, Boolean) -> Unit = { _, _ -> },
 ) {
+    val now = rememberTickingNow()
     var isSheetOpen by remember { mutableStateOf(false) }
     var isBlocked by remember { mutableStateOf(false) }
     val gate = rememberNotificationGate(onBlocked = { isBlocked = true })
@@ -129,7 +129,8 @@ fun SupplementRoutineSection(
             )
             OutlinedButton(onClick = { isSheetOpen = true }) { Text("Plan…") }
         } else {
-            RunningRoutine(routine)
+            RoutineSummary(routine, now)
+            RoutineSchedule(routine, now, onToggleStep)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { isSheetOpen = true }) { Text("Change") }
                 OutlinedButton(onClick = onStop) { Text("Stop") }
@@ -150,29 +151,6 @@ fun SupplementRoutineSection(
                     if (routine != null && kind == routine.kind) onChange(dose, rate) else onStart(kind, dose, rate)
                 }
             }
-        )
-    }
-}
-
-@Composable
-private fun RunningRoutine(routine: ActiveRoutine) {
-    val now = Instant.now()
-    val next = remainingSteps(routine.kind, routine.doseTime, now).firstOrNull()
-    if (next != null) {
-        val title = reminderTitle(next, routine.doseTime, ::clockText).removePrefix("MDMA routine · ")
-        Text(
-            "Next: $title · ${takeLine(next)?.removePrefix("Take: ") ?: "water"}",
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.SemiBold
-        )
-    }
-    Text("Water: ${routine.mlPerHour} ml an hour", style = MaterialTheme.typography.bodyMedium)
-    stepsOf(routine.kind).forEach { step ->
-        val time = stepTime(routine.doseTime, step)
-        Text(
-            "${clockText(time)}  ${takeLine(step)?.removePrefix("Take: ") ?: "water"}",
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.alpha(if (time.isBefore(now)) 0.5f else 1f)
         )
     }
 }

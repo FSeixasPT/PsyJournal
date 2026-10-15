@@ -18,6 +18,9 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import com.isaakhanimann.journal.data.supplements.ActiveRoutine
+import com.isaakhanimann.journal.data.supplements.RoutineStep
+import com.isaakhanimann.journal.data.supplements.routineBelongsTo
 import com.isaakhanimann.journal.data.supplements.offeredIngestionId
 import com.isaakhanimann.journal.data.supplements.isRoutineActive
 import com.isaakhanimann.journal.data.supplements.RoutineKind
@@ -203,6 +206,21 @@ class ExperienceViewModel @Inject constructor(
     }
 
     fun dismissRoutineOffer() = viewModelScope.launch { userPreferences.dismissRoutineOffer(experienceId) }
+
+    // the running routine, when it belongs to this experience
+    val routineForExperienceFlow: StateFlow<ActiveRoutine?> by lazy {
+        combine(ingestionsWithCompanionsFlow, routineController.activeRoutineFlow, currentTimeFlow) { ingestions, routine, now ->
+            val ownMdma = ingestions.map { it.ingestion }
+                .filter { it.consumerName == null && it.substanceName == "MDMA" }
+                .map { it.id to it.time }
+            routine?.takeIf { isRoutineActive(it, now) && routineBelongsTo(it, ownMdma) }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    }
+
+    fun toggleRoutineStep(step: RoutineStep, isDone: Boolean) =
+        viewModelScope.launch { routineController.markDone(step.offset.toMinutes(), isDone) }
+
+    fun stopRoutine() = viewModelScope.launch { routineController.stop() }
 
     // own ingestions of every substance with a frequency rule, for the line under the redose preview
     val pastFrequencyIngestionsFlow: StateFlow<List<PastIngestion>> = experienceRepo.getPastIngestionsFlow(

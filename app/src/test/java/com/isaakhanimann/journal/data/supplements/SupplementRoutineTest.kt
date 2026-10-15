@@ -44,15 +44,19 @@ class SupplementRoutineTest {
     }
 
     @Test
-    fun minimalStepsMatchRollSafeAndAddHourlyWater() {
+    fun minimalStepsMatchRollSafeWithoutWaterOnlySteps() {
         val steps = stepsOf(RoutineKind.MINIMAL)
+        assertEquals(3, steps.size)
         assertEquals(Duration.ofHours(-13), steps[0].offset)
         assertEquals(listOf(Supplement("Vitamin E", "800 IU")), steps[0].take)
         assertEquals(Duration.ofMinutes(-390), steps[1].offset)
         assertEquals(listOf(Supplement("CoQ10", "200–600 mg")), steps[1].take)
         assertEquals(listOf(Supplement("ALCAR", "1000 mg")), steps[2].take)
-        assertEquals((0L..7L).toList(), steps.drop(3).map { it.offset.toHours() })
-        assertTrue(steps.drop(3).all { it.take.isEmpty() && it.optional.isEmpty() })
+    }
+
+    @Test
+    fun everyStepHasASupplement() {
+        RoutineKind.entries.forEach { kind -> assertTrue(stepsOf(kind).all { it.take.isNotEmpty() }) }
     }
 
     @Test
@@ -73,7 +77,8 @@ class SupplementRoutineTest {
     fun finishedAfterTheLastStep() {
         assertFalse(isFinished(RoutineKind.REGULAR, dose, dose.plus(Duration.ofMinutes(419))))
         assertTrue(isFinished(RoutineKind.REGULAR, dose, dose.plus(h(7))))
-        assertTrue(isFinished(RoutineKind.MINIMAL, dose, dose.plus(h(7))))
+        assertFalse(isFinished(RoutineKind.MINIMAL, dose, dose.minus(h(4))))
+        assertTrue(isFinished(RoutineKind.MINIMAL, dose, dose.minus(h(3))))
     }
 
     @Test

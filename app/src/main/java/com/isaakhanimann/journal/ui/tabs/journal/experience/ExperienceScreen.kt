@@ -18,6 +18,9 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import com.isaakhanimann.journal.data.supplements.ActiveRoutine
+import com.isaakhanimann.journal.data.supplements.RoutineStep
+import com.isaakhanimann.journal.ui.supplements.SupplementRoutineCard
 import com.isaakhanimann.journal.ui.supplements.SupplementRoutineOffer
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationBlockedMessage
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationButton
@@ -182,6 +185,9 @@ fun ExperienceScreen(
         routineOfferDose = viewModel.routineOfferDoseFlow.collectAsState().value,
         onStartRoutine = viewModel::startRoutineFrom,
         onDismissRoutineOffer = viewModel::dismissRoutineOffer,
+        routine = viewModel.routineForExperienceFlow.collectAsState().value,
+        onToggleRoutineStep = viewModel::toggleRoutineStep,
+        onStopRoutine = viewModel::stopRoutine,
         navigateToChooseDose = navigateToChooseDose,
         isQuickLogPending = viewModel::isQuickLogPending,
         onQuickLogOpened = viewModel::onQuickLogOpened,
@@ -254,6 +260,9 @@ fun ExperienceScreen(
     routineOfferDose: Instant? = null,
     onStartRoutine: (Instant) -> Unit = {},
     onDismissRoutineOffer: () -> Unit = {},
+    routine: ActiveRoutine? = null,
+    onToggleRoutineStep: (RoutineStep, Boolean) -> Unit = { _, _ -> },
+    onStopRoutine: () -> Unit = {},
     navigateToChooseDose: (PlannedIngestion) -> Unit = {},
     isQuickLogPending: () -> Boolean = { false },
     onQuickLogOpened: () -> Unit = {},
@@ -305,7 +314,14 @@ fun ExperienceScreen(
                 isLiveNotificationAvailable = isLiveNotificationAvailable,
                 setLive = setLive,
             )
-            if (routineOfferDose != null) {
+            if (routine != null) {
+                SupplementRoutineCard(
+                    routine = routine,
+                    onToggle = onToggleRoutineStep,
+                    onStop = onStopRoutine,
+                    modifier = Modifier.padding(vertical = verticalCardPadding)
+                )
+            } else if (routineOfferDose != null) {
                 SupplementRoutineOffer(
                     onStart = { onStartRoutine(routineOfferDose) },
                     onDismiss = onDismissRoutineOffer,

@@ -78,3 +78,9 @@ fun reminderLines(
     }
     return lines
 }
+
+// for the routine's card and page; null before the dose
+fun waterSoFarText(doseTime: Instant, at: Instant, mlPerHour: Int): String? =
+    waterTotalMl(doseTime, at, mlPerHour)?.let {
+        if (it == 0) "Start drinking about $mlPerHour ml an hour" else "Water so far: about ${litres(it)} L ($mlPerHour ml an hour)"
+    }
