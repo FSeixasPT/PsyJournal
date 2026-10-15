@@ -66,6 +66,19 @@ class RoutineProgressTest {
     }
 
     @Test
+    fun theCurrentStepIsTheLatestDueOneUntilItIsDone() {
+        val justAfterDose = dose.plus(Duration.ofMinutes(1))
+        assertEquals(step(0), currentStep(routine(), justAfterDose))
+        assertEquals(null, currentStep(routine(done = setOf(0L)), justAfterDose))
+        // skipped steps aren't current
+        assertEquals(null, currentStep(routine(skippedBefore = dose), justAfterDose))
+        // before the first step nothing is due
+        assertEquals(null, currentStep(routine(), dose.minus(h(5))))
+        // an older step left undone isn't current once a newer one is due
+        assertEquals(step(1), currentStep(routine(), dose.plus(Duration.ofMinutes(61))))
+    }
+
+    @Test
     fun waterSoFarOnlyAfterTheDose() {
         assertEquals(null, waterSoFarText(dose, dose.minus(h(1)), 250))
         // nothing to have drunk yet right after the dose

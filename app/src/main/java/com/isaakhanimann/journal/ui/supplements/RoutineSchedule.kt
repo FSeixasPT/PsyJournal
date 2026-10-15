@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import com.isaakhanimann.journal.data.supplements.ActiveRoutine
 import com.isaakhanimann.journal.data.supplements.RoutineStep
 import com.isaakhanimann.journal.data.supplements.StepStatus
+import com.isaakhanimann.journal.data.supplements.currentStep
 import com.isaakhanimann.journal.data.supplements.notMarkedCount
 import com.isaakhanimann.journal.data.supplements.reminderTitle
 import com.isaakhanimann.journal.data.supplements.remainingSteps
@@ -79,6 +80,16 @@ fun rememberTickingNow(): Instant {
 // next step, water so far and how many past steps aren't marked done
 @Composable
 fun RoutineSummary(routine: ActiveRoutine, now: Instant) {
+    // the step to take now comes first, until it's marked done
+    currentStep(routine, now)?.let { current ->
+        val title = reminderTitle(current, routine.doseTime, ::clockText).removePrefix("MDMA routine · ")
+        Text(
+            "Now: $title · ${takeLine(current)?.removePrefix("Take: ").orEmpty()}",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = notMarkedColor
+        )
+    }
     remainingSteps(routine.kind, routine.doseTime, now).firstOrNull()?.let { next ->
         val title = reminderTitle(next, routine.doseTime, ::clockText).removePrefix("MDMA routine · ")
         Text(
