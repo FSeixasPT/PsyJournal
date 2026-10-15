@@ -18,6 +18,8 @@
 
 package com.isaakhanimann.journal.ui.supplements
 
+import com.isaakhanimann.journal.data.supplements.stepsOf
+import com.isaakhanimann.journal.data.supplements.withStepDone
 import android.util.Log
 import com.isaakhanimann.journal.data.supplements.shouldStopForDeletedDose
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -99,7 +101,9 @@ class SupplementRoutineController @Inject constructor(
         val now = Instant.now()
         notifier.cancel()
         userPreferences.saveActiveRoutine(
-            ActiveRoutine(kind, doseTime, mlPerHour, initialLastPostedAt(kind, doseTime, now), linkedIngestionId)
+            initialLastPostedAt(kind, doseTime, now).let { skipped ->
+                ActiveRoutine(kind, doseTime, mlPerHour, skipped, linkedIngestionId, skippedBefore = skipped)
+            }
         )
         syncLocked()
     }
@@ -108,12 +112,26 @@ class SupplementRoutineController @Inject constructor(
         val current = userPreferences.activeRoutineFlow.first() ?: return@withLock
         val now = Instant.now()
         userPreferences.saveActiveRoutine(
-            current.copy(doseTime = doseTime, mlPerHour = mlPerHour, lastPostedAt = initialLastPostedAt(current.kind, doseTime, now))
+            initialLastPostedAt(current.kind, doseTime, now).let { skipped ->
+                // a new dose time moves every step, so earlier ticks no longer match
+                val doneOffsets = if (doseTime == current.doseTime) current.doneOffsets else emptySet()
+                current.copy(doseTime = doseTime, mlPerHour = mlPerHour, lastPostedAt = skipped, skippedBefore = skipped, doneOffsets = doneOffsets)
+            }
         )
         syncLocked()
     }
 
     suspend fun stop() = mutex.withLock { stopLocked() }
+
+    // from the app's checkboxes, or the Done button of a reminder (which names the routine's dose time,
+    // so a button left over from another routine does nothing)
+    suspend fun markDone(offsetMinutes: Long, isDone: Boolean, forDoseTime: Instant? = null) = mutex.withLock {
+        val routine = userPreferences.activeRoutineFlow.first() ?: return@withLock
+        if (forDoseTime != null && forDoseTime != routine.doseTime) return@withLock
+        val step = stepsOf(routine.kind).firstOrNull { it.offset.toMinutes() == offsetMinutes } ?: return@withLock
+        userPreferences.saveActiveRoutine(routine.withStepDone(step, isDone))
+        if (forDoseTime != null) notifier.cancel()
+    }
 
     suspend fun onAlarm() = mutex.withLock { syncLocked() }
 
@@ -135,6 +153,8 @@ class SupplementRoutineController @Inject constructor(
             val lastMdma = experienceRepo.getPastIngestions(setOf("MDMA"), routine.doseTime.minus(Duration.ofHours(2)))
                 .maxOfOrNull { it.time }?.takeIf { it.isAfter(routine.doseTime) } ?: routine.doseTime
             notifier.post(
+                doseTime = routine.doseTime,
+                offsetMinutes = step.offset.toMinutes(),
                 title = reminderTitle(step, routine.doseTime, ::formatTime),
                 lines = reminderLines(routine.kind, step, routine.doseTime, routine.mlPerHour, lastMdma, ::formatTime, ::formatDayTime),
                 showDetailsOnLockScreen = userPreferences.isLiveShownOnLockScreenFlow.first()

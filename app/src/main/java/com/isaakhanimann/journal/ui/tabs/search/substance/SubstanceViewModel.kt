@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.search.substance
 
+import com.isaakhanimann.journal.data.supplements.RoutineStep
 import com.isaakhanimann.journal.data.supplements.ActiveRoutine
 import com.isaakhanimann.journal.data.supplements.RoutineKind
 import com.isaakhanimann.journal.ui.supplements.SupplementRoutineController
@@ -78,6 +79,9 @@ class SubstanceViewModel @Inject constructor(
     fun changeRoutine(doseTime: Instant, mlPerHour: Int) = viewModelScope.launch { routineController.change(doseTime, mlPerHour) }
 
     fun stopRoutine() = viewModelScope.launch { routineController.stop() }
+
+    fun toggleRoutineStep(step: RoutineStep, isDone: Boolean) =
+        viewModelScope.launch { routineController.markDone(step.offset.toMinutes(), isDone) }
 
     // null for substances without a frequency rule
     val frequencySummaryFlow: StateFlow<FrequencySummary?> =

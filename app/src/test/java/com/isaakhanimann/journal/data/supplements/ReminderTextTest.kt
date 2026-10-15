@@ -19,7 +19,6 @@
 package com.isaakhanimann.journal.data.supplements
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Duration
@@ -45,7 +44,6 @@ class ReminderTextTest {
     @Test
     fun takeLineListsOptionalSeparately() {
         assertEquals("Take: ALA 300 mg · optional: Magnesium 100 mg", takeLine(step(RoutineKind.REGULAR, 2)))
-        assertNull(takeLine(step(RoutineKind.MINIMAL, 2)))
     }
 
     @Test
@@ -62,11 +60,11 @@ class ReminderTextTest {
     }
 
     @Test
-    fun afterTheDoseTheWaterTotal() {
-        val result = lines(RoutineKind.MINIMAL, 2)
-        assertEquals(1, result.size)
-        assertTrue(result[0].startsWith("Water so far: about 0.5 L (250 ml an hour)."))
-        assertTrue(result[0].contains("too much water is dangerous"))
+    fun afterTheDoseSupplementStepsSayTheWaterSoFar() {
+        val result = lines(RoutineKind.REGULAR, 2)
+        assertEquals("Take: ALA 300 mg · optional: Magnesium 100 mg", result[0])
+        assertTrue(result[1].startsWith("Water so far: about 0.5 L (250 ml an hour)."))
+        assertTrue(result[1].contains("too much water is dangerous"))
     }
 
     @Test

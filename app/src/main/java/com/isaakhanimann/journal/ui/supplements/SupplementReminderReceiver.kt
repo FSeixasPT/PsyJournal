@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.supplements
 
+import java.time.Instant
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -56,16 +57,35 @@ class SupplementReminderReceiver : BroadcastReceiver() {
         when (intent.action) {
             ACTION_ALARM -> runController(context) { onAlarm() }
             ACTION_STOP -> runController(context) { stop() }
+            ACTION_DONE -> {
+                val dose = Instant.ofEpochMilli(intent.getLongExtra(EXTRA_DOSE, 0))
+                val offset = intent.getLongExtra(EXTRA_OFFSET, Long.MIN_VALUE)
+                runController(context) { markDone(offset, isDone = true, forDoseTime = dose) }
+            }
         }
     }
 
     companion object {
         private const val ACTION_ALARM = "com.isaakhanimann.journal.supplements.ALARM"
         private const val ACTION_STOP = "com.isaakhanimann.journal.supplements.STOP"
+        private const val ACTION_DONE = "com.isaakhanimann.journal.supplements.DONE"
+        private const val EXTRA_DOSE = "dose_epoch_millis"
+        private const val EXTRA_OFFSET = "offset_minutes"
         private const val FLAGS = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
 
         fun alarmIntent(context: Context): PendingIntent = PendingIntent.getBroadcast(
             context, 20, Intent(context, SupplementReminderReceiver::class.java).setAction(ACTION_ALARM), FLAGS
+        )
+
+        // one request code per step, so each reminder's Done button carries its own step
+        fun doneIntent(context: Context, doseTime: Instant, offsetMinutes: Long): PendingIntent = PendingIntent.getBroadcast(
+            context,
+            1000 + offsetMinutes.toInt(),
+            Intent(context, SupplementReminderReceiver::class.java)
+                .setAction(ACTION_DONE)
+                .putExtra(EXTRA_DOSE, doseTime.toEpochMilli())
+                .putExtra(EXTRA_OFFSET, offsetMinutes),
+            FLAGS
         )
 
         fun stopIntent(context: Context): PendingIntent = PendingIntent.getBroadcast(

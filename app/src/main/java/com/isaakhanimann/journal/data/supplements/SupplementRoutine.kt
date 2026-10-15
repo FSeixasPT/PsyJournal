@@ -55,12 +55,12 @@ private val regular = listOf(
     RoutineStep(hours(7), listOf(ala)),
 )
 
-// for when pills can't be taken at the event; after the dose only water reminders
+// for when pills can't be taken at the event, so it ends before the dose
 private val minimal = listOf(
     RoutineStep(hours(-13), listOf(Supplement("Vitamin E", "800 IU"))),
     RoutineStep(Duration.ofMinutes(-390), listOf(Supplement("CoQ10", "200–600 mg"))),
     RoutineStep(hours(-3), listOf(Supplement("ALCAR", "1000 mg"))),
-) + (0L..7L).map { RoutineStep(hours(it), emptyList()) }
+)
 
 fun stepsOf(kind: RoutineKind): List<RoutineStep> = when (kind) {
     RoutineKind.REGULAR -> regular
