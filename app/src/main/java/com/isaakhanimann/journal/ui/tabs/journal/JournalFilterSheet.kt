@@ -87,10 +87,19 @@ fun JournalFilterSheet(
 
             Text("Number of substances", style = MaterialTheme.typography.titleSmall)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = filter.substanceCounts.isEmpty(),
+                    onClick = { onChange(filter.copy(substanceCounts = emptySet())) },
+                    label = { Text("Any") }
+                )
+                // several can be chosen, e.g. 1 or 2
                 SubstanceCount.entries.forEach { count ->
+                    val isSelected = count in filter.substanceCounts
                     FilterChip(
-                        selected = filter.substanceCount == count,
-                        onClick = { onChange(filter.copy(substanceCount = count)) },
+                        selected = isSelected,
+                        onClick = {
+                            onChange(filter.copy(substanceCounts = if (isSelected) filter.substanceCounts - count else filter.substanceCounts + count))
+                        },
                         label = { Text(count.label) }
                     )
                 }

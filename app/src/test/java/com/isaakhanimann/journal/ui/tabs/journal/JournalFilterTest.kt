@@ -49,12 +49,15 @@ class JournalFilterTest {
     }
 
     @Test
-    fun theNumberOfSubstances() {
-        assertTrue(JournalFilter(substanceCount = SubstanceCount.ONE).matches(setOf("MDMA"), null))
-        assertFalse(JournalFilter(substanceCount = SubstanceCount.ONE).matches(setOf("MDMA", "LSD"), null))
-        assertTrue(JournalFilter(substanceCount = SubstanceCount.TWO).matches(setOf("MDMA", "LSD"), null))
-        assertTrue(JournalFilter(substanceCount = SubstanceCount.THREE_OR_MORE).matches(setOf("A", "B", "C", "D"), null))
-        assertFalse(JournalFilter(substanceCount = SubstanceCount.THREE_OR_MORE).matches(setOf("A", "B"), null))
+    fun theNumberOfSubstancesCanBeAnyOfTheChosenOnes() {
+        val oneOrTwo = JournalFilter(substanceCounts = setOf(SubstanceCount.ONE, SubstanceCount.TWO))
+        assertTrue(oneOrTwo.matches(setOf("MDMA"), null))
+        assertTrue(oneOrTwo.matches(setOf("MDMA", "LSD"), null))
+        assertFalse(oneOrTwo.matches(setOf("A", "B", "C"), null))
+        assertTrue(JournalFilter(substanceCounts = setOf(SubstanceCount.THREE_OR_MORE)).matches(setOf("A", "B", "C", "D"), null))
+        assertFalse(JournalFilter(substanceCounts = setOf(SubstanceCount.THREE_OR_MORE)).matches(setOf("A", "B"), null))
+        // none chosen is any number
+        assertTrue(JournalFilter().matches(setOf("A", "B", "C", "D", "E"), null))
     }
 
     @Test
@@ -88,8 +91,10 @@ class JournalFilterTest {
     @Test
     fun summary() {
         assertEquals(null, JournalFilter().summary())
-        assertEquals("MDMA, LSD · 2 substances · 4–8.5 h", JournalFilter(setOf("MDMA", "LSD"), SubstanceCount.TWO, 4f, 8.5f).summary())
-        assertEquals("1 substance · at least 4 h", JournalFilter(substanceCount = SubstanceCount.ONE, minHours = 4f).summary())
-        assertEquals("3+ substances · up to 8 h", JournalFilter(substanceCount = SubstanceCount.THREE_OR_MORE, maxHours = 8f).summary())
+        assertEquals("MDMA, LSD · 2 substances · 4–8.5 h", JournalFilter(setOf("MDMA", "LSD"), setOf(SubstanceCount.TWO), 4f, 8.5f).summary())
+        assertEquals("1 substance · at least 4 h", JournalFilter(substanceCounts = setOf(SubstanceCount.ONE), minHours = 4f).summary())
+        assertEquals("3+ substances · up to 8 h", JournalFilter(substanceCounts = setOf(SubstanceCount.THREE_OR_MORE), maxHours = 8f).summary())
+        assertEquals("1 or 3+ substances", JournalFilter(substanceCounts = setOf(SubstanceCount.THREE_OR_MORE, SubstanceCount.ONE)).summary())
+        assertEquals("1, 2 or 3+ substances", JournalFilter(substanceCounts = SubstanceCount.entries.toSet()).summary())
     }
 }
