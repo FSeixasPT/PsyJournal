@@ -18,6 +18,18 @@
 
 package com.isaakhanimann.journal.ui.supplements
 
+import android.util.Log
+import com.isaakhanimann.journal.data.supplements.shouldStopForDeletedDose
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import com.isaakhanimann.journal.data.supplements.initialLastPostedAt
 import com.isaakhanimann.journal.data.supplements.nextCheckpoint
 import android.app.AlarmManager
@@ -57,14 +69,38 @@ class SupplementRoutineController @Inject constructor(
     private val mutex = Mutex()
     val activeRoutineFlow: Flow<ActiveRoutine?> = userPreferences.activeRoutineFlow
 
+    // a failure in this scope must never crash the app
+    private val scope = CoroutineScope(
+        SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, error ->
+            Log.w("SupplementRoutine", "Observer failed", error)
+        }
+    )
+
+    // while the app runs: deleting the dose a routine was started from (the ingestion, its experience,
+    // or the whole journal) stops the routine and removes its reminder
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun observe() {
+        scope.launch {
+            userPreferences.activeRoutineFlow
+                .flatMapLatest { routine ->
+                    val id = routine?.linkedIngestionId ?: return@flatMapLatest flowOf(false)
+                    experienceRepo.getIngestionFlow(id).map { shouldStopForDeletedDose(routine, linkedDoseExists = it != null) }
+                }
+                .catch { Log.w("SupplementRoutine", "Observer failed", it) }
+                .collect { isGone -> if (isGone) stop() }
+        }
+    }
+
     fun canPost(): Boolean = notifier.canPost()
 
     // steps more than half an hour past when starting are never shown; one from the last half hour,
     // such as the dose step when starting right after the dose, is shown straight away
-    suspend fun start(kind: RoutineKind, doseTime: Instant, mlPerHour: Int) = mutex.withLock {
+    suspend fun start(kind: RoutineKind, doseTime: Instant, mlPerHour: Int, linkedIngestionId: Int? = null) = mutex.withLock {
         val now = Instant.now()
         notifier.cancel()
-        userPreferences.saveActiveRoutine(ActiveRoutine(kind, doseTime, mlPerHour, initialLastPostedAt(kind, doseTime, now)))
+        userPreferences.saveActiveRoutine(
+            ActiveRoutine(kind, doseTime, mlPerHour, initialLastPostedAt(kind, doseTime, now), linkedIngestionId)
+        )
         syncLocked()
     }
 
@@ -87,6 +123,12 @@ class SupplementRoutineController @Inject constructor(
     // the alarm, a restart, a late Doze wake-up or a checkpoint: show the most recent due step once, then arm the next
     private suspend fun syncLocked() {
         val routine = userPreferences.activeRoutineFlow.first() ?: return
+        // also when the dose was deleted while the app wasn't running
+        val linkedId = routine.linkedIngestionId
+        if (linkedId != null && shouldStopForDeletedDose(routine, experienceRepo.getIngestionFlow(linkedId).first() != null)) {
+            stopLocked()
+            return
+        }
         val now = Instant.now()
         stepToPost(routine.kind, routine.doseTime, now, routine.lastPostedAt)?.let { step ->
             // a redose pushes the 5-HTP date later

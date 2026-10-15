@@ -46,5 +46,6 @@ class JournalApplication : Application() {
         widgetUpdater.observe()
         // re-arms a running supplement routine whose alarm a battery saver may have removed
         CoroutineScope(SupervisorJob() + Dispatchers.Default).launch { supplementRoutineController.resync() }
+        supplementRoutineController.observe()
     }
 }
