@@ -112,6 +112,38 @@ class JournalViewModel @Inject constructor(
         }
     }
 
+    // estimated durations by experience id, in their own flow so the list doesn't wait for them
+    val durations: StateFlow<Map<Int, Duration>> =
+        experienceRepo.getSortedExperienceWithIngestionsCompanionsAndRatingsFlow()
+            .map { experiences ->
+                experiences.mapNotNull { experience ->
+                    experienceDuration(myEffectLines(experience.ingestionsWithCompanions, substanceRepo))
+                        ?.let { experience.experience.id to it }
+                }.toMap()
+            }
+            .flowOn(Dispatchers.Default)
+            .stateIn(
+                initialValue = emptyMap(),
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000)
+            )
+
+    val filterFlow = MutableStateFlow(JournalFilter())
+
+    fun setFilter(filter: JournalFilter) {
+        filterFlow.value = filter
+    }
+
+    // the user's own substances, most taken first, for the filter's chips
+    val filterSubstances: StateFlow<List<String>> =
+        experienceRepo.getSortedExperienceWithIngestionsCompanionsAndRatingsFlow()
+            .map { experiences -> substancesByUse(experiences.map { exp -> ownSubstances(exp.ingestionsWithCompanions.map { it.ingestion }) }) }
+            .stateIn(
+                initialValue = emptyList(),
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000)
+            )
+
     val experiences =
         experienceRepo.getSortedExperienceWithIngestionsCompanionsAndRatingsFlow()
             .combine(searchTextFlow) { experiencesWithIngestions, searchText ->
@@ -163,25 +195,17 @@ class JournalViewModel @Inject constructor(
                 }
                 return@combine experiencesWithIngestions
             }
+            .combine(filterFlow) { experiences, filter -> experiences to filter }
+            .combine(durations) { (experiences, filter), durations ->
+                if (!filter.isActive) return@combine experiences
+                experiences.filter {
+                    filter.matches(ownSubstances(it.ingestionsWithCompanions.map { i -> i.ingestion }), durations[it.experience.id])
+                }
+            }
             .stateIn(
                 initialValue = emptyList(),
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000)
             )
 
-    // estimated durations by experience id, in their own flow so the list doesn't wait for them
-    val durations: StateFlow<Map<Int, Duration>> =
-        experienceRepo.getSortedExperienceWithIngestionsCompanionsAndRatingsFlow()
-            .map { experiences ->
-                experiences.mapNotNull { experience ->
-                    experienceDuration(myEffectLines(experience.ingestionsWithCompanions, substanceRepo))
-                        ?.let { experience.experience.id to it }
-                }.toMap()
-            }
-            .flowOn(Dispatchers.Default)
-            .stateIn(
-                initialValue = emptyMap(),
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000)
-            )
 }

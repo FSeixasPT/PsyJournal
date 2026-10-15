@@ -18,6 +18,13 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal
 
+import androidx.compose.material.icons.filled.FilterAlt
+import androidx.compose.material.icons.outlined.FilterAlt
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -104,6 +111,9 @@ fun JournalScreen(
         onChangeIsSearchEnabled = viewModel::onChangeOfIsSearchEnabled,
         experiences = experiences,
         durations = viewModel.durations.collectAsState().value,
+        filter = viewModel.filterFlow.collectAsState().value,
+        onChangeFilter = viewModel::setFilter,
+        filterSubstances = viewModel.filterSubstances.collectAsState().value,
     )
 }
 
@@ -149,7 +159,20 @@ fun JournalScreen(
     experiences: List<ExperienceWithIngestionsCompanionsAndRatings>,
     // estimated durations by experience id
     durations: Map<Int, Duration> = emptyMap(),
+    filter: JournalFilter = JournalFilter(),
+    onChangeFilter: (JournalFilter) -> Unit = {},
+    filterSubstances: List<String> = emptyList(),
 ) {
+    var isFilterSheetShown by remember { mutableStateOf(false) }
+    if (isFilterSheetShown) {
+        JournalFilterSheet(
+            filter = filter,
+            onChange = onChangeFilter,
+            substances = filterSubstances,
+            sliderMaxHours = durationSliderMax(durations.values),
+            onDismiss = { isFilterSheetShown = false }
+        )
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -173,6 +196,13 @@ fun JournalScreen(
                             Icon(Icons.Filled.Star, contentDescription = "Is favorite")
                         } else {
                             Icon(Icons.Outlined.StarOutline, contentDescription = "Is not favorite")
+                        }
+                    }
+                    IconButton(onClick = { isFilterSheetShown = true }) {
+                        if (filter.isActive) {
+                            Icon(Icons.Filled.FilterAlt, contentDescription = "Filter, on")
+                        } else {
+                            Icon(Icons.Outlined.FilterAlt, contentDescription = "Filter")
                         }
                     }
                     IconToggleButton(
@@ -282,6 +312,21 @@ fun JournalScreen(
                         }
                     }
                 }
+                filter.summary()?.let { summary ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(start = horizontalPadding)
+                    ) {
+                        Text(
+                            text = summary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { isFilterSheetShown = true }
+                        )
+                        TextButton(onClick = { onChangeFilter(JournalFilter()) }) { Text("Clear") }
+                    }
+                }
                 val listState = rememberLazyListState()
                 val isScrollUpButtonShown by remember {
                     derivedStateOf {
@@ -325,7 +370,12 @@ fun JournalScreen(
                 }
             }
             if (experiences.isEmpty() && !isSearchEnabled) {
-                if (isFavoriteEnabled) {
+                if (filter.isActive) {
+                    EmptyScreenDisclaimer(
+                        title = "No matching experiences",
+                        description = "No experiences match the filter."
+                    )
+                } else if (isFavoriteEnabled) {
                     EmptyScreenDisclaimer(
                         title = "No favorites",
                         description = "Mark experiences as favorites to find them quickly."
