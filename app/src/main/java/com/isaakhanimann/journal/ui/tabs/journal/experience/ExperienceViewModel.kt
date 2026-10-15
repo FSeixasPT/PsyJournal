@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import com.isaakhanimann.journal.data.supplements.offeredIngestionId
 import com.isaakhanimann.journal.data.supplements.isRoutineActive
 import com.isaakhanimann.journal.data.supplements.RoutineKind
 import com.isaakhanimann.journal.data.supplements.routineOfferDose
@@ -193,7 +194,13 @@ class ExperienceViewModel @Inject constructor(
         routineOfferDose(ownMdma, now, isRoutineRunning = isRoutineActive(routine, now), isDismissed = experienceId in dismissed)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null) }
 
-    fun startRoutineFrom(dose: Instant) = viewModelScope.launch { routineController.start(RoutineKind.REGULAR, dose, 250) }
+    // linked to the offered dose, so deleting it stops the reminders
+    fun startRoutineFrom(dose: Instant) = viewModelScope.launch {
+        val ownMdma = ingestionsWithCompanionsFlow.value.map { it.ingestion }
+            .filter { it.consumerName == null && it.substanceName == "MDMA" }
+            .map { it.id to it.time }
+        routineController.start(RoutineKind.REGULAR, dose, 250, linkedIngestionId = offeredIngestionId(ownMdma, Instant.now()))
+    }
 
     fun dismissRoutineOffer() = viewModelScope.launch { userPreferences.dismissRoutineOffer(experienceId) }
 

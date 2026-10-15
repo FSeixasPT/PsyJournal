@@ -26,3 +26,8 @@ fun routineOfferDose(ownMdmaTimes: List<Instant>, now: Instant, isRoutineRunning
     if (isRoutineRunning || isDismissed) return null
     return ownMdmaTimes.filter { !it.isAfter(now) && Duration.between(it, now) <= Duration.ofHours(2) }.maxOrNull()
 }
+
+// the ingestion the offer is about, so the routine can be linked to it
+fun offeredIngestionId(ownMdma: List<Pair<Int, Instant>>, now: Instant): Int? =
+    ownMdma.filter { (_, time) -> !time.isAfter(now) && Duration.between(time, now) <= Duration.ofHours(2) }
+        .maxByOrNull { (_, time) -> time }?.first
