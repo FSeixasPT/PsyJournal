@@ -45,6 +45,7 @@ import com.isaakhanimann.journal.data.supplements.ActiveRoutine
 import com.isaakhanimann.journal.data.supplements.RoutineStep
 import com.isaakhanimann.journal.data.supplements.StepStatus
 import com.isaakhanimann.journal.data.supplements.currentStep
+import com.isaakhanimann.journal.data.supplements.missedSteps
 import com.isaakhanimann.journal.data.supplements.notMarkedCount
 import com.isaakhanimann.journal.data.supplements.reminderTitle
 import com.isaakhanimann.journal.data.supplements.remainingSteps
@@ -139,6 +140,27 @@ fun RoutineSchedule(routine: ActiveRoutine, now: Instant, onToggle: (RoutineStep
     }
 }
 
+// earlier steps not marked done, to tick off what was taken; never a nudge to catch up
+@Composable
+private fun MissedSteps(routine: ActiveRoutine, now: Instant, onToggle: (RoutineStep, Boolean) -> Unit) {
+    val missed = missedSteps(routine, now)
+    if (missed.isEmpty()) return
+    Text(
+        "Not marked done. Tick the ones you took, and don't double up to catch up.",
+        style = MaterialTheme.typography.bodySmall
+    )
+    missed.forEach { step ->
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Checkbox(checked = false, onCheckedChange = { onToggle(step, it) })
+            Text(
+                "${clockText(stepTime(routine.doseTime, step))}  ${takeLine(step)?.removePrefix("Take: ").orEmpty()}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = notMarkedColor
+            )
+        }
+    }
+}
+
 // under the chart of the experience the routine belongs to
 @Composable
 fun SupplementRoutineCard(
@@ -153,6 +175,7 @@ fun SupplementRoutineCard(
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("Supplement routine", style = MaterialTheme.typography.titleMedium)
             RoutineSummary(routine, now)
+            if (!isScheduleShown) MissedSteps(routine, now, onToggle)
             if (isScheduleShown) RoutineSchedule(routine, now, onToggle)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = { isScheduleShown = !isScheduleShown }) {

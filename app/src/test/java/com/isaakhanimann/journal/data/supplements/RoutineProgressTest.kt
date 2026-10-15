@@ -79,6 +79,15 @@ class RoutineProgressTest {
     }
 
     @Test
+    fun missedStepsAreTheEarlierOnesNotMarkedDone() {
+        val now = dose.plus(Duration.ofMinutes(190))
+        val r = routine(done = setOf(60L), skippedBefore = dose.minus(h(1)))
+        // the dose step and +2 h are missed; +3 h is current, +1 h done, earlier ones skipped
+        assertEquals(listOf(step(0), step(2)), missedSteps(r, now))
+        assertEquals(emptyList<RoutineStep>(), missedSteps(r.withStepDone(step(0), true).withStepDone(step(2), true), now))
+    }
+
+    @Test
     fun waterSoFarOnlyAfterTheDose() {
         assertEquals(null, waterSoFarText(dose, dose.minus(h(1)), 250))
         // nothing to have drunk yet right after the dose

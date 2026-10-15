@@ -56,3 +56,9 @@ fun currentStep(routine: ActiveRoutine, now: Instant): RoutineStep? {
     val latestDue = stepsOf(routine.kind).lastOrNull { !stepTime(routine.doseTime, it).isAfter(now) } ?: return null
     return latestDue.takeIf { stepStatus(routine, it, now) == StepStatus.NOT_MARKED }
 }
+
+// earlier steps left unmarked, oldest first; the current step is shown on its own
+fun missedSteps(routine: ActiveRoutine, now: Instant): List<RoutineStep> {
+    val current = currentStep(routine, now)
+    return stepsOf(routine.kind).filter { it != current && stepStatus(routine, it, now) == StepStatus.NOT_MARKED }
+}
