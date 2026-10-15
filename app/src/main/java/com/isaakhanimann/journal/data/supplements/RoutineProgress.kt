@@ -62,3 +62,10 @@ fun missedSteps(routine: ActiveRoutine, now: Instant): List<RoutineStep> {
     val current = currentStep(routine, now)
     return stepsOf(routine.kind).filter { it != current && stepStatus(routine, it, now) == StepStatus.NOT_MARKED }
 }
+
+data class OwnDose(val ingestionId: Int, val time: Instant, val experienceId: Int)
+
+// the experience the routine's reminders open; null before its dose is logged
+fun routineExperienceId(routine: ActiveRoutine, ownMdma: List<OwnDose>): Int? =
+    ownMdma.filter { routineBelongsTo(routine, listOf(it.ingestionId to it.time)) }
+        .maxByOrNull { it.time }?.experienceId

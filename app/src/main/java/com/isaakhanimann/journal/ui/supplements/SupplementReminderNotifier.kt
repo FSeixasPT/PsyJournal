@@ -50,7 +50,15 @@ class SupplementReminderNotifier @Inject constructor(
     }
 
     @SuppressLint("MissingPermission") // canPost() checks the permission
-    fun post(doseTime: Instant, offsetMinutes: Long, title: String, lines: List<String>, showDetailsOnLockScreen: Boolean) {
+    // opens the routine's experience, or the MDMA page before the dose is logged
+    fun post(
+        doseTime: Instant,
+        offsetMinutes: Long,
+        experienceId: Int?,
+        title: String,
+        lines: List<String>,
+        showDetailsOnLockScreen: Boolean
+    ) {
         if (!canPost()) return
         ensureChannel()
         // the lock screen shows this version unless details are allowed there
@@ -65,7 +73,14 @@ class SupplementReminderNotifier @Inject constructor(
             .setStyle(NotificationCompat.BigTextStyle().bigText(lines.joinToString("\n")))
             .setAutoCancel(true)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
-            .setContentIntent(LiveNotificationIntents.openSubstance(context, "MDMA"))
+            .setContentIntent(
+                if (experienceId != null) {
+                    // its own request code, so it never replaces the live notification's tap target
+                    LiveNotificationIntents.openFromWidget(context, OPEN_EXPERIENCE_REQUEST_CODE, experienceId)
+                } else {
+                    LiveNotificationIntents.openSubstance(context, "MDMA")
+                }
+            )
             .addAction(0, "Done", SupplementReminderReceiver.doneIntent(context, doseTime, offsetMinutes))
             .addAction(0, "Stop routine", SupplementReminderReceiver.stopIntent(context))
             .setVisibility(if (showDetailsOnLockScreen) NotificationCompat.VISIBILITY_PUBLIC else NotificationCompat.VISIBILITY_PRIVATE)
@@ -88,5 +103,6 @@ class SupplementReminderNotifier @Inject constructor(
     companion object {
         const val CHANNEL_ID = "supplement_reminders"
         private const val NOTIFICATION_ID = 4711
+        private const val OPEN_EXPERIENCE_REQUEST_CODE = 30
     }
 }

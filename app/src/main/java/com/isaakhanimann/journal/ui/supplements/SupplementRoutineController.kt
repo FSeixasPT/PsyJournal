@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.supplements
 
+import com.isaakhanimann.journal.data.supplements.routineExperienceId
 import com.isaakhanimann.journal.data.supplements.stepsOf
 import com.isaakhanimann.journal.data.supplements.withStepDone
 import android.util.Log
@@ -152,9 +153,11 @@ class SupplementRoutineController @Inject constructor(
             // a redose pushes the 5-HTP date later
             val lastMdma = experienceRepo.getPastIngestions(setOf("MDMA"), routine.doseTime.minus(Duration.ofHours(2)))
                 .maxOfOrNull { it.time }?.takeIf { it.isAfter(routine.doseTime) } ?: routine.doseTime
+            val ownDoses = experienceRepo.getOwnDoses(setOf("MDMA"), routine.doseTime.minus(Duration.ofHours(5)))
             notifier.post(
                 doseTime = routine.doseTime,
                 offsetMinutes = step.offset.toMinutes(),
+                experienceId = routineExperienceId(routine, ownDoses),
                 title = reminderTitle(step, routine.doseTime, ::formatTime),
                 lines = reminderLines(routine.kind, step, routine.doseTime, routine.mlPerHour, lastMdma, ::formatTime, ::formatDayTime),
                 showDetailsOnLockScreen = userPreferences.isLiveShownOnLockScreenFlow.first()

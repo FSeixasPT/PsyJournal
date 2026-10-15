@@ -80,16 +80,19 @@ fun rememberTickingNow(): Instant {
 
 // next step, water so far and how many past steps aren't marked done
 @Composable
-fun RoutineSummary(routine: ActiveRoutine, now: Instant) {
-    // the step to take now comes first, until it's marked done
+fun RoutineSummary(routine: ActiveRoutine, now: Instant, onToggle: (RoutineStep, Boolean) -> Unit) {
+    // the step to take now comes first, with its checkbox, until it's marked done
     currentStep(routine, now)?.let { current ->
         val title = reminderTitle(current, routine.doseTime, ::clockText).removePrefix("MDMA routine · ")
-        Text(
-            "Now: $title · ${takeLine(current)?.removePrefix("Take: ").orEmpty()}",
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = notMarkedColor
-        )
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Checkbox(checked = false, onCheckedChange = { onToggle(current, it) })
+            Text(
+                "Now: $title · ${takeLine(current)?.removePrefix("Take: ").orEmpty()}",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = notMarkedColor
+            )
+        }
     }
     remainingSteps(routine.kind, routine.doseTime, now).firstOrNull()?.let { next ->
         val title = reminderTitle(next, routine.doseTime, ::clockText).removePrefix("MDMA routine · ")
@@ -174,7 +177,7 @@ fun SupplementRoutineCard(
     ElevatedCard(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("Supplement routine", style = MaterialTheme.typography.titleMedium)
-            RoutineSummary(routine, now)
+            RoutineSummary(routine, now, onToggle)
             if (!isScheduleShown) MissedSteps(routine, now, onToggle)
             if (isScheduleShown) RoutineSchedule(routine, now, onToggle)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
