@@ -205,7 +205,7 @@ fun RoutineStoppedDialog(onDismiss: () -> Unit, onNeverSuggest: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Supplement routine stopped") },
-        text = { Text("The supplement routine was stopped for this experience.") },
+        text = { Text("The supplement routine was stopped for this experience. You can start it again from the + menu.") },
         confirmButton = { TextButton(onClick = onDismiss) { Text("OK") } },
         dismissButton = { TextButton(onClick = onNeverSuggest) { Text("Don't suggest again") } }
     )

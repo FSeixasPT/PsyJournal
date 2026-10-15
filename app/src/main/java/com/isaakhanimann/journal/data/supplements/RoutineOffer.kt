@@ -38,3 +38,15 @@ fun routineOfferDose(
 fun offeredIngestionId(ownMdma: List<Pair<Int, Instant>>, now: Instant): Int? =
     ownMdma.filter { (_, time) -> !time.isAfter(now) && Duration.between(time, now) <= Duration.ofHours(2) }
         .maxByOrNull { (_, time) -> time }?.first
+
+// starting from the experience's menu: the latest MDMA dose of the user's own, however long ago
+fun latestDose(ownMdma: List<Pair<Int, Instant>>): Pair<Int, Instant>? = ownMdma.maxByOrNull { it.second }
+
+// the experience's + menu item: null hides it (no MDMA dose of the user's own, this experience's routine
+// runs already, or a routine from the latest dose would be over); true means another routine gets replaced
+fun routineMenuState(ownMdma: List<Pair<Int, Instant>>, routine: ActiveRoutine?, now: Instant): Boolean? {
+    val (_, dose) = latestDose(ownMdma) ?: return null
+    if (isFinished(RoutineKind.REGULAR, dose, now)) return null
+    val running = routine?.takeIf { isRoutineActive(it, now) } ?: return false
+    return if (routineBelongsTo(running, ownMdma)) null else true
+}

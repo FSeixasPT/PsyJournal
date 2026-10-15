@@ -18,6 +18,8 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import androidx.compose.material.icons.outlined.Medication
+import com.isaakhanimann.journal.ui.tabs.search.substance.rememberNotificationGate
 import com.isaakhanimann.journal.ui.supplements.RoutineStoppedDialog
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.isaakhanimann.journal.data.supplements.ActiveRoutine
@@ -191,6 +193,8 @@ fun ExperienceScreen(
         onToggleRoutineStep = viewModel::toggleRoutineStep,
         onStopRoutine = viewModel::stopRoutine,
         onNeverSuggestRoutine = viewModel::neverSuggestRoutine,
+        routineMenu = viewModel.routineMenuFlow.collectAsState().value,
+        onStartRoutineFromMenu = viewModel::startRoutineFromLatestDose,
         navigateToChooseDose = navigateToChooseDose,
         isQuickLogPending = viewModel::isQuickLogPending,
         onQuickLogOpened = viewModel::onQuickLogOpened,
@@ -267,6 +271,8 @@ fun ExperienceScreen(
     onToggleRoutineStep: (RoutineStep, Boolean) -> Unit = { _, _ -> },
     onStopRoutine: () -> Unit = {},
     onNeverSuggestRoutine: () -> Unit = {},
+    routineMenu: Boolean? = null,
+    onStartRoutineFromMenu: () -> Unit = {},
     navigateToChooseDose: (PlannedIngestion) -> Unit = {},
     isQuickLogPending: () -> Boolean = { false },
     onQuickLogOpened: () -> Unit = {},
@@ -274,6 +280,30 @@ fun ExperienceScreen(
     isLiveNotificationAvailable: Boolean = false,
     setLive: (Boolean) -> Unit = {},
 ) {
+    var isReplacingRoutine by rememberSaveable { mutableStateOf(false) }
+    var isRoutineBlocked by rememberSaveable { mutableStateOf(false) }
+    val routineGate = rememberNotificationGate(onBlocked = { isRoutineBlocked = true })
+    if (isReplacingRoutine) {
+        AlertDialog(
+            onDismissRequest = { isReplacingRoutine = false },
+            title = { Text("Replace the running routine?") },
+            text = { Text("A supplement routine for another experience is running. Only one routine runs at a time.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    isReplacingRoutine = false
+                    routineGate(onStartRoutineFromMenu)
+                }) { Text("Replace") }
+            },
+            dismissButton = { TextButton(onClick = { isReplacingRoutine = false }) { Text("Cancel") } }
+        )
+    }
+    if (isRoutineBlocked) {
+        AlertDialog(
+            onDismissRequest = { isRoutineBlocked = false },
+            text = { Text("Allow notifications for PsyJournal to get the supplement reminders.") },
+            confirmButton = { TextButton(onClick = { isRoutineBlocked = false }) { Text("OK") } }
+        )
+    }
     Scaffold(
         topBar = {
             ExperienceTopBar(
@@ -286,7 +316,10 @@ fun ExperienceScreen(
                 saveIsFavorite = saveIsFavorite,
                 navigateToAddTimedNoteScreen = navigateToAddTimedNoteScreen,
                 navigateToAddRatingScreen = navigateToAddRatingScreen,
-                addIngestion = addIngestion
+                addIngestion = addIngestion,
+                startSupplementRoutine = routineMenu?.let { isReplacing ->
+                    { if (isReplacing) isReplacingRoutine = true else routineGate(onStartRoutineFromMenu) }
+                }
             )
         },
         floatingActionButton = {
@@ -870,7 +903,9 @@ private fun ExperienceTopBar(
     saveIsFavorite: (Boolean) -> Unit,
     navigateToAddTimedNoteScreen: () -> Unit,
     navigateToAddRatingScreen: () -> Unit,
-    addIngestion: () -> Unit
+    addIngestion: () -> Unit,
+    // null when this experience has no MDMA dose of the user's own or its routine runs already
+    startSupplementRoutine: (() -> Unit)? = null,
 ) {
     TopAppBar(
         title = { Text(oneExperienceScreenModel.title) },
@@ -1058,6 +1093,22 @@ private fun ExperienceTopBar(
                         )
                     }
                 )
+                if (startSupplementRoutine != null) {
+                    DropdownMenuItem(
+                        text = { Text("Supplement routine") },
+                        onClick = {
+                            startSupplementRoutine()
+                            areAddOptionsExpanded = false
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Outlined.Medication,
+                                contentDescription = "Start supplement routine",
+                                modifier = Modifier.size(ButtonDefaults.IconSize)
+                            )
+                        }
+                    )
+                }
             }
         }
     )
