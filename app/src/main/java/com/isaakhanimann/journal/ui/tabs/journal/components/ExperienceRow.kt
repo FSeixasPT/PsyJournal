@@ -18,6 +18,8 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.components
 
+import com.isaakhanimann.journal.R
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -38,7 +40,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.Medication
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -113,7 +114,7 @@ fun ExperienceRow(
                     )
                 }
                 DetailWithIcon(
-                    imageVector = Icons.Outlined.Medication,
+                    imageVector = ImageVector.vectorResource(R.drawable.ic_pill),
                     text = ingestions.size.toString(),
                     contentDescription = if (ingestions.size == 1) "1 ingestion" else "${ingestions.size} ingestions"
                 )
