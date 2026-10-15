@@ -67,7 +67,8 @@ fun TimelineQuantityDetails(
     val time = selectedTime ?: currentTime
     val endTime = model.startTime.plusSeconds(model.widthInSeconds.toLong())
     if (time < model.startTime || time > endTime) return
-    val details = model.getQuantityDetails(time)
+    // what comes next only makes sense for now, not for a time picked on the chart
+    val details = model.getQuantityDetails(time, withPhase = selectedTime == null)
     if (details.isEmpty()) return
     val isDarkTheme = isSystemInDarkTheme()
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -83,6 +84,9 @@ fun TimelineQuantityDetails(
                         text = detail.toText(),
                         style = MaterialTheme.typography.bodyMedium
                     )
+                    detail.phaseText?.let {
+                        Text(text = it, style = MaterialTheme.typography.bodySmall)
+                    }
                     if (detail.doseEquivalents.size > 1) {
                         Text(
                             text = detail.doseEquivalents.joinToString(separator = " / ") {

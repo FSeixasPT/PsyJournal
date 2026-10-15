@@ -126,4 +126,15 @@ class TimelineQuantityDetailsTest {
         val details = model(line(0, dose = 100.0, roaDuration = incomplete)).getQuantityDetails(at(90))
         assertTrue(details.isEmpty())
     }
+
+    @Test
+    fun withThePhaseEachSubstanceSaysWhatComesNextAndWhen() {
+        val model = model(line(0, dose = 100.0))
+        assertTrue(model.getQuantityDetails(at(10), withPhase = true).single().phaseText!!.startsWith("Waiting for onset · starts in 2"))
+        assertTrue(model.getQuantityDetails(at(45), withPhase = true).single().phaseText!!.startsWith("Coming up · peaks in 1"))
+        assertTrue(model.getQuantityDetails(at(90), withPhase = true).single().phaseText!!.startsWith("Peaking · comes down in 3"))
+        assertEquals(null, model.getQuantityDetails(at(200), withPhase = true).single().phaseText)
+        // a selected time on the chart isn't now, so no "in 20 min" there
+        assertEquals(null, model.getQuantityDetails(at(45)).single().phaseText)
+    }
 }
