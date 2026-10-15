@@ -37,7 +37,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.HourglassEmpty
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Medication
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -99,7 +99,7 @@ fun ExperienceRow(
                 if (duration != null) {
                     val hours = duration.toHoursText()
                     DetailWithIcon(
-                        imageVector = Icons.Outlined.HourglassEmpty,
+                        imageVector = Icons.Outlined.Schedule,
                         text = hours,
                         contentDescription = "Lasts about $hours"
                     )
