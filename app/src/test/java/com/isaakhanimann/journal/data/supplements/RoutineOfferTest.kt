@@ -41,4 +41,10 @@ class RoutineOfferTest {
         assertNull(routineOfferDose(listOf(dose), now, isRoutineRunning = false, isDismissed = true))
         assertNull(routineOfferDose(emptyList(), now, false, false))
     }
+
+    @Test
+    fun notOfferedWhenSuggestionsAreTurnedOff() {
+        val dose = now.minus(Duration.ofMinutes(30))
+        assertNull(routineOfferDose(listOf(dose), now, isRoutineRunning = false, isDismissed = false, isSuggestionOn = false))
+    }
 }

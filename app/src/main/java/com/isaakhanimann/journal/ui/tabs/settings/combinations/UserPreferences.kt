@@ -66,6 +66,7 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
         val KEY_LIVE_SHOW_ON_LOCK_SCREEN = booleanPreferencesKey("KEY_LIVE_SHOW_ON_LOCK_SCREEN")
         val KEY_ACTIVE_ROUTINE = stringPreferencesKey("KEY_ACTIVE_ROUTINE")
         val KEY_DISMISSED_ROUTINE_OFFERS = stringSetPreferencesKey("KEY_DISMISSED_ROUTINE_OFFERS")
+        val KEY_SUGGEST_ROUTINE = booleanPreferencesKey("KEY_SUGGEST_ROUTINE")
     }
 
     suspend fun saveTimeDisplayOption(value: SavedTimeDisplayOption) {
@@ -279,6 +280,14 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
                 preferences[PreferencesKeys.KEY_ACTIVE_ROUTINE] = value.toPreferenceString()
             }
         }
+    }
+
+    // whether logging MDMA offers the after-dose supplement reminders
+    val isRoutineSuggestedFlow: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[PreferencesKeys.KEY_SUGGEST_ROUTINE] ?: true }
+
+    suspend fun saveIsRoutineSuggested(value: Boolean) {
+        dataStore.edit { preferences -> preferences[PreferencesKeys.KEY_SUGGEST_ROUTINE] = value }
     }
 
     // experiences where the after-dose reminders were declined

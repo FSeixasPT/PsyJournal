@@ -22,8 +22,15 @@ import java.time.Duration
 import java.time.Instant
 
 // the after-dose reminders are offered for an MDMA dose of the user's own from the last 2 hours
-fun routineOfferDose(ownMdmaTimes: List<Instant>, now: Instant, isRoutineRunning: Boolean, isDismissed: Boolean): Instant? {
-    if (isRoutineRunning || isDismissed) return null
+fun routineOfferDose(
+    ownMdmaTimes: List<Instant>,
+    now: Instant,
+    isRoutineRunning: Boolean,
+    isDismissed: Boolean,
+    // the "Suggest MDMA supplement routine" setting
+    isSuggestionOn: Boolean = true,
+): Instant? {
+    if (isRoutineRunning || isDismissed || !isSuggestionOn) return null
     return ownMdmaTimes.filter { !it.isAfter(now) && Duration.between(it, now) <= Duration.ofHours(2) }.maxOrNull()
 }
 

@@ -88,6 +88,16 @@ class RoutineProgressTest {
     }
 
     @Test
+    fun theRoutinesExperienceIsTheOneWithItsDose() {
+        val linked = routine().copy(linkedIngestionId = 42)
+        assertEquals(5, routineExperienceId(linked, listOf(OwnDose(41, dose, 4), OwnDose(42, dose, 5))))
+        assertEquals(4, routineExperienceId(routine(), listOf(OwnDose(41, dose.plus(h(1)), 4))))
+        // before the dose is logged there's no experience yet
+        assertEquals(null, routineExperienceId(routine(), emptyList()))
+        assertEquals(null, routineExperienceId(routine(), listOf(OwnDose(41, dose.plus(h(9)), 4))))
+    }
+
+    @Test
     fun waterSoFarOnlyAfterTheDose() {
         assertEquals(null, waterSoFarText(dose, dose.minus(h(1)), 250))
         // nothing to have drunk yet right after the dose

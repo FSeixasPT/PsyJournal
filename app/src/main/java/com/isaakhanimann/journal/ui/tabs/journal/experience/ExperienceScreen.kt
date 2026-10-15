@@ -18,6 +18,8 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import com.isaakhanimann.journal.ui.supplements.RoutineStoppedDialog
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.isaakhanimann.journal.data.supplements.ActiveRoutine
 import com.isaakhanimann.journal.data.supplements.RoutineStep
 import com.isaakhanimann.journal.ui.supplements.SupplementRoutineCard
@@ -188,6 +190,7 @@ fun ExperienceScreen(
         routine = viewModel.routineForExperienceFlow.collectAsState().value,
         onToggleRoutineStep = viewModel::toggleRoutineStep,
         onStopRoutine = viewModel::stopRoutine,
+        onNeverSuggestRoutine = viewModel::neverSuggestRoutine,
         navigateToChooseDose = navigateToChooseDose,
         isQuickLogPending = viewModel::isQuickLogPending,
         onQuickLogOpened = viewModel::onQuickLogOpened,
@@ -263,6 +266,7 @@ fun ExperienceScreen(
     routine: ActiveRoutine? = null,
     onToggleRoutineStep: (RoutineStep, Boolean) -> Unit = { _, _ -> },
     onStopRoutine: () -> Unit = {},
+    onNeverSuggestRoutine: () -> Unit = {},
     navigateToChooseDose: (PlannedIngestion) -> Unit = {},
     isQuickLogPending: () -> Boolean = { false },
     onQuickLogOpened: () -> Unit = {},
@@ -314,11 +318,24 @@ fun ExperienceScreen(
                 isLiveNotificationAvailable = isLiveNotificationAvailable,
                 setLive = setLive,
             )
+            var isRoutineStoppedDialogShown by rememberSaveable { mutableStateOf(false) }
+            if (isRoutineStoppedDialogShown) {
+                RoutineStoppedDialog(
+                    onDismiss = { isRoutineStoppedDialogShown = false },
+                    onNeverSuggest = {
+                        onNeverSuggestRoutine()
+                        isRoutineStoppedDialogShown = false
+                    }
+                )
+            }
             if (routine != null) {
                 SupplementRoutineCard(
                     routine = routine,
                     onToggle = onToggleRoutineStep,
-                    onStop = onStopRoutine,
+                    onStop = {
+                        onStopRoutine()
+                        isRoutineStoppedDialogShown = true
+                    },
                     modifier = Modifier.padding(vertical = verticalCardPadding)
                 )
             } else if (routineOfferDose != null) {

@@ -18,6 +18,11 @@
 
 package com.isaakhanimann.journal.ui.supplements
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -80,33 +85,36 @@ fun rememberTickingNow(): Instant {
 
 // next step, water so far and how many past steps aren't marked done
 @Composable
-fun RoutineSummary(routine: ActiveRoutine, now: Instant) {
-    // the step to take now comes first, until it's marked done
+fun RoutineSummary(routine: ActiveRoutine, now: Instant, onToggle: (RoutineStep, Boolean) -> Unit) {
+    // the step to take now comes first, with its checkbox, until it's marked done
     currentStep(routine, now)?.let { current ->
         val title = reminderTitle(current, routine.doseTime, ::clockText).removePrefix("MDMA routine · ")
-        Text(
-            "Now: $title · ${takeLine(current)?.removePrefix("Take: ").orEmpty()}",
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = notMarkedColor
-        )
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Checkbox(checked = false, onCheckedChange = { onToggle(current, it) })
+            Text(
+                "Now: $title · ${takeLine(current)?.removePrefix("Take: ").orEmpty()}",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = notMarkedColor
+            )
+        }
     }
     remainingSteps(routine.kind, routine.doseTime, now).firstOrNull()?.let { next ->
         val title = reminderTitle(next, routine.doseTime, ::clockText).removePrefix("MDMA routine · ")
         Text(
             "Next: $title · ${takeLine(next)?.removePrefix("Take: ").orEmpty()}",
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold
         )
     }
     waterSoFarText(routine.doseTime, now, routine.mlPerHour)?.let {
-        Text(it, style = MaterialTheme.typography.bodyMedium)
+        Text(it, style = MaterialTheme.typography.bodySmall)
     }
     val notMarked = notMarkedCount(routine, now)
     if (notMarked > 0) {
         Text(
             if (notMarked == 1) "1 step not marked done" else "$notMarked steps not marked done",
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = notMarkedColor
         )
     }
@@ -161,7 +169,7 @@ private fun MissedSteps(routine: ActiveRoutine, now: Instant, onToggle: (Routine
     }
 }
 
-// under the chart of the experience the routine belongs to
+// under the chart of the experience the routine belongs to; the X stops it
 @Composable
 fun SupplementRoutineCard(
     routine: ActiveRoutine,
@@ -172,17 +180,33 @@ fun SupplementRoutineCard(
     val now = rememberTickingNow()
     var isScheduleShown by rememberSaveable { mutableStateOf(false) }
     ElevatedCard(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("Supplement routine", style = MaterialTheme.typography.titleMedium)
-            RoutineSummary(routine, now)
-            if (!isScheduleShown) MissedSteps(routine, now, onToggle)
-            if (isScheduleShown) RoutineSchedule(routine, now, onToggle)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(modifier = Modifier.padding(start = 16.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Supplement routine", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                IconButton(onClick = onStop) {
+                    Icon(Icons.Default.Close, contentDescription = "Stop supplement routine")
+                }
+            }
+            Column(modifier = Modifier.padding(end = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                RoutineSummary(routine, now, onToggle)
+                if (!isScheduleShown) MissedSteps(routine, now, onToggle)
+                if (isScheduleShown) RoutineSchedule(routine, now, onToggle)
                 TextButton(onClick = { isScheduleShown = !isScheduleShown }) {
                     Text(if (isScheduleShown) "Hide schedule" else "Schedule")
                 }
-                TextButton(onClick = onStop) { Text("Stop") }
             }
         }
     }
+}
+
+// shown by the screen, because the card is gone once the routine stops
+@Composable
+fun RoutineStoppedDialog(onDismiss: () -> Unit, onNeverSuggest: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Supplement routine stopped") },
+        text = { Text("The supplement routine was stopped for this experience.") },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("OK") } },
+        dismissButton = { TextButton(onClick = onNeverSuggest) { Text("Don't suggest again") } }
+    )
 }

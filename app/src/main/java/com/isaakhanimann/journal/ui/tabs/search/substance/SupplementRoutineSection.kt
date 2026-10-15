@@ -129,7 +129,7 @@ fun SupplementRoutineSection(
             )
             OutlinedButton(onClick = { isSheetOpen = true }) { Text("Plan…") }
         } else {
-            RoutineSummary(routine, now)
+            RoutineSummary(routine, now, onToggleStep)
             RoutineSchedule(routine, now, onToggleStep)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { isSheetOpen = true }) { Text("Change") }

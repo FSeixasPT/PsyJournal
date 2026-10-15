@@ -19,6 +19,7 @@
 package com.isaakhanimann.journal.data.room.experiences
 
 import com.isaakhanimann.journal.data.frequency.PastIngestion
+import com.isaakhanimann.journal.data.supplements.OwnDose
 import com.isaakhanimann.journal.data.room.experiences.entities.CustomSubstance
 import com.isaakhanimann.journal.data.room.experiences.entities.CustomUnit
 import com.isaakhanimann.journal.data.room.experiences.entities.Experience
@@ -193,6 +194,9 @@ class ExperienceRepository @Inject constructor(private val experienceDao: Experi
 
     suspend fun getPastIngestions(substanceNames: Set<String>, since: Instant): List<PastIngestion> =
         experienceDao.getOwnIngestionsSince(substanceNames.toList(), since).map { PastIngestion(it.substanceName, it.time, it.experienceId) }
+
+    suspend fun getOwnDoses(substanceNames: Set<String>, since: Instant): List<OwnDose> =
+        experienceDao.getOwnIngestionsSince(substanceNames.toList(), since).map { OwnDose(it.id, it.time, it.experienceId) }
 
     fun getPastIngestionsFlow(substanceNames: Set<String>, since: Instant): Flow<List<PastIngestion>> =
         experienceDao.getOwnIngestionsSinceFlow(substanceNames.toList(), since)
