@@ -18,6 +18,10 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline
 
+import com.isaakhanimann.journal.ui.tabs.journal.experience.components.TimeDisplayOption
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.Phase
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.phaseWithHint
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.word
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import com.isaakhanimann.journal.data.substances.classes.roa.RoaDuration
@@ -237,7 +241,8 @@ class AllTimelinesModel(
         Pair(seconds, fullTimelines.heightAt(seconds) / fullTimelines.referenceHeight)
     }
 
-    fun getQuantityDetails(time: Instant): List<TimelineQuantityDetail> {
+    // withPhase when the time is now: each substance then also says what comes next and when
+    fun getQuantityDetails(time: Instant, withPhase: Boolean = false): List<TimelineQuantityDetail> {
         val secondsFromStart = Duration.between(startTime, time).seconds.toFloat()
         return roaGroups.zip(groupDrawables).mapNotNull { (group, drawable) ->
             val fullTimelines = drawable.fullTimelines ?: return@mapNotNull null
@@ -258,7 +263,8 @@ class AllTimelinesModel(
                     }
                 } else {
                     emptyList()
-                }
+                },
+                phaseText = if (withPhase) CurveLine(startTime, fullTimelines).phaseText(time, startTime) else null
             )
         }
     }
@@ -305,4 +311,11 @@ class AllTimelinesModel(
             )
         }
     }
+}
+
+private fun CurveLine.phaseText(now: Instant, experienceStart: Instant): String? {
+    val (phase, hint) = phaseWithHint(now)
+    if (phase == Phase.ENDED || phase == Phase.NO_TIMELINE) return null
+    val hintText = hint?.let { "${it.kind.word} ${plannedTimeText(it.time, now, experienceStart, TimeDisplayOption.RELATIVE_TO_NOW)}" }
+    return listOfNotNull(phase.word.replaceFirstChar { it.uppercase() }, hintText).joinToString(" · ")
 }

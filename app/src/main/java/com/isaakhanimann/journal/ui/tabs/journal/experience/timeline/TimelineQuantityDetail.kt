@@ -28,7 +28,9 @@ data class TimelineQuantityDetail(
     val fractionOfPeak: Float,
     // for each route of the line: dose that would cause this intensity at its peak.
     // Empty if not all doses are known in consistent units.
-    val doseEquivalents: List<RouteDoseEquivalent>
+    val doseEquivalents: List<RouteDoseEquivalent>,
+    // like the live notification, e.g. "Coming up · peaks in 20 min"; only for now, null once it ended
+    val phaseText: String? = null,
 )
 
 data class RouteDoseEquivalent(
