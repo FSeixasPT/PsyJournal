@@ -18,6 +18,8 @@
 
 package com.isaakhanimann.journal.ui.tabs.settings
 
+import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
+import com.isaakhanimann.journal.data.room.experiences.entities.SubstanceCompanion
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
@@ -73,5 +75,20 @@ class ImportFileTest {
         assertEquals("This file contains 42 experiences with 118 ingestions, from 3 Mar 2024 to 12 Oct 2026, plus 5 custom substances and 1 custom unit.", text)
         assertTrue(ImportSummary(1, 1, march, march, 0, 0).text { "3 Mar 2024" }.startsWith("This file contains 1 experience with 1 ingestion, on 3 Mar 2024."))
         assertEquals("This file contains no experiences.", ImportSummary(0, 0, null, null, 0, 0).text { "" })
+    }
+
+    @Test
+    fun substancesWithoutAColorGetOneSoTheJournalCanShowThem() {
+        val lsd = experience(october, 0).copy(ingestions = listOf(ingestion(october).copy(substanceName = "LSD")))
+        val export = JournalExport(
+            experiences = listOf(experience(march, 1), lsd),
+            substanceCompanions = listOf(SubstanceCompanion("MDMA", AdaptiveColor.PINK))
+        )
+        val read = readImportFile(Json.encodeToString(JournalExport.serializer(), export)) as ImportFile.Export
+        val companions = read.journal.substanceCompanions.associateBy { it.substanceName }
+        assertEquals(setOf("MDMA", "LSD"), companions.keys)
+        // the file's own color is kept, and the new one differs from it
+        assertEquals(AdaptiveColor.PINK, companions.getValue("MDMA").color)
+        assertTrue(companions.getValue("LSD").color != AdaptiveColor.PINK)
     }
 }

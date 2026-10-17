@@ -18,6 +18,8 @@
 
 package com.isaakhanimann.journal.ui.tabs.settings
 
+import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
+import com.isaakhanimann.journal.data.room.experiences.entities.SubstanceCompanion
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -69,7 +71,8 @@ fun readImportFile(text: String): ImportFile {
     val element = runCatching { json.parseToJsonElement(text) }.getOrNull() ?: return ImportFile.Unreadable
     if (element !is JsonObject) return ImportFile.NotAnExport
     if (element.isNotEmpty() && element.keys.none { it in exportKeys }) return ImportFile.NotAnExport
-    val journal = runCatching { json.decodeFromJsonElement<JournalExport>(element) }.getOrNull() ?: return ImportFile.Unreadable
+    val decoded = runCatching { json.decodeFromJsonElement<JournalExport>(element) }.getOrNull() ?: return ImportFile.Unreadable
+    val journal = decoded.copy(substanceCompanions = withMissingCompanions(decoded))
     val dates = journal.experiences.map { it.sortDate }
     return ImportFile.Export(
         journal,
@@ -82,4 +85,17 @@ fun readImportFile(text: String): ImportFile {
             customUnits = journal.customUnits.size,
         )
     )
+}
+
+// the journal needs a color for every substance it shows; an export without one (made by hand or by
+// another tool) gets built-in colors, preferring ones the file doesn't use yet
+private fun withMissingCompanions(journal: JournalExport): List<SubstanceCompanion> {
+    val known = journal.substanceCompanions.map { it.substanceName }.toSet()
+    val missing = (journal.experiences.flatMap { e -> e.ingestions.map { it.substanceName } } + journal.customUnits.map { it.substanceName })
+        .distinct()
+        .filter { it !in known }
+    if (missing.isEmpty()) return journal.substanceCompanions
+    val used = journal.substanceCompanions.map { it.color }.toSet()
+    val palette = AdaptiveColor.pickerColors.filter { it !in used }.ifEmpty { AdaptiveColor.pickerColors }
+    return journal.substanceCompanions + missing.mapIndexed { i, name -> SubstanceCompanion(name, palette[i % palette.size]) }
 }
