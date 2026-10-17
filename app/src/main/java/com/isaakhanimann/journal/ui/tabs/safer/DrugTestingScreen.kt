@@ -116,7 +116,7 @@ fun DrugTestingScreen() {
                 TestingServiceItem(
                     name = "Get Your Drugs Tested",
                     city = "Vancouver",
-                    url = "http://www.vch.ca/public-health/harm-reduction/overdose-prevention-response/drug-checking"
+                    url = "https://www.vch.ca/en/service/drug-checking"
                 )
                 TestingServiceItem(
                     name = "grip",

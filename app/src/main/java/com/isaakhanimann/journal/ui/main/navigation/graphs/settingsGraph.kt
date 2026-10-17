@@ -23,7 +23,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.navigation
 import com.isaakhanimann.journal.ui.main.navigation.SettingsTopLevelRoute
 import com.isaakhanimann.journal.ui.main.navigation.composableWithTransitions
-import com.isaakhanimann.journal.ui.tabs.settings.DonateScreen
 import com.isaakhanimann.journal.ui.tabs.settings.FAQScreen
 import com.isaakhanimann.journal.ui.tabs.settings.SettingsScreen
 import com.isaakhanimann.journal.ui.tabs.settings.colors.SubstanceColorsScreen
@@ -52,16 +51,12 @@ fun NavGraphBuilder.settingsGraph(navController: NavHostController) {
                 navigateToCustomUnits = {
                     navController.navigate(CustomUnitsRoute)
                 },
-                navigateToDonate = {
-                    navController.navigate(DonateRoute)
-                },
                 navigateToRouteVisibility = {
                     navController.navigate(RouteVisibilityRoute)
                 },
             )
         }
         composableWithTransitions<FAQRoute> { FAQScreen() }
-        composableWithTransitions<DonateRoute> { DonateScreen() }
         composableWithTransitions<CombinationSettingsRoute> { CombinationSettingsScreen() }
         composableWithTransitions<SubstanceColorsRoute> { SubstanceColorsScreen() }
         composableWithTransitions<RouteVisibilityRoute> { RouteVisibilityScreen() }
@@ -95,9 +90,6 @@ object SettingsScreenRoute
 
 @Serializable
 object FAQRoute
-
-@Serializable
-object DonateRoute
 
 @Serializable
 object CombinationSettingsRoute

@@ -49,6 +49,7 @@ import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.QuestionAnswer
 import androidx.compose.material.icons.outlined.Route
 import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.VolunteerActivism
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -97,7 +98,6 @@ fun SettingsPreview() {
         navigateToComboSettings = {},
         navigateToSubstanceColors = {},
         navigateToCustomUnits = {},
-        navigateToDonate = {},
         navigateToRouteVisibility = {},
         importFile = {},
         pendingImport = null,
@@ -131,7 +131,6 @@ fun SettingsScreen(
     navigateToComboSettings: () -> Unit,
     navigateToSubstanceColors: () -> Unit,
     navigateToCustomUnits: () -> Unit,
-    navigateToDonate: () -> Unit,
     navigateToRouteVisibility: () -> Unit,
 ) {
     SettingsScreen(
@@ -139,7 +138,6 @@ fun SettingsScreen(
         navigateToComboSettings = navigateToComboSettings,
         navigateToSubstanceColors = navigateToSubstanceColors,
         navigateToCustomUnits = navigateToCustomUnits,
-        navigateToDonate = navigateToDonate,
         navigateToRouteVisibility = navigateToRouteVisibility,
         deleteEverything = viewModel::deleteEverything,
         importFile = viewModel::importFile,
@@ -174,7 +172,6 @@ fun SettingsScreen(
     navigateToComboSettings: () -> Unit,
     navigateToSubstanceColors: () -> Unit,
     navigateToCustomUnits: () -> Unit,
-    navigateToDonate: () -> Unit,
     navigateToRouteVisibility: () -> Unit,
     deleteEverything: () -> Unit,
     importFile: (uri: Uri) -> Unit,
@@ -463,6 +460,12 @@ fun SettingsScreen(
                 val shareIntent = Intent.createChooser(sendIntent, null)
                 SettingsButton(imageVector = Icons.Outlined.Share, text = "Share") {
                     context.startActivity(shareIntent)
+                }
+                if (isDonationOffered(context)) {
+                    HorizontalDivider()
+                    SettingsButton(imageVector = Icons.Outlined.VolunteerActivism, text = "Donate") {
+                        uriHandler.openUri(DONATE_URL)
+                    }
                 }
                 HorizontalDivider()
                 Text(

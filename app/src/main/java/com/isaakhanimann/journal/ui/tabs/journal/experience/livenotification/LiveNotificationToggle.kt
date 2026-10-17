@@ -38,6 +38,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,6 +60,10 @@ class LiveNotificationToggleState internal constructor(
     private val requestPermission: () -> Unit,
 ) {
     val isBlocked: Boolean get() = blocked.value
+
+    fun recheck() {
+        if (blocked.value && areLiveNotificationsAllowed(context)) blocked.value = false
+    }
 
     fun toggle(isLive: Boolean) {
         val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -110,8 +116,12 @@ fun LiveNotificationButton(isLive: Boolean, state: LiveNotificationToggleState) 
 
 @Composable
 fun LiveNotificationBlockedMessage(state: LiveNotificationToggleState) {
-    if (!state.isBlocked) return
     val context = LocalContext.current
+    // coming back from Android's settings after allowing notifications clears the message
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        state.recheck()
+    }
+    if (!state.isBlocked) return
     Column {
         Text(
             text = "Notifications are blocked for this app, so the live notification can't be shown.",
