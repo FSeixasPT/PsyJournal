@@ -360,6 +360,8 @@ private fun PlannedIngestionChip(
                         )
                     }
                     .padding(start = 10.dp, top = 8.dp, bottom = 8.dp)
+                    // the text gives way, so the buttons stay visible with a large font size
+                    .weight(1f, fill = false)
             ) {
                 val color = state.plannedLine?.color
                 if (color != null) {
