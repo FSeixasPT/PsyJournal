@@ -309,7 +309,7 @@ fun SettingsScreen(
                 HorizontalDivider()
                 SwitchWithInfoRow(
                     title = "Live notification details on lock screen",
-                    info = "When disabled, the lock screen only shows that an experience is in progress, without substance names or the chart. Details are shown after unlocking.",
+                    info = "When disabled, the live notification and supplement reminders ask Android to show only a generic message on the lock screen, without substance names or the chart, and the details after unlocking. Android shows the details anyway if it's set to show sensitive notification content on the lock screen; to hide them, turn that off in Android's notification settings.",
                     checked = isLiveShownOnLockScreen,
                     onCheckedChange = saveIsLiveShownOnLockScreen
                 )
