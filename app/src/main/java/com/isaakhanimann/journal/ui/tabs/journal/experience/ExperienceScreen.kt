@@ -541,7 +541,8 @@ private fun ConsumerSection(
                             .height(200.dp),
                         onSelectedTimeChange = { selectedTime = it }
                     )
-                    TimelineQuantityDetails(model = timelineModel, selectedTime = selectedTime)
+                    // a little more room below the chart's hour labels
+                    TimelineQuantityDetails(model = timelineModel, selectedTime = selectedTime, modifier = Modifier.padding(top = 5.dp))
                 }
             }
         }
@@ -821,7 +822,8 @@ private fun MyTimelineSection(
                         onSelectedTimeChange = { selectedTime = it }
                     )
                     // the details always describe the real ingestions, the planned one is described below the chip
-                    TimelineQuantityDetails(model = timelineModel, selectedTime = selectedTime)
+                    // a little more room below the chart's hour labels
+                    TimelineQuantityDetails(model = timelineModel, selectedTime = selectedTime, modifier = Modifier.padding(top = 5.dp))
                     if (isLiveNotificationAvailable) {
                         LiveNotificationBlockedMessage(state = liveToggleState)
                     }
