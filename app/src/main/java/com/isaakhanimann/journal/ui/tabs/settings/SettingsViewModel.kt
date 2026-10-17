@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.settings
 
+import kotlinx.coroutines.flow.MutableStateFlow
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationController
 import android.net.Uri
 import androidx.compose.material3.SnackbarDuration
@@ -125,33 +126,53 @@ class SettingsViewModel @Inject constructor(
 
     val snackbarHostState = SnackbarHostState()
 
+    // a read export waiting for the user to confirm replacing the journal, with the current journal's size
+    val pendingImportFlow = MutableStateFlow<PendingImport?>(null)
+
+    // reads the file first; nothing is replaced until the user has seen what it contains
     fun importFile(uri: Uri) {
         viewModelScope.launch {
             val text = fileSystemConnection.getTextFromUri(uri)
             if (text == null) {
-                snackbarHostState.showSnackbar(
-                    message = "File not found",
-                    duration = SnackbarDuration.Short
+                snackbarHostState.showSnackbar(message = "File not found", duration = SnackbarDuration.Short)
+                return@launch
+            }
+            when (val read = readImportFile(text)) {
+                is ImportFile.Export -> pendingImportFlow.value = PendingImport(
+                    read,
+                    currentExperiences = experienceRepository.getAllExperiencesWithIngestionsTimedNotesAndRatingsSorted().size
                 )
-            } else {
-                try {
-                    val json = Json { ignoreUnknownKeys = true }
-                    val journalExport = json.decodeFromString<JournalExport>(text)
-                    // the imported journal replaces the experience the notification follows
-                    liveNotificationController.stop()
-                    experienceRepository.deleteEverything()
-                    experienceRepository.insertEverything(journalExport)
-                    snackbarHostState.showSnackbar(
-                        message = "Import successful",
-                        duration = SnackbarDuration.Short
-                    )
-                } catch (e: Exception) {
-                    println("Error when decoding: ${e.message}")
-                    snackbarHostState.showSnackbar(
-                        message = "Decoding file failed",
-                        duration = SnackbarDuration.Short
-                    )
-                }
+
+                ImportFile.NotAnExport -> snackbarHostState.showSnackbar(
+                    message = "This file isn't a PsyJournal export. Nothing was changed.",
+                    duration = SnackbarDuration.Long
+                )
+
+                ImportFile.Unreadable -> snackbarHostState.showSnackbar(
+                    message = "This file couldn't be read. Nothing was changed.",
+                    duration = SnackbarDuration.Long
+                )
+            }
+        }
+    }
+
+    fun cancelImport() {
+        pendingImportFlow.value = null
+    }
+
+    fun confirmImport() {
+        val pending = pendingImportFlow.value ?: return
+        pendingImportFlow.value = null
+        viewModelScope.launch {
+            try {
+                // the imported journal replaces the experience the notification follows
+                liveNotificationController.stop()
+                experienceRepository.deleteEverything()
+                experienceRepository.insertEverything(pending.file.journal)
+                snackbarHostState.showSnackbar(message = "Import successful", duration = SnackbarDuration.Short)
+            } catch (e: Exception) {
+                println("Error when importing: ${e.message}")
+                snackbarHostState.showSnackbar(message = "Import failed", duration = SnackbarDuration.Short)
             }
         }
     }
@@ -260,3 +281,5 @@ class SettingsViewModel @Inject constructor(
         }
     }
 }
+
+data class PendingImport(val file: ImportFile.Export, val currentExperiences: Int)

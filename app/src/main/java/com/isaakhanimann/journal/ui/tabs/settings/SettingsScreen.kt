@@ -18,6 +18,9 @@
 
 package com.isaakhanimann.journal.ui.tabs.settings
 
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -97,6 +100,9 @@ fun SettingsPreview() {
         navigateToDonate = {},
         navigateToRouteVisibility = {},
         importFile = {},
+        pendingImport = null,
+        onConfirmImport = {},
+        onCancelImport = {},
         exportFile = {},
         snackbarHostState = remember { SnackbarHostState() },
         areDosageDotsHidden = false,
@@ -137,6 +143,9 @@ fun SettingsScreen(
         navigateToRouteVisibility = navigateToRouteVisibility,
         deleteEverything = viewModel::deleteEverything,
         importFile = viewModel::importFile,
+        pendingImport = viewModel.pendingImportFlow.collectAsState().value,
+        onConfirmImport = viewModel::confirmImport,
+        onCancelImport = viewModel::cancelImport,
         exportFile = viewModel::exportFile,
         snackbarHostState = viewModel.snackbarHostState,
         areDosageDotsHidden = viewModel.areDosageDotsHiddenFlow.collectAsState().value,
@@ -169,6 +178,10 @@ fun SettingsScreen(
     navigateToRouteVisibility: () -> Unit,
     deleteEverything: () -> Unit,
     importFile: (uri: Uri) -> Unit,
+    // a read export waiting for confirmation
+    pendingImport: PendingImport?,
+    onConfirmImport: () -> Unit,
+    onCancelImport: () -> Unit,
     exportFile: (uri: Uri) -> Unit,
     snackbarHostState: SnackbarHostState,
     areDosageDotsHidden: Boolean,
@@ -357,42 +370,28 @@ fun SettingsScreen(
                     )
                 }
                 HorizontalDivider()
-                var isShowingImportDialog by remember { mutableStateOf(false) }
-                SettingsButton(imageVector = Icons.Outlined.FileDownload, text = "Import file") {
-                    isShowingImportDialog = true
-                }
                 val launcherImport =
                     rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri ->
                         if (uri != null) {
                             importFile(uri)
                         }
                     }
-                AnimatedVisibility(visible = isShowingImportDialog) {
+                // the file is read first, so the confirmation can say what it contains
+                SettingsButton(imageVector = Icons.Outlined.FileDownload, text = "Import file") {
+                    launcherImport.launch(jsonMIMEType)
+                }
+                if (pendingImport != null) {
                     AlertDialog(
-                        onDismissRequest = { isShowingImportDialog = false },
-                        title = {
-                            Text(text = "Import file?")
-                        },
+                        onDismissRequest = onCancelImport,
+                        title = { Text(text = "Replace your journal?") },
                         text = {
-                            Text("Import a file that was exported before. Note that this will delete the data that you already have in the app.")
+                            val formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+                            val contents = pendingImport.file.summary.text { formatter.format(it.atZone(ZoneId.systemDefault())) }
+                            val current = pendingImport.currentExperiences.let { if (it == 1) "1 experience" else "$it experiences" }
+                            Text("$contents\n\nYour current journal ($current) will be replaced. This can't be undone.")
                         },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    isShowingImportDialog = false
-                                    launcherImport.launch(jsonMIMEType)
-                                }
-                            ) {
-                                Text("Import")
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(
-                                onClick = { isShowingImportDialog = false }
-                            ) {
-                                Text("Cancel")
-                            }
-                        }
+                        confirmButton = { TextButton(onClick = onConfirmImport) { Text("Replace journal") } },
+                        dismissButton = { TextButton(onClick = onCancelImport) { Text("Cancel") } }
                     )
                 }
                 HorizontalDivider()
