@@ -32,6 +32,9 @@ import androidx.compose.ui.unit.width
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.rememberLiveNotificationToggleState
 import com.isaakhanimann.journal.ui.theme.JournalTheme
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.text.TextLayoutResult
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -42,16 +45,18 @@ class EffectTimelineHeaderTest {
     @get:Rule
     val rule = createComposeRule()
 
-    private fun showHeader(fontScale: Float) {
+    private val cardWidth = 340.dp
+
+    private fun showHeader(fontScale: Float, isLive: Boolean = true) {
         rule.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
                 JournalTheme {
-                    // a common phone width
-                    Box(modifier = Modifier.width(360.dp)) {
+                    // the card's width on a common 360 dp phone, inside the screen's 10 dp margins
+                    Box(modifier = Modifier.width(cardWidth)) {
                         EffectTimelineHeader(
                             isLiveNotificationAvailable = true,
-                            isLive = true,
+                            isLive = isLive,
                             liveToggleState = rememberLiveNotificationToggleState {},
                             onInfo = {},
                             onExpand = {}
@@ -60,6 +65,33 @@ class EffectTimelineHeaderTest {
                 }
             }
         }
+    }
+
+    @Test
+    fun titleFitsOnOneLineOnACommonPhone() {
+        showHeader(fontScale = 1f, isLive = false)
+        assertTitleOnOneLine()
+    }
+
+    // the live button is widest when on, with its check mark
+    @Test
+    fun titleFitsOnOneLineOnACommonPhoneWithTheLiveNotificationOn() {
+        showHeader(fontScale = 1f, isLive = true)
+        assertTitleOnOneLine()
+    }
+
+    private fun assertTitleOnOneLine() {
+        val layouts = mutableListOf<TextLayoutResult>()
+        rule.onNodeWithText("Effect timeline").fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
+        val title = rule.onNodeWithText("Effect timeline").getBoundsInRoot()
+        val live = rule.onNodeWithText("Live notification").getBoundsInRoot()
+        val info = rule.onNodeWithText("Info").getBoundsInRoot()
+        val expand = rule.onNodeWithContentDescription("Expand timeline").getBoundsInRoot()
+        assertEquals(
+            "title ${title.width} (one line: ${with(rule.density) { layouts.single().multiParagraph.intrinsics.maxIntrinsicWidth.toDp() }}), live ${live.width}, info ${info.width}, expand ${expand.width}",
+            1, layouts.single().lineCount
+        )
     }
 
     @Test
@@ -79,7 +111,7 @@ class EffectTimelineHeaderTest {
             rule.onNodeWithContentDescription("Expand timeline").getBoundsInRoot(),
         ).forEach { bounds ->
             assertTrue("squeezed: $bounds", bounds.width > 20.dp)
-            assertTrue("outside the card: $bounds", bounds.right <= 360.dp)
+            assertTrue("outside the card: $bounds", bounds.right <= cardWidth + 0.5.dp) // allows for rounding to pixels
         }
     }
 }

@@ -8,7 +8,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ### Fixed
 
-- **Timeline buttons back on the title's line.** In 12.1, the timeline's Live notification, Info and expand buttons moved to a line of their own on many phones, even at the normal font size. They now stay next to the title, which wraps onto two lines if needed, and only move down when they really don't fit, such as with a very large font.
+- **Timeline header on one line again.** In 12.1, the timeline's Live notification, Info and expand buttons moved to a line of their own on many phones, even at the normal font size. The buttons are now a little more compact, so "Effect timeline" and the buttons fit on one line on common phones; when space is tighter the title wraps first, and the buttons only move down when they really don't fit, such as with a very large font. Live notification shows it's on by its color, without the check mark.
 
 ## 12.1 — 2026-10-17
 
