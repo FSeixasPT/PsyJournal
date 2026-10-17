@@ -6,6 +6,10 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ## Unreleased
 
+### Changed
+
+- **A little more space under the timeline chart**, between its hour labels and the list of current effects.
+
 ### Fixed
 
 - **Timeline header on one line again.** In 12.1, the timeline's Live notification, Info and expand buttons moved to a line of their own on many phones, even at the normal font size. The buttons are now a little more compact, so "Effect timeline" and the buttons fit on one line on common phones; when space is tighter the title wraps first, and the buttons only move down when they really don't fit, such as with a very large font. Live notification shows it's on by its color, without the check mark.
