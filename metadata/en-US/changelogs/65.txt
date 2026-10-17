@@ -1,0 +1,7 @@
+• Journal filter: by substances, number of substances or duration
+• MDMA supplement routine reminders (RollSafe), with water guidance
+• Warnings when sessions of MDMA, psychedelics or ketamine are too close together
+• Each substance's phase and what comes next, under the chart
+• Safer import: the file is checked and summarized before it replaces your journal
+• Clearer lock-screen setting; buttons stay visible with large fonts
+• Donate button (Ko-fi)
