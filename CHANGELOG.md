@@ -17,7 +17,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 - **Importing the wrong file can no longer wipe your journal.** A file that isn't a PsyJournal export is now rejected without changing anything; before, an unrelated JSON file was accepted and replaced the journal with an empty one. A valid export is read first, and the confirmation says what it contains (how many experiences and ingestions, and from when to when) and how many experiences your current journal has, before you replace it. An export that lacks the journal color of a substance it uses, such as one made by hand or by another tool, gets a built-in color instead of crashing the journal.
 - **The lock-screen setting explains what Android decides.** With "Live notification details on lock screen" off, PsyJournal asks Android for a generic lock-screen message, but Android still shows the details when the phone is set to show sensitive notification content. The setting now says so, and that it covers the supplement reminders too.
-- **Timeline buttons stay visible with a large font size.** The timeline's Live notification, Info and expand buttons wrap onto another line instead of disappearing, and the preview chip's pin, change and "I took it" buttons keep their space while its text wraps.
+- **Timeline buttons stay visible with a large font size.** The timeline's Live notification, Info and expand buttons wrap onto another line instead of disappearing, and the preview chip's pin, change and "I took it" buttons keep their space while its text wraps. The experience's title in the top bar stays on one line, ending in "…" when it doesn't fit.
 
 ## 12.0 — 2026-10-14
 
