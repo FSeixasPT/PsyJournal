@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.outlined.Medication
 import com.isaakhanimann.journal.ui.tabs.search.substance.rememberNotificationGate
@@ -914,7 +915,8 @@ private fun ExperienceTopBar(
     startSupplementRoutine: (() -> Unit)? = null,
 ) {
     TopAppBar(
-        title = { Text(oneExperienceScreenModel.title) },
+        // one line, so a long title or a large font size doesn't push it off the bar
+        title = { Text(oneExperienceScreenModel.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         actions = {
             var areTimeOptionsExpanded by remember { mutableStateOf(false) }
             IconButton(onClick = { areTimeOptionsExpanded = true }) {
