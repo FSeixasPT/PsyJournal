@@ -1,0 +1,2 @@
+• Timeline header fits on one line again on common phones (Live notification, Info and expand were pushed to a second line in 12.1)
+• A little more space under the timeline chart

@@ -16,8 +16,8 @@ android {
         applicationId = "io.github.fseixaspt.psyjournal"
         minSdk = 26
         targetSdk = 36
-        versionCode = 65
-        versionName = "12.1"
+        versionCode = 66
+        versionName = "12.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

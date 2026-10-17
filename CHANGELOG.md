@@ -4,7 +4,7 @@ All notable changes to PsyJournal are listed here, newest first.
 
 PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhanimann/psychonautwiki-journal-android) 11.11, the last open-source version. For changes up to 11.11, see the original project.
 
-## Unreleased
+## 12.1.1 — 2026-10-18
 
 ### Changed
 
