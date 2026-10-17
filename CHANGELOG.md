@@ -16,6 +16,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 ### Fixed
 
 - **Importing the wrong file can no longer wipe your journal.** A file that isn't a PsyJournal export is now rejected without changing anything; before, an unrelated JSON file was accepted and replaced the journal with an empty one. A valid export is read first, and the confirmation says what it contains (how many experiences and ingestions, and from when to when) and how many experiences your current journal has, before you replace it.
+- **The lock-screen setting explains what Android decides.** With "Live notification details on lock screen" off, PsyJournal asks Android for a generic lock-screen message, but Android still shows the details when the phone is set to show sensitive notification content. The setting now says so, and that it covers the supplement reminders too.
 
 ## 12.0 — 2026-10-14
 
