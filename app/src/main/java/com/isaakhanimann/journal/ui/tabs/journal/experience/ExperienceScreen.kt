@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.outlined.Medication
 import com.isaakhanimann.journal.ui.tabs.search.substance.rememberNotificationGate
 import com.isaakhanimann.journal.ui.supplements.RoutineStoppedDialog
@@ -759,6 +760,7 @@ private fun MyIngestionList(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MyTimelineSection(
     timelineDisplayOption: TimelineDisplayOption,
@@ -786,20 +788,24 @@ private fun MyTimelineSection(
             val timelineModel = timelineDisplayOption.allTimelinesModel
             val liveToggleState = rememberLiveNotificationToggleState(setLive)
             ElevatedCard(modifier = Modifier.padding(vertical = verticalCardPadding)) {
-                Row(
+                // wraps instead of squeezing the buttons away, e.g. with a large font size
+                FlowRow(
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    CardTitle(title = "Effect timeline")
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.align(Alignment.CenterVertically)) {
+                        CardTitle(title = "Effect timeline")
+                    }
+                    FlowRow(modifier = Modifier.align(Alignment.CenterVertically)) {
                         if (isLiveNotificationAvailable) {
-                            LiveNotificationButton(isLive = isLive, state = liveToggleState)
+                            Box(modifier = Modifier.align(Alignment.CenterVertically)) {
+                                LiveNotificationButton(isLive = isLive, state = liveToggleState)
+                            }
                         }
-                        TextButton(onClick = navigateToExplainTimeline) {
+                        TextButton(onClick = navigateToExplainTimeline, modifier = Modifier.align(Alignment.CenterVertically)) {
                             Text(text = "Info")
                         }
-                        IconButton(onClick = { navigateToTimelineScreen(YOU) }) {
+                        IconButton(onClick = { navigateToTimelineScreen(YOU) }, modifier = Modifier.align(Alignment.CenterVertically)) {
                             Icon(
                                 Icons.Default.OpenInFull,
                                 contentDescription = "Expand timeline"
