@@ -4,6 +4,12 @@ All notable changes to PsyJournal are listed here, newest first.
 
 PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhanimann/psychonautwiki-journal-android) 11.11, the last open-source version. For changes up to 11.11, see the original project.
 
+## Unreleased
+
+### Fixed
+
+- **Timeline buttons back on the title's line.** In 12.1, the timeline's Live notification, Info and expand buttons moved to a line of their own on many phones, even at the normal font size. They now stay next to the title, which wraps onto two lines if needed, and only move down when they really don't fit, such as with a very large font.
+
 ## 12.1 — 2026-10-17
 
 ### Added

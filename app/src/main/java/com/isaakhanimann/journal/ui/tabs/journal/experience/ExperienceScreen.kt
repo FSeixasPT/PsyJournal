@@ -18,6 +18,8 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.outlined.Medication
@@ -30,6 +32,7 @@ import com.isaakhanimann.journal.ui.supplements.SupplementRoutineCard
 import com.isaakhanimann.journal.ui.supplements.SupplementRoutineOffer
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationBlockedMessage
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationButton
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveNotificationToggleState
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.rememberLiveNotificationToggleState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
@@ -789,31 +792,13 @@ private fun MyTimelineSection(
             val timelineModel = timelineDisplayOption.allTimelinesModel
             val liveToggleState = rememberLiveNotificationToggleState(setLive)
             ElevatedCard(modifier = Modifier.padding(vertical = verticalCardPadding)) {
-                // wraps instead of squeezing the buttons away, e.g. with a large font size
-                FlowRow(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Box(modifier = Modifier.align(Alignment.CenterVertically)) {
-                        CardTitle(title = "Effect timeline")
-                    }
-                    FlowRow(modifier = Modifier.align(Alignment.CenterVertically)) {
-                        if (isLiveNotificationAvailable) {
-                            Box(modifier = Modifier.align(Alignment.CenterVertically)) {
-                                LiveNotificationButton(isLive = isLive, state = liveToggleState)
-                            }
-                        }
-                        TextButton(onClick = navigateToExplainTimeline, modifier = Modifier.align(Alignment.CenterVertically)) {
-                            Text(text = "Info")
-                        }
-                        IconButton(onClick = { navigateToTimelineScreen(YOU) }, modifier = Modifier.align(Alignment.CenterVertically)) {
-                            Icon(
-                                Icons.Default.OpenInFull,
-                                contentDescription = "Expand timeline"
-                            )
-                        }
-                    }
-                }
+                EffectTimelineHeader(
+                    isLiveNotificationAvailable = isLiveNotificationAvailable,
+                    isLive = isLive,
+                    liveToggleState = liveToggleState,
+                    onInfo = navigateToExplainTimeline,
+                    onExpand = { navigateToTimelineScreen(YOU) }
+                )
                 Column(
                     modifier = Modifier
                         .padding(horizontal = horizontalPadding)
@@ -1176,4 +1161,65 @@ private fun NowRelativeToStartTimeText(startTime: Instant) {
         style = MaterialTheme.typography.titleSmall,
         modifier = Modifier.padding(vertical = 5.dp, horizontal = horizontalPadding)
     )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun EffectTimelineHeader(
+    isLiveNotificationAvailable: Boolean,
+    isLive: Boolean,
+    liveToggleState: LiveNotificationToggleState,
+    onInfo: () -> Unit,
+    onExpand: () -> Unit,
+) {
+    TitleWithActions(
+        title = { CardTitle(title = "Effect timeline") }
+    ) {
+        // the buttons themselves wrap too when even they don't fit, e.g. with a large font size
+        FlowRow {
+            if (isLiveNotificationAvailable) {
+                Box(modifier = Modifier.align(Alignment.CenterVertically)) {
+                    LiveNotificationButton(isLive = isLive, state = liveToggleState)
+                }
+            }
+            TextButton(onClick = onInfo, modifier = Modifier.align(Alignment.CenterVertically)) {
+                Text(text = "Info")
+            }
+            IconButton(onClick = onExpand, modifier = Modifier.align(Alignment.CenterVertically)) {
+                Icon(
+                    Icons.Default.OpenInFull,
+                    contentDescription = "Expand timeline"
+                )
+            }
+        }
+    }
+}
+
+// The actions share the title's line while they fit next to its longest word, so the title wraps
+// before the actions do. Only when they don't fit even then do they move to a line of their own.
+@Composable
+private fun TitleWithActions(title: @Composable () -> Unit, actions: @Composable () -> Unit) {
+    Layout(
+        contents = listOf(title, actions),
+        modifier = Modifier.fillMaxWidth()
+    ) { (titleMeasurables, actionMeasurables), constraints ->
+        val titleMeasurable = titleMeasurables.first()
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val actions = actionMeasurables.first().measure(loose)
+        val width = constraints.maxWidth
+        if (actions.width + titleMeasurable.minIntrinsicWidth(Constraints.Infinity) <= width) {
+            val titlePlaceable = titleMeasurable.measure(loose.copy(maxWidth = width - actions.width))
+            val height = maxOf(titlePlaceable.height, actions.height)
+            layout(width, height) {
+                titlePlaceable.place(0, (height - titlePlaceable.height) / 2)
+                actions.place(width - actions.width, (height - actions.height) / 2)
+            }
+        } else {
+            val titlePlaceable = titleMeasurable.measure(loose)
+            layout(width, titlePlaceable.height + actions.height) {
+                titlePlaceable.place(0, 0)
+                actions.place(width - actions.width, titlePlaceable.height)
+            }
+        }
+    }
 }
