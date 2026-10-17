@@ -18,6 +18,9 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.CompactTextButtonPadding
+import com.isaakhanimann.journal.ui.theme.minimumTouchTargetHeight
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.style.TextOverflow
@@ -1173,7 +1176,8 @@ fun EffectTimelineHeader(
     onExpand: () -> Unit,
 ) {
     TitleWithActions(
-        title = { CardTitle(title = "Effect timeline") }
+        // the buttons bring their own padding
+        title = { CardTitle(title = "Effect timeline", endPadding = 0.dp) }
     ) {
         // the buttons themselves wrap too when even they don't fit, e.g. with a large font size
         FlowRow {
@@ -1182,7 +1186,14 @@ fun EffectTimelineHeader(
                     LiveNotificationButton(isLive = isLive, state = liveToggleState)
                 }
             }
-            TextButton(onClick = onInfo, modifier = Modifier.align(Alignment.CenterVertically)) {
+            TextButton(
+                onClick = onInfo,
+                contentPadding = CompactTextButtonPadding,
+                // replaces the default 58 dp minimum width, keeping a full-size touch target
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .widthIn(min = minimumTouchTargetHeight)
+            ) {
                 Text(text = "Info")
             }
             IconButton(onClick = onExpand, modifier = Modifier.align(Alignment.CenterVertically)) {

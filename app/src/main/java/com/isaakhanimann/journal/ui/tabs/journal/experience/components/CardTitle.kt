@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.components
 
+import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,10 +28,10 @@ import androidx.compose.ui.unit.dp
 import com.isaakhanimann.journal.ui.theme.horizontalPadding
 
 @Composable
-fun CardTitle(title: String) {
+fun CardTitle(title: String, endPadding: Dp = horizontalPadding) {
     Text(
         text = title,
         style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 5.dp)
+        modifier = Modifier.padding(start = horizontalPadding, end = endPadding, top = 5.dp, bottom = 5.dp)
     )
 }

@@ -18,6 +18,8 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.unit.dp
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -27,13 +29,7 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -101,15 +97,13 @@ fun LiveNotificationButton(isLive: Boolean, state: LiveNotificationToggleState) 
         colors = ButtonDefaults.textButtonColors(
             contentColor = if (isLive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
         ),
+        contentPadding = CompactTextButtonPadding,
         modifier = Modifier.semantics {
             role = Role.Switch
             stateDescription = if (isLive) "On" else "Off"
         }
     ) {
-        if (isLive) {
-            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
-            Spacer(modifier = Modifier.width(ButtonDefaults.IconSpacing))
-        }
+        // on shows in the accent colour; a check mark wouldn't leave room for the header's title on common phones
         Text(text = "Live notification")
     }
 }
@@ -144,3 +138,6 @@ private fun areLiveNotificationsAllowed(context: Context): Boolean {
     return manager.areNotificationsEnabled() &&
             isChannelUsable(manager.getNotificationChannelCompat(LiveNotificationNotifier.CHANNEL_ID)?.importance)
 }
+
+// narrower than a text button's default, so the timeline header fits on one line on common phones
+val CompactTextButtonPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
