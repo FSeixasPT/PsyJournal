@@ -20,7 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.isaakhanimann.journal.ui.utils.getDateWithWeekdayText
+import com.isaakhanimann.journal.ui.utils.getPickerDateText
 import com.isaakhanimann.journal.ui.utils.getShortTimeText
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.rememberCurrentTime
 import java.time.LocalDateTime
@@ -63,7 +63,7 @@ fun TimePointOrRangePicker(
                         DatePickerButton(
                             localDateTime = localDateTimeStart,
                             onChange = onChangeStartDateOrTime,
-                            dateString = localDateTimeStart.getDateWithWeekdayText(),
+                            dateString = localDateTimeStart.getPickerDateText(),
                         )
                         TimePickerButton(
                             localDateTime = localDateTimeStart,
@@ -99,7 +99,7 @@ fun TimePointOrRangePicker(
                         DatePickerButton(
                             localDateTime = localDateTimeStart,
                             onChange = onChangeStartDateOrTime,
-                            dateString = localDateTimeStart.getDateWithWeekdayText(),
+                            dateString = localDateTimeStart.getPickerDateText(),
                         )
                         TimePickerButton(
                             localDateTime = localDateTimeStart,
@@ -129,7 +129,7 @@ fun TimePointOrRangePicker(
                         DatePickerButton(
                             localDateTime = localDateTimeEnd,
                             onChange = onChangeEndDateOrTime,
-                            dateString = localDateTimeEnd.getDateWithWeekdayText(),
+                            dateString = localDateTimeEnd.getPickerDateText(),
                         )
                         TimePickerButton(
                             localDateTime = localDateTimeEnd,

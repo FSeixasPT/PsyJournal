@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.utils
 
+import java.time.LocalDate
 import java.text.DateFormat
 import java.time.Instant
 import java.time.LocalDateTime
@@ -76,3 +77,11 @@ fun Instant.getLocalDateTime(): LocalDateTime {
 fun LocalDateTime.getInstant(): Instant {
     return atZone(ZoneId.systemDefault()).toInstant()
 }
+
+// for the date buttons of the time pickers: the year only when it isn't this one, so the button leaves room for the time
+fun pickerDateText(date: LocalDate, today: LocalDate = LocalDate.now(), locale: Locale = Locale.getDefault()): String {
+    val pattern = if (date.year == today.year) "EEE d MMM" else "EEE d MMM yyyy"
+    return date.format(DateTimeFormatter.ofPattern(pattern, locale))
+}
+
+fun LocalDateTime.getPickerDateText(): String = pickerDateText(toLocalDate())

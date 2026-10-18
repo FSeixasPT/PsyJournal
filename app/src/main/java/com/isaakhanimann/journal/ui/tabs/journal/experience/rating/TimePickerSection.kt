@@ -31,7 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.time.DatePickerButton
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.time.TimePickerButton
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.CardWithTitle
-import com.isaakhanimann.journal.ui.utils.getDateWithWeekdayText
+import com.isaakhanimann.journal.ui.utils.getPickerDateText
 import com.isaakhanimann.journal.ui.utils.getShortTimeText
 import java.time.LocalDateTime
 
@@ -57,7 +57,7 @@ fun TimePickerSection(
             DatePickerButton(
                 localDateTime = selectedTime,
                 onChange = onTimeChange,
-                dateString = selectedTime.getDateWithWeekdayText(),
+                dateString = selectedTime.getPickerDateText(),
                 modifier = Modifier.fillMaxWidth()
             )
             TimePickerButton(

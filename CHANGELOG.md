@@ -4,6 +4,19 @@ All notable changes to PsyJournal are listed here, newest first.
 
 PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhanimann/psychonautwiki-journal-android) 11.11, the last open-source version. For changes up to 11.11, see the original project.
 
+## Unreleased
+
+### Changed
+
+- **Shorter dates on the time pickers.** The date buttons when logging or editing an ingestion or rating leave out the year when it's this year, such as "Sun 18 Oct", so the time next to them stays on one line.
+- **Settings labels a little smaller**, so the longer switch settings fit next to their switch on common phones.
+
+### Fixed
+
+- **Settings switches no longer cut off.** On narrower phones, the switches of longer settings such as "Live notification details on lock screen" were pushed partly off the card; the label now wraps instead.
+- **Drug testing services with long city lists show their name.** Ai Laket in Spain showed as "Ai …"; long city lists now wrap, and its cities read Vitoria-Gasteiz, Bilbao and Donostia.
+- **The last interactions and safer-use tips scroll clear of the Next button** when logging an ingestion.
+
 ## 12.1.1 — 2026-10-18
 
 ### Changed

@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion
 
+import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -25,6 +26,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 
+// space at the end of a scrolling screen so its last lines can scroll clear of the button: 56 dp high, 16 dp from the edge
+val spaceBelowNextFAB = 80.dp
 
 @Composable
 fun NextFAB(navigateToNext: () -> Unit) {

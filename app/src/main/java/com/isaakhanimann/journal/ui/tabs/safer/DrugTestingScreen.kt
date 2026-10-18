@@ -18,17 +18,17 @@
 
 package com.isaakhanimann.journal.ui.tabs.safer
 
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -208,7 +208,7 @@ fun DrugTestingScreen() {
                 )
                 TestingServiceItem(
                     name = "Ai Laket",
-                    city = "Vitoria-Gasteiz, Bilbo and Donosti",
+                    city = "Vitoria-Gasteiz, Bilbao and Donostia",
                     url = "https://ailaket.com/proyectos/punto-fijo/"
                 )
             }
@@ -321,10 +321,11 @@ fun TestingServiceItem(
             style = MaterialTheme.typography.titleSmall,
             modifier = Modifier.weight(1f)
         )
+        // a long list of cities wraps instead of squeezing out the name
         Text(
             text = city,
-            maxLines = 1,
-            modifier = Modifier.width(IntrinsicSize.Max)
+            textAlign = TextAlign.End,
+            modifier = Modifier.widthIn(max = 160.dp)
         )
     }
 }
