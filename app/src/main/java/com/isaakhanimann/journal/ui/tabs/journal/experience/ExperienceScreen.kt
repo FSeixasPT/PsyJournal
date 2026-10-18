@@ -840,7 +840,8 @@ private fun MyTimelineSection(
                         frequencyLine = frequencyLine,
                         isLogPending = isQuickLogPending,
                         onLogOpened = onQuickLogOpened,
-                        modifier = Modifier.padding(top = 4.dp)
+                        // the room from the details above is only needed inside the chart card
+                        modifier = if (isPinned) Modifier else Modifier.padding(top = 4.dp)
                     )
                 }
                 if (isDisclaimerShown) {
@@ -900,13 +901,7 @@ private fun MyTimelineSection(
                 },
                 content = {
                     if (isPinned && (isPlanShown || isDisclaimerShown)) {
-                        ElevatedCard(modifier = Modifier.padding(vertical = verticalCardPadding)) {
-                            Column(
-                                modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 10.dp),
-                                verticalArrangement = Arrangement.spacedBy(5.dp),
-                                content = extras
-                            )
-                        }
+                        PinnedExtrasCard(modifier = Modifier.padding(vertical = verticalCardPadding), content = extras)
                     }
                     content()
                 }

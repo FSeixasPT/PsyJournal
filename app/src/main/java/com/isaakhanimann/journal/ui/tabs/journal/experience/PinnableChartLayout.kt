@@ -17,6 +17,12 @@
  */
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import com.isaakhanimann.journal.ui.theme.horizontalPadding
+import androidx.compose.ui.unit.dp
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.rememberScrollState
@@ -50,5 +56,20 @@ fun PinnableChartLayout(
             chart()
             content()
         }
+    }
+}
+
+// what's below the chart in its card, such as the planned dose, when the chart is pinned without it
+@Composable
+fun PinnedExtrasCard(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    ElevatedCard(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp),
+            content = content
+        )
     }
 }

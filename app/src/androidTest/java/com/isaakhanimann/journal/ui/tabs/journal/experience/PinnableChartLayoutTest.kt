@@ -17,6 +17,9 @@
  */
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -86,5 +89,23 @@ class PinnableChartLayoutTest {
         val chartAfter = rule.onNodeWithTag("chart").getBoundsInRoot()
         // a chart scrolled fully out of view has empty bounds, so this compares its bottom edge
         assertTrue("chart stayed: $chartBefore -> $chartAfter", chartAfter.bottom < chartBefore.bottom)
+    }
+
+    @Test
+    fun extrasCardIsFullWidthAndOnlyAsTallAsItsButton() {
+        rule.setContent {
+            JournalTheme {
+                Column(modifier = Modifier.width(360.dp)) {
+                    PinnedExtrasCard(modifier = Modifier.testTag("card")) {
+                        TextButton(onClick = {}) { Text("Preview next ingestion") }
+                    }
+                }
+            }
+        }
+        val card = rule.onNodeWithTag("card").getBoundsInRoot()
+        assertEquals(360.dp, card.right - card.left)
+        // the button's 48 dp touch target and 4 dp above and below it, give or take the rounding to pixels
+        val height = card.bottom - card.top
+        assertTrue("card is $height tall", height < 57.dp)
     }
 }
