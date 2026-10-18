@@ -18,9 +18,9 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
-import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.CompactTextButtonPadding
-import com.isaakhanimann.journal.ui.theme.minimumTouchTargetHeight
-import androidx.compose.foundation.layout.widthIn
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.ChartSettingsSheet
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.ChartSettingsButton
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.ChartSettings
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.style.TextOverflow
@@ -190,6 +190,8 @@ fun ExperienceScreen(
         navigateToTimelineScreen = navigateToTimelineScreen,
         areDosageDotsHidden = viewModel.areDosageDotsHiddenFlow.collectAsState().value,
         isTimelineHidden = viewModel.isTimelineHiddenFlow.collectAsState().value,
+        chartSettings = viewModel.chartSettingsFlow.collectAsState().value,
+        onChangeChartSettings = viewModel::saveChartSettings,
         plannedIngestionActions = viewModel.plannedIngestionActions,
         frequencyLine = viewModel.pastFrequencyIngestionsFlow.collectAsState().value.let { past ->
             { substanceName: String -> viewModel.frequencyLineFor(substanceName, past) }
@@ -270,6 +272,8 @@ fun ExperienceScreen(
     navigateToTimelineScreen: (consumerName: String) -> Unit,
     areDosageDotsHidden: Boolean,
     isTimelineHidden: Boolean,
+    chartSettings: ChartSettings = ChartSettings(),
+    onChangeChartSettings: (ChartSettings) -> Unit = {},
     plannedIngestionActions: PlannedIngestionActions? = null,
     frequencyLine: (substanceName: String) -> String? = { null },
     routineOfferDose: Instant? = null,
@@ -346,6 +350,8 @@ fun ExperienceScreen(
                 verticalCardPadding = verticalCardPadding,
                 navigateToExplainTimeline = navigateToExplainTimeline,
                 navigateToTimelineScreen = navigateToTimelineScreen,
+                chartSettings = chartSettings,
+                onChangeChartSettings = onChangeChartSettings,
                 oneExperienceScreenModel = oneExperienceScreenModel,
                 timeDisplayOption = timeDisplayOption,
                 isOralDisclaimerHidden = isOralDisclaimerHidden,
@@ -775,6 +781,8 @@ private fun MyTimelineSection(
     verticalCardPadding: Dp,
     navigateToExplainTimeline: () -> Unit,
     navigateToTimelineScreen: (consumerName: String) -> Unit,
+    chartSettings: ChartSettings,
+    onChangeChartSettings: (ChartSettings) -> Unit,
     oneExperienceScreenModel: OneExperienceScreenModel,
     timeDisplayOption: TimeDisplayOption,
     isOralDisclaimerHidden: Boolean,
@@ -795,12 +803,21 @@ private fun MyTimelineSection(
         is TimelineDisplayOption.Shown -> {
             val timelineModel = timelineDisplayOption.allTimelinesModel
             val liveToggleState = rememberLiveNotificationToggleState(setLive)
+            var isShowingChartSettings by remember { mutableStateOf(false) }
+            if (isShowingChartSettings) {
+                ChartSettingsSheet(
+                    settings = chartSettings,
+                    onChange = onChangeChartSettings,
+                    onExplain = navigateToExplainTimeline,
+                    onDismiss = { isShowingChartSettings = false }
+                )
+            }
             ElevatedCard(modifier = Modifier.padding(vertical = verticalCardPadding)) {
                 EffectTimelineHeader(
                     isLiveNotificationAvailable = isLiveNotificationAvailable,
                     isLive = isLive,
                     liveToggleState = liveToggleState,
-                    onInfo = navigateToExplainTimeline,
+                    onSettings = { isShowingChartSettings = true },
                     onExpand = { navigateToTimelineScreen(YOU) }
                 )
                 Column(
@@ -1174,7 +1191,7 @@ fun EffectTimelineHeader(
     isLiveNotificationAvailable: Boolean,
     isLive: Boolean,
     liveToggleState: LiveNotificationToggleState,
-    onInfo: () -> Unit,
+    onSettings: () -> Unit,
     onExpand: () -> Unit,
 ) {
     TitleWithActions(
@@ -1188,16 +1205,7 @@ fun EffectTimelineHeader(
                     LiveNotificationButton(isLive = isLive, state = liveToggleState)
                 }
             }
-            TextButton(
-                onClick = onInfo,
-                contentPadding = CompactTextButtonPadding,
-                // replaces the default 58 dp minimum width, keeping a full-size touch target
-                modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .widthIn(min = minimumTouchTargetHeight)
-            ) {
-                Text(text = "Info")
-            }
+            ChartSettingsButton(onClick = onSettings, modifier = Modifier.align(Alignment.CenterVertically))
             IconButton(onClick = onExpand, modifier = Modifier.align(Alignment.CenterVertically)) {
                 Icon(
                     Icons.Default.OpenInFull,

@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.ChartSettings
 import com.isaakhanimann.journal.data.supplements.latestDose
 import com.isaakhanimann.journal.data.supplements.isRoutineOfferDismissed
 import com.isaakhanimann.journal.data.supplements.routineMenuState
@@ -101,27 +102,15 @@ class ExperienceViewModel @Inject constructor(
     private val state: SavedStateHandle
 ) : ViewModel() {
 
-    private val areSubstanceHeightsIndependentFlow =
-        userPreferences.areSubstanceHeightsIndependentFlow.stateIn(
-            initialValue = false,
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000)
-        )
-
-    private val areRoutesMergedFlow =
-        userPreferences.areRoutesMergedFlow.stateIn(
-            initialValue = true,
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000)
-        )
-
     // the chart settings in one flow, because the timeline flow already combines six flows
-    private val chartSettingsFlow = combine(
-        areSubstanceHeightsIndependentFlow,
-        areRoutesMergedFlow,
-        userPreferences.isDurationRangeShownFlow
-    ) { areSubstanceHeightsIndependent, areRoutesMerged, isDurationRangeShown ->
-        Triple(areSubstanceHeightsIndependent, areRoutesMerged, isDurationRangeShown)
+    val chartSettingsFlow = userPreferences.chartSettingsFlow.stateIn(
+        initialValue = ChartSettings(),
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000)
+    )
+
+    fun saveChartSettings(settings: ChartSettings) = viewModelScope.launch {
+        userPreferences.saveChartSettings(settings)
     }
 
     val isTimelineHiddenFlow = userPreferences.isTimelineHiddenFlow.stateIn(

@@ -18,6 +18,8 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.screen
 
+import kotlinx.coroutines.launch
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.ChartSettings
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -64,19 +66,15 @@ class TimelineScreenViewModel @Inject constructor(
     state: SavedStateHandle
 ) : ViewModel() {
 
-    private val areSubstanceHeightsIndependentFlow =
-        userPreferences.areSubstanceHeightsIndependentFlow.stateIn(
-            initialValue = false,
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000)
-        )
+    val chartSettingsFlow = userPreferences.chartSettingsFlow.stateIn(
+        initialValue = ChartSettings(),
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000)
+    )
 
-    private val areRoutesMergedFlow =
-        userPreferences.areRoutesMergedFlow.stateIn(
-            initialValue = true,
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000)
-        )
+    fun saveChartSettings(settings: ChartSettings) = viewModelScope.launch {
+        userPreferences.saveChartSettings(settings)
+    }
 
     private val timelineRoute = state.toRoute<TimelineScreenRoute>()
     private val experienceID = timelineRoute.experienceId
@@ -174,12 +172,8 @@ class TimelineScreenViewModel @Inject constructor(
         dataForEffectLinesFlow,
         ratingsFlow,
         timedNotesFlow,
-        areSubstanceHeightsIndependentFlow,
-        // combine takes at most five flows with their own types
-        areRoutesMergedFlow.combine(userPreferences.isDurationRangeShownFlow) { areRoutesMerged, isDurationRangeShown ->
-            Pair(areRoutesMerged, isDurationRangeShown)
-        }
-    ) { dataForEffectLines, ratings, timedNotesSorted, areSubstanceHeightsIndependent, (areRoutesMerged, isDurationRangeShown) ->
+        chartSettingsFlow
+    ) { dataForEffectLines, ratings, timedNotesSorted, (areSubstanceHeightsIndependent, areRoutesMerged, isDurationRangeShown) ->
 
         val newRatings = if (consumerName == YOU) ratings else emptyList()
         val newTimedNotes = if (consumerName == YOU) timedNotesSorted else emptyList()

@@ -18,6 +18,8 @@
 
 package com.isaakhanimann.journal.ui.tabs.settings.combinations
 
+import kotlinx.coroutines.flow.combine
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.ChartSettings
 import com.isaakhanimann.journal.data.supplements.ActiveRoutine
 import com.isaakhanimann.journal.ui.tabs.journal.experience.livenotification.LiveExperience
 import androidx.datastore.core.DataStore
@@ -171,6 +173,21 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
         .map { preferences ->
             preferences[PreferencesKeys.KEY_ARE_ROUTES_MERGED] ?: true
         }
+
+    val chartSettingsFlow: Flow<ChartSettings> = combine(
+        areSubstanceHeightsIndependentFlow,
+        areRoutesMergedFlow,
+        isDurationRangeShownFlow,
+        ::ChartSettings
+    )
+
+    suspend fun saveChartSettings(settings: ChartSettings) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.KEY_ARE_SUBSTANCE_HEIGHTS_INDEPENDENT] = settings.areSubstanceHeightsIndependent
+            preferences[PreferencesKeys.KEY_ARE_ROUTES_MERGED] = settings.areRoutesMerged
+            preferences[PreferencesKeys.KEY_IS_DURATION_RANGE_SHOWN] = settings.isDurationRangeShown
+        }
+    }
 
     // only one redose preview can be pinned at a time, across all experiences
     suspend fun savePinnedRedose(value: PinnedRedose?) {

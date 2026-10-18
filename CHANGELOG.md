@@ -6,6 +6,10 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ## Unreleased
 
+### Added
+
+- **Chart settings next to the chart.** A gear on the effect timeline, and on the full-screen chart, opens a sheet with the chart's switches: independent substance heights, merged routes and duration range. The chart changes behind the sheet as you tap them. They apply to all experiences and are still in Settings too. The sheet links to the explanation of how to read the chart, which replaces the Info button.
+
 ### Changed
 
 - **Shorter dates on the time pickers.** The date buttons when logging or editing an ingestion or rating leave out the year when it's this year, such as "Sun 18 Oct", so the time next to them stays on one line.
