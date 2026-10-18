@@ -18,6 +18,9 @@
 
 package com.isaakhanimann.journal.ui.main
 
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,7 +30,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -75,21 +77,22 @@ fun AcceptConditionsScreen(
             var checkedState3 by remember { mutableStateOf(false) }
             val allIsChecked =
                 checkedState0 && checkedState1 && checkedState2 && checkedState3
-            val painter =
-                if (allIsChecked) painterResource(R.drawable.eye_open) else painterResource(R.drawable.eye_closed)
             Image(
-                painter = painter,
-                contentDescription = "PsychonautWiki eye",
+                painter = painterResource(R.drawable.ic_app_logo),
+                contentDescription = "PsyJournal logo",
+                // gray until every condition is accepted, like the eye that opened in the original app
+                colorFilter = if (allIsChecked) null else ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) }),
+                // the padding is outside the clip, so the ripple is the logo's circle
                 modifier = Modifier
-                    .clip(RoundedCornerShape(30.dp))
+                    .padding(bottom = 20.dp)
+                    .fillMaxWidth(0.4f)
+                    .clip(CircleShape)
                     .clickable {
                         checkedState0 = true
                         checkedState1 = true
                         checkedState2 = true
                         checkedState3 = true
                     }
-                    .fillMaxWidth(0.4f)
-                    .padding(bottom = 20.dp)
             )
             Column(
                 horizontalAlignment = Alignment.Start,

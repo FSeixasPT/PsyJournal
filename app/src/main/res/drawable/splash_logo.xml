@@ -19,23 +19,12 @@
 
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <!-- the Sunset disc from the app icon behind the eye -->
+    <!-- the app icon on its Sunset disc. Android draws a splash icon 1.8 times larger and shows only a 192 dp
+         circle of it, so this keeps the whole disc in view, about 187 dp wide -->
     <item
-        android:width="150dp"
-        android:height="150dp"
-        android:gravity="center"
-        tools:ignore="UnusedAttribute">
-        <shape android:shape="oval">
-            <gradient
-                android:angle="270"
-                android:endColor="#FBBF24"
-                android:startColor="#FB7185" />
-        </shape>
-    </item>
-    <item
-        android:width="94dp"
-        android:height="83dp"
-        android:drawable="@drawable/eye_open"
+        android:width="104dp"
+        android:height="104dp"
+        android:drawable="@drawable/ic_app_logo"
         android:gravity="center"
         tools:ignore="UnusedAttribute" />
 </layer-list>

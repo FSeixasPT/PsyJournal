@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PsyJournal's mark: an open journal with a red spiral, on the Sunset background -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="@string/icon_pages" />
+    <path
+        android:fillColor="#BE123C"
+        android:pathData="@string/icon_spiral" />
+</vector>

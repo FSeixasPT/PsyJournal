@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- the app icon as it shows on a round launcher, for the welcome and launch screens -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="72dp"
+    android:height="72dp"
+    android:viewportWidth="72"
+    android:viewportHeight="72">
+    <path android:pathData="M36,0 A36,36 0 1,1 36,72 A36,36 0 1,1 36,0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endColor="#FBBF24"
+                android:endX="36"
+                android:endY="72"
+                android:startColor="#FB7185"
+                android:startX="36"
+                android:startY="0"
+                android:type="linear" />
+        </aapt:attr>
+    </path>
+    <!-- the icon's 108-unit layer, of which a launcher shows the middle 72 -->
+    <group
+        android:translateX="-18"
+        android:translateY="-18">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="@string/icon_pages" />
+        <path
+            android:fillColor="#BE123C"
+            android:pathData="@string/icon_spiral" />
+    </group>
+</vector>
