@@ -59,6 +59,23 @@ fun PinnableChartLayout(
     }
 }
 
+// the chart and what's below it, inside the chart card
+@Composable
+fun ChartCardColumn(
+    // the planned dose or the disclaimer, which end in a button
+    hasExtrasAtTheEnd: Boolean,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .padding(horizontal = horizontalPadding)
+            // a button's 48 dp touch target already leaves room below it
+            .padding(bottom = if (hasExtrasAtTheEnd) 2.dp else 10.dp),
+        verticalArrangement = Arrangement.spacedBy(5.dp),
+        content = content
+    )
+}
+
 // what's below the chart in its card, such as the planned dose, when the chart is pinned without it
 @Composable
 fun PinnedExtrasCard(

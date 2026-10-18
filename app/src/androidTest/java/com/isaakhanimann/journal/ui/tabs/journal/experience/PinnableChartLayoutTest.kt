@@ -92,6 +92,27 @@ class PinnableChartLayoutTest {
     }
 
     @Test
+    fun chartCardEndingInAButtonHasLittlePaddingBelowIt() {
+        rule.setContent {
+            JournalTheme {
+                Column(modifier = Modifier.width(360.dp)) {
+                    Box(modifier = Modifier.testTag("card")) {
+                        ChartCardColumn(hasExtrasAtTheEnd = true) {
+                            TextButton(onClick = {}, modifier = Modifier.testTag("button")) {
+                                Text("Preview next ingestion")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        val card = rule.onNodeWithTag("card").getBoundsInRoot()
+        val button = rule.onNodeWithTag("button").getBoundsInRoot()
+        // the bounds are the visible button: 4 dp of its 48 dp touch target and 2 dp of padding are below it
+        assertTrue("${card.bottom - button.bottom} below the button", card.bottom - button.bottom < 7.dp)
+    }
+
+    @Test
     fun extrasCardIsFullWidthAndOnlyAsTallAsItsButton() {
         rule.setContent {
             JournalTheme {

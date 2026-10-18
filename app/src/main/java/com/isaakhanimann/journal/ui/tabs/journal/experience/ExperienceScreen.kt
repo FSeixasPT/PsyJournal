@@ -840,8 +840,6 @@ private fun MyTimelineSection(
                         frequencyLine = frequencyLine,
                         isLogPending = isQuickLogPending,
                         onLogOpened = onQuickLogOpened,
-                        // the room from the details above is only needed inside the chart card
-                        modifier = if (isPinned) Modifier else Modifier.padding(top = 4.dp)
                     )
                 }
                 if (isDisclaimerShown) {
@@ -872,12 +870,7 @@ private fun MyTimelineSection(
                             onSettings = { isShowingChartSettings = true },
                             onExpand = { navigateToTimelineScreen(YOU) }
                         )
-                        Column(
-                            modifier = Modifier
-                                .padding(horizontal = horizontalPadding)
-                                .padding(bottom = 10.dp),
-                            verticalArrangement = Arrangement.spacedBy(5.dp)
-                        ) {
+                        ChartCardColumn(hasExtrasAtTheEnd = !isPinned && (isPlanShown || isDisclaimerShown)) {
                             AllTimelines(
                                 model = displayedModel,
                                 timeDisplayOption = timeDisplayOption,
