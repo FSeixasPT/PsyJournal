@@ -50,6 +50,7 @@ class SettingsSwitchRowTest {
         "Independent substance heights",
         "Merge routes of same substance",
         "Show duration range",
+        "Keep chart in view",
         "Start live notification automatically",
         "Lock screen details",
         "Suggest MDMA supplement routine",

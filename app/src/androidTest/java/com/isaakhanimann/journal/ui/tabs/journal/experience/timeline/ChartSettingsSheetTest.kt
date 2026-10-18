@@ -51,32 +51,36 @@ class ChartSettingsSheetTest {
         }
     }
 
-    // the switches in the order of the rows: heights, merged routes, duration range
+    // the switches in the order of the rows: heights, merged routes, duration range, pinned chart
     private fun switch(index: Int) = rule.onAllNodes(isToggleable())[index]
 
     @Test
     fun switchesShowTheCurrentSettings() {
-        showContent(ChartSettings(areSubstanceHeightsIndependent = true, areRoutesMerged = false, isDurationRangeShown = true))
+        showContent(ChartSettings(areSubstanceHeightsIndependent = true, areRoutesMerged = false, isDurationRangeShown = true, isChartPinned = false))
         rule.onNodeWithText("Independent substance heights").assertExists()
         rule.onNodeWithText("Merge routes of same substance").assertExists()
         rule.onNodeWithText("Show duration range").assertExists()
+        rule.onNodeWithText("Keep chart in view").assertExists()
         switch(0).assertIsOn()
         switch(1).assertIsOff()
         switch(2).assertIsOn()
+        switch(3).assertIsOff()
     }
 
     @Test
     fun eachSwitchChangesOnlyItsOwnSetting() {
-        val settings = ChartSettings(areSubstanceHeightsIndependent = false, areRoutesMerged = true, isDurationRangeShown = false)
+        val settings = ChartSettings(areSubstanceHeightsIndependent = false, areRoutesMerged = true, isDurationRangeShown = false, isChartPinned = false)
         showContent(settings)
         switch(0).performClick()
         switch(1).performClick()
         switch(2).performClick()
+        switch(3).performClick()
         assertEquals(
             listOf(
                 settings.copy(areSubstanceHeightsIndependent = true),
                 settings.copy(areRoutesMerged = false),
                 settings.copy(isDurationRangeShown = true),
+                settings.copy(isChartPinned = true),
             ),
             changes
         )

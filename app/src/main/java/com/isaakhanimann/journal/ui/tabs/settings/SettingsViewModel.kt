@@ -90,6 +90,10 @@ class SettingsViewModel @Inject constructor(
         userPreferences.saveIsDurationRangeShown(value)
     }
 
+    fun saveIsChartPinned(value: Boolean) = viewModelScope.launch {
+        userPreferences.saveIsChartPinned(value)
+    }
+
     fun saveIsTimelineHidden(value: Boolean) = viewModelScope.launch {
         userPreferences.saveIsTimelineHidden(value)
     }
@@ -113,6 +117,12 @@ class SettingsViewModel @Inject constructor(
     )
 
     val isDurationRangeShownFlow = userPreferences.isDurationRangeShownFlow.stateIn(
+        initialValue = false,
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000)
+    )
+
+    val isChartPinnedFlow = userPreferences.isChartPinnedFlow.stateIn(
         initialValue = false,
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000)
