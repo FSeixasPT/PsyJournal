@@ -13,6 +13,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ### Changed
 
+- **New app icon: an open journal with a red spiral**, on the same sunset background. It replaces the eye, which was the original app's logo, on the home screen, the launch screen and the welcome screen, and in its themed version.
 - **Shorter dates on the time pickers.** The date buttons when logging or editing an ingestion or rating leave out the year when it's this year, such as "Sun 18 Oct", so the time next to them stays on one line.
 - **Settings labels a little smaller**, so every switch setting fits on one line next to its switch on common phones. "Live notification details on lock screen" is now called "Lock screen details".
 

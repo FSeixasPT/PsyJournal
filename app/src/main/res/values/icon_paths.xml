@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- the app icon's shapes, in its 108-unit layer: shared by the launcher, themed and logo drawables -->
+<resources>
+    <!-- an open journal, its two pages apart at the spine -->
+    <string name="icon_pages" translatable="false">M53,40 C46,35 38,35 32,37 V70 C38,68 46,68 53,73 Z M55,40 C62,35 70,35 76,37 V70 C70,68 62,68 55,73 Z</string>
+    <!-- the outline of a three-turn spiral, 4.2 units thick with round ends, so it can be cut out of the pages -->
+    <string name="icon_spiral" translatable="false">M49.4,55 A5.1,5.1 0 0,1 59.6,55 A8.1,8.1 0 0,1 43.4,55 A11.1,11.1 0 0,1 65.6,55 A2.1,2.1 0 0,1 61.4,55 A6.9,6.9 0 0,0 47.6,55 A3.9,3.9 0 0,0 55.4,55 A0.9,0.9 0 0,0 53.6,55 A2.1,2.1 0 0,1 49.4,55 Z</string>
+    <string name="icon_pages_without_spiral" translatable="false">M0,0 H108 V108 H0 Z M49.4,55 A5.1,5.1 0 0,1 59.6,55 A8.1,8.1 0 0,1 43.4,55 A11.1,11.1 0 0,1 65.6,55 A2.1,2.1 0 0,1 61.4,55 A6.9,6.9 0 0,0 47.6,55 A3.9,3.9 0 0,0 55.4,55 A0.9,0.9 0 0,0 53.6,55 A2.1,2.1 0 0,1 49.4,55 Z</string>
+</resources>
