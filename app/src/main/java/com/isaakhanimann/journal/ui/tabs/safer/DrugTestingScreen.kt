@@ -208,7 +208,7 @@ fun DrugTestingScreen() {
                 )
                 TestingServiceItem(
                     name = "Ai Laket",
-                    city = "Vitoria-Gasteiz, Bilbao and Donostia",
+                    city = "Vitoria-Gasteiz, Pamplona, Bilbao and Donostia",
                     url = "https://ailaket.com/proyectos/punto-fijo/"
                 )
             }
