@@ -73,6 +73,7 @@ fun NavGraphBuilder.journalGraph(navController: NavHostController) {
         }
         composableWithTransitions<TimelineScreenRoute> {
             TimelineScreen(
+                navigateToExplainTimeline = { navController.navigate(ExplainTimelineOnJournalTabRoute) },
                 navigateToChooseDose = { planned ->
                         val customUnit = planned.customUnit
                         if (customUnit != null) {

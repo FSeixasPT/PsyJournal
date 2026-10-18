@@ -38,6 +38,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.DURATION_RANGE_INFO
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.MERGE_ROUTES_INFO
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.independentSubstanceHeightsInfo
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.DeleteForever
@@ -272,27 +275,21 @@ fun SettingsScreen(
                 HorizontalDivider()
                 SwitchWithInfoRow(
                     title = "Independent substance heights",
-                    info = """
-                                    Enable this setting if you want the timeline of different substances and routes of administration (roas) to be independent. Then ingestions of different substances and roas will always take the full height of the timeline.
-                                    
-                                    If this setting is disabled then timelines of different substances have a height relative to each other. In that case the average of the common dose is used as the point to compare it to.
-                                    E.g. if the oral average common dose of MDMA is 100mg and the average common dose of insufflated MDMA is 50mg then the timeline for 100mg of oral MDMA is the same height as for 50mg of insufflated MDMA.
-                                    This is also applied across substances. E.g. if the common dose of oral 2C-B is 20mg then the timeline of 40mg oral 2C-B will be twice as high as 100mg of oral MDMA.
-                                """.trimIndent(),
+                    info = independentSubstanceHeightsInfo,
                     checked = areSubstanceHeightsIndependent,
                     onCheckedChange = saveAreSubstanceHeightsIndependent
                 )
                 HorizontalDivider()
                 SwitchWithInfoRow(
                     title = "Merge routes of same substance",
-                    info = "When enabled, ingestions of the same substance through different routes (e.g. insufflated and oral ketamine) are shown as one combined line. Each route keeps its own onset and duration, and doses are made comparable using each route's common dose range, so the line shows the combined effect rather than the combined amount. Routes without dose ranges in the database are always shown separately.",
+                    info = MERGE_ROUTES_INFO,
                     checked = areRoutesMerged,
                     onCheckedChange = saveAreRoutesMerged
                 )
                 HorizontalDivider()
                 SwitchWithInfoRow(
                     title = "Show duration range",
-                    info = "Shades the area between the shortest and the longest durations known for each route, so you can see how much the timing can vary. The line itself is the estimate for your dose. Only timelines with complete durations have a range.",
+                    info = DURATION_RANGE_INFO,
                     checked = isDurationRangeShown,
                     onCheckedChange = saveIsDurationRangeShown
                 )

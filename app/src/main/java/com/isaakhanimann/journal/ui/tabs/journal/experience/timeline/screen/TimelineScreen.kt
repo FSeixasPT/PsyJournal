@@ -18,6 +18,9 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.screen
 
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.ChartSettingsSheet
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.ChartSettingsButton
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.ChartSettings
 import android.content.res.Configuration
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -65,6 +68,7 @@ import java.time.Instant
 fun TimelineScreen(
     viewModel: TimelineScreenViewModel = hiltViewModel(),
     navigateToChooseDose: (PlannedIngestion) -> Unit = {},
+    navigateToExplainTimeline: () -> Unit = {},
 ) {
     TimelineScreen(
         title = viewModel.consumerName,
@@ -72,6 +76,9 @@ fun TimelineScreen(
         navigateToChooseDose = navigateToChooseDose,
         timelineDisplayOption = viewModel.timelineDisplayOptionFlow.collectAsState().value,
         timeDisplayOption = viewModel.timeDisplayOptionFlow.collectAsState().value,
+        chartSettings = viewModel.chartSettingsFlow.collectAsState().value,
+        onChangeChartSettings = viewModel::saveChartSettings,
+        navigateToExplainTimeline = navigateToExplainTimeline,
     )
 }
 
@@ -83,11 +90,26 @@ fun TimelineScreen(
      navigateToChooseDose: (PlannedIngestion) -> Unit = {},
      timelineDisplayOption: TimelineDisplayOption,
      timeDisplayOption: TimeDisplayOption,
+     chartSettings: ChartSettings = ChartSettings(),
+     onChangeChartSettings: (ChartSettings) -> Unit = {},
+     navigateToExplainTimeline: () -> Unit = {},
 ) {
+    var isShowingChartSettings by remember { mutableStateOf(false) }
+    if (isShowingChartSettings) {
+        ChartSettingsSheet(
+            settings = chartSettings,
+            onChange = onChangeChartSettings,
+            onExplain = navigateToExplainTimeline,
+            onDismiss = { isShowingChartSettings = false }
+        )
+    }
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(title) }
+                title = { Text(title) },
+                actions = {
+                    ChartSettingsButton(onClick = { isShowingChartSettings = true })
+                }
             )
         }
     ) { padding ->

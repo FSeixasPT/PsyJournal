@@ -26,6 +26,7 @@ import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.width
@@ -47,6 +48,8 @@ class EffectTimelineHeaderTest {
 
     private val cardWidth = 340.dp
 
+    private var settingsOpened = 0
+
     private fun showHeader(fontScale: Float, isLive: Boolean = true) {
         rule.setContent {
             val density = LocalDensity.current
@@ -58,7 +61,7 @@ class EffectTimelineHeaderTest {
                             isLiveNotificationAvailable = true,
                             isLive = isLive,
                             liveToggleState = rememberLiveNotificationToggleState {},
-                            onInfo = {},
+                            onSettings = { settingsOpened++ },
                             onExpand = {}
                         )
                     }
@@ -86,10 +89,10 @@ class EffectTimelineHeaderTest {
             .config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
         val title = rule.onNodeWithText("Effect timeline").getBoundsInRoot()
         val live = rule.onNodeWithText("Live notification").getBoundsInRoot()
-        val info = rule.onNodeWithText("Info").getBoundsInRoot()
+        val settings = rule.onNodeWithContentDescription("Chart settings").getBoundsInRoot()
         val expand = rule.onNodeWithContentDescription("Expand timeline").getBoundsInRoot()
         assertEquals(
-            "title ${title.width} (one line: ${with(rule.density) { layouts.single().multiParagraph.intrinsics.maxIntrinsicWidth.toDp() }}), live ${live.width}, info ${info.width}, expand ${expand.width}",
+            "title ${title.width} (one line: ${with(rule.density) { layouts.single().multiParagraph.intrinsics.maxIntrinsicWidth.toDp() }}), live ${live.width}, settings ${settings.width}, expand ${expand.width}",
             1, layouts.single().lineCount
         )
     }
@@ -107,11 +110,19 @@ class EffectTimelineHeaderTest {
         showHeader(fontScale = 2f)
         listOf(
             rule.onNodeWithText("Live notification").getBoundsInRoot(),
-            rule.onNodeWithText("Info").getBoundsInRoot(),
+            rule.onNodeWithContentDescription("Chart settings").getBoundsInRoot(),
             rule.onNodeWithContentDescription("Expand timeline").getBoundsInRoot(),
         ).forEach { bounds ->
             assertTrue("squeezed: $bounds", bounds.width > 20.dp)
             assertTrue("outside the card: $bounds", bounds.right <= cardWidth + 0.5.dp) // allows for rounding to pixels
         }
+    }
+
+    @Test
+    fun theGearOpensTheChartSettingsInsteadOfAnInfoButton() {
+        showHeader(fontScale = 1f)
+        rule.onNodeWithText("Info").assertDoesNotExist()
+        rule.onNodeWithContentDescription("Chart settings").performClick()
+        assertEquals(1, settingsOpened)
     }
 }
