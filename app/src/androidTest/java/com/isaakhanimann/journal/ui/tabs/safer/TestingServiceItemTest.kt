@@ -50,11 +50,11 @@ class TestingServiceItemTest {
             JournalTheme {
                 // the card's width on a common 360 dp phone
                 Box(modifier = Modifier.width(340.dp)) {
-                    TestingServiceItem(name = "Ai Laket", city = "Vitoria-Gasteiz, Bilbao and Donostia", url = "")
+                    TestingServiceItem(name = "Ai Laket", city = "Vitoria-Gasteiz, Pamplona, Bilbao and Donostia", url = "")
                 }
             }
         }
         assertFalse("name cut off", overflows("Ai Laket"))
-        assertFalse("city cut off", overflows("Vitoria-Gasteiz, Bilbao and Donostia"))
+        assertFalse("city cut off", overflows("Vitoria-Gasteiz, Pamplona, Bilbao and Donostia"))
     }
 }

@@ -27,6 +27,11 @@ import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.isaakhanimann.journal.ui.theme.JournalTheme
 import androidx.compose.ui.unit.width
+import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.text.TextLayoutResult
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -40,13 +45,42 @@ class SettingsSwitchRowTest {
     // the settings card's width on a common 360 dp phone
     private val cardWidth = 340.dp
 
+    // the settings with an info button, as in SettingsScreen
+    private val titlesWithInfo = listOf(
+        "Independent substance heights",
+        "Merge routes of same substance",
+        "Show duration range",
+        "Start live notification automatically",
+        "Lock screen details",
+        "Suggest MDMA supplement routine",
+    )
+
+    @Test
+    fun everySettingFitsOnOneLine() {
+        rule.setContent {
+            JournalTheme {
+                Column(modifier = Modifier.width(cardWidth)) {
+                    titlesWithInfo.forEach { title ->
+                        SwitchWithInfoRow(title = title, info = "", checked = false, onCheckedChange = {})
+                    }
+                }
+            }
+        }
+        titlesWithInfo.forEach { title ->
+            val layouts = mutableListOf<TextLayoutResult>()
+            rule.onNodeWithText(title).fetchSemanticsNode()
+                .config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
+            assertEquals(title, 1, layouts.single().lineCount)
+        }
+    }
+
     @Test
     fun theLongestSettingKeepsItsSwitchInsideTheCard() {
         rule.setContent {
             JournalTheme {
                 Box(modifier = Modifier.width(cardWidth)) {
                     SwitchWithInfoRow(
-                        title = "Live notification details on lock screen",
+                        title = "Start live notification automatically",
                         info = "",
                         checked = false,
                         onCheckedChange = {}
