@@ -43,6 +43,7 @@ data class ChartSettings(
     val areSubstanceHeightsIndependent: Boolean = false,
     val areRoutesMerged: Boolean = true,
     val isDurationRangeShown: Boolean = false,
+    val isChartPinned: Boolean = false,
 )
 
 // shared with the settings screen, which keeps these switches too
@@ -55,6 +56,8 @@ internal val independentSubstanceHeightsInfo = """
 """.trimIndent()
 
 internal const val MERGE_ROUTES_INFO = "When enabled, ingestions of the same substance through different routes (e.g. insufflated and oral ketamine) are shown as one combined line. Each route keeps its own onset and duration, and doses are made comparable using each route's common dose range, so the line shows the combined effect rather than the combined amount. Routes without dose ranges in the database are always shown separately."
+
+internal const val CHART_PINNED_INFO = "Keeps the effect timeline and its current effects at the top of the experience, while the ingestions, notes and ratings scroll below it. In landscape or on short windows, such as split screen, the chart scrolls as usual, since it would leave too little room."
 
 internal const val DURATION_RANGE_INFO = "Shades the area between the shortest and the longest durations known for each route, so you can see how much the timing can vary. The line itself is the estimate for your dose. Only timelines with complete durations have a range."
 
@@ -124,6 +127,13 @@ fun ChartSettingsContent(
             info = DURATION_RANGE_INFO,
             checked = settings.isDurationRangeShown,
             onCheckedChange = { onChange(settings.copy(isDurationRangeShown = it)) }
+        )
+        HorizontalDivider()
+        SwitchWithInfoRow(
+            title = "Keep chart in view",
+            info = CHART_PINNED_INFO,
+            checked = settings.isChartPinned,
+            onCheckedChange = { onChange(settings.copy(isChartPinned = it)) }
         )
         HorizontalDivider()
         SettingsButton(imageVector = Icons.Outlined.Timeline, text = "How to read the chart", onClick = onExplain)

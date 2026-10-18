@@ -58,6 +58,7 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
         val KEY_ARE_SUBSTANCE_HEIGHTS_INDEPENDENT = booleanPreferencesKey("KEY_ARE_SUBSTANCE_HEIGHTS_INDEPENDENT")
         val KEY_ARE_ROUTES_MERGED = booleanPreferencesKey("KEY_ARE_ROUTES_MERGED")
         val KEY_IS_DURATION_RANGE_SHOWN = booleanPreferencesKey("KEY_IS_DURATION_RANGE_SHOWN")
+        val KEY_IS_CHART_PINNED = booleanPreferencesKey("KEY_IS_CHART_PINNED")
         val KEY_PINNED_REDOSE = stringPreferencesKey("KEY_PINNED_REDOSE")
         val KEY_CHOSEN_PLAN = stringPreferencesKey("KEY_CHOSEN_PLAN")
         val KEY_HIDDEN_ROUTES = stringSetPreferencesKey("KEY_HIDDEN_ROUTES")
@@ -163,6 +164,17 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
             preferences[PreferencesKeys.KEY_IS_DURATION_RANGE_SHOWN] ?: false
         }
 
+    suspend fun saveIsChartPinned(value: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.KEY_IS_CHART_PINNED] = value
+        }
+    }
+
+    val isChartPinnedFlow: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.KEY_IS_CHART_PINNED] ?: false
+        }
+
     suspend fun saveAreRoutesMerged(value: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.KEY_ARE_ROUTES_MERGED] = value
@@ -178,6 +190,7 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
         areSubstanceHeightsIndependentFlow,
         areRoutesMergedFlow,
         isDurationRangeShownFlow,
+        isChartPinnedFlow,
         ::ChartSettings
     )
 
@@ -186,6 +199,7 @@ class UserPreferences @Inject constructor(private val dataStore: DataStore<Prefe
             preferences[PreferencesKeys.KEY_ARE_SUBSTANCE_HEIGHTS_INDEPENDENT] = settings.areSubstanceHeightsIndependent
             preferences[PreferencesKeys.KEY_ARE_ROUTES_MERGED] = settings.areRoutesMerged
             preferences[PreferencesKeys.KEY_IS_DURATION_RANGE_SHOWN] = settings.isDurationRangeShown
+            preferences[PreferencesKeys.KEY_IS_CHART_PINNED] = settings.isChartPinned
         }
     }
 

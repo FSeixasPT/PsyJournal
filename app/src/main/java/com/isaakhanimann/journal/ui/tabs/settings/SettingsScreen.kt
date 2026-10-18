@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.settings
 
+import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.CHART_PINNED_INFO
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -118,6 +119,8 @@ fun SettingsPreview() {
         saveAreRoutesMerged = {},
         isDurationRangeShown = true,
         saveIsDurationRangeShown = {},
+        isChartPinned = false,
+        saveIsChartPinned = {},
         isLiveAutoStart = false,
         saveIsLiveAutoStart = {},
         isRoutineSuggested = true,
@@ -159,6 +162,8 @@ fun SettingsScreen(
         saveAreRoutesMerged = viewModel::saveAreRoutesMerged,
         isDurationRangeShown = viewModel.isDurationRangeShownFlow.collectAsState().value,
         saveIsDurationRangeShown = viewModel::saveIsDurationRangeShown,
+        isChartPinned = viewModel.isChartPinnedFlow.collectAsState().value,
+        saveIsChartPinned = viewModel::saveIsChartPinned,
         isLiveAutoStart = viewModel.isLiveAutoStartFlow.collectAsState().value,
         saveIsLiveAutoStart = viewModel::saveIsLiveAutoStart,
         isRoutineSuggested = viewModel.isRoutineSuggestedFlow.collectAsState().value,
@@ -194,6 +199,8 @@ fun SettingsScreen(
     saveAreRoutesMerged: (Boolean) -> Unit,
     isDurationRangeShown: Boolean,
     saveIsDurationRangeShown: (Boolean) -> Unit,
+    isChartPinned: Boolean,
+    saveIsChartPinned: (Boolean) -> Unit,
     isLiveAutoStart: Boolean,
     saveIsLiveAutoStart: (Boolean) -> Unit,
     isRoutineSuggested: Boolean,
@@ -292,6 +299,13 @@ fun SettingsScreen(
                     info = DURATION_RANGE_INFO,
                     checked = isDurationRangeShown,
                     onCheckedChange = saveIsDurationRangeShown
+                )
+                HorizontalDivider()
+                SwitchWithInfoRow(
+                    title = "Keep chart in view",
+                    info = CHART_PINNED_INFO,
+                    checked = isChartPinned,
+                    onCheckedChange = saveIsChartPinned
                 )
                 HorizontalDivider()
                 SwitchWithInfoRow(

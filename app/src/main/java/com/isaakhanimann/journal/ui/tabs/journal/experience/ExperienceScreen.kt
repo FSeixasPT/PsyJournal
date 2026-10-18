@@ -18,6 +18,8 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.experience
 
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.foundation.layout.ColumnScope
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.ChartSettingsSheet
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.ChartSettingsButton
 import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.ChartSettings
@@ -338,33 +340,31 @@ fun ExperienceScreen(
             AddIngestionFAB(oneExperienceScreenModel, addIngestion)
         }
     ) { padding ->
-        Column(
+        val verticalCardPadding = 4.dp
+        MyTimelineSection(
+            timelineDisplayOption = timelineDisplayOption,
+            verticalCardPadding = verticalCardPadding,
+            navigateToExplainTimeline = navigateToExplainTimeline,
+            navigateToTimelineScreen = navigateToTimelineScreen,
+            chartSettings = chartSettings,
+            onChangeChartSettings = onChangeChartSettings,
+            oneExperienceScreenModel = oneExperienceScreenModel,
+            timeDisplayOption = timeDisplayOption,
+            isOralDisclaimerHidden = isOralDisclaimerHidden,
+            onChangeIsOralDisclaimerHidden = onChangeIsOralDisclaimerHidden,
+            plannedIngestionActions = plannedIngestionActions,
+            frequencyLine = frequencyLine,
+            navigateToChooseDose = navigateToChooseDose,
+            isQuickLogPending = isQuickLogPending,
+            onQuickLogOpened = onQuickLogOpened,
+            isLive = isLive,
+            isLiveNotificationAvailable = isLiveNotificationAvailable,
+            setLive = setLive,
+            isPinned = isChartPinned(chartSettings.isChartPinned, LocalConfiguration.current.screenHeightDp),
             modifier = Modifier
-                .verticalScroll(rememberScrollState())
                 .padding(padding)
                 .padding(horizontal = horizontalPadding)
         ) {
-            val verticalCardPadding = 4.dp
-            MyTimelineSection(
-                timelineDisplayOption = timelineDisplayOption,
-                verticalCardPadding = verticalCardPadding,
-                navigateToExplainTimeline = navigateToExplainTimeline,
-                navigateToTimelineScreen = navigateToTimelineScreen,
-                chartSettings = chartSettings,
-                onChangeChartSettings = onChangeChartSettings,
-                oneExperienceScreenModel = oneExperienceScreenModel,
-                timeDisplayOption = timeDisplayOption,
-                isOralDisclaimerHidden = isOralDisclaimerHidden,
-                onChangeIsOralDisclaimerHidden = onChangeIsOralDisclaimerHidden,
-                plannedIngestionActions = plannedIngestionActions,
-                frequencyLine = frequencyLine,
-                navigateToChooseDose = navigateToChooseDose,
-                isQuickLogPending = isQuickLogPending,
-                onQuickLogOpened = onQuickLogOpened,
-                isLive = isLive,
-                isLiveNotificationAvailable = isLiveNotificationAvailable,
-                setLive = setLive,
-            )
             var isRoutineStoppedDialogShown by rememberSaveable { mutableStateOf(false) }
             if (isRoutineStoppedDialogShown) {
                 RoutineStoppedDialog(
@@ -795,11 +795,20 @@ private fun MyTimelineSection(
     isLive: Boolean,
     isLiveNotificationAvailable: Boolean,
     setLive: (Boolean) -> Unit,
+    isPinned: Boolean,
+    modifier: Modifier = Modifier,
+    // everything below the chart, which scrolls under it when it's pinned
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     when (timelineDisplayOption) {
-        TimelineDisplayOption.Hidden -> {}
-        TimelineDisplayOption.Loading -> LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-        TimelineDisplayOption.NotWorthDrawing -> {}
+        TimelineDisplayOption.Hidden, TimelineDisplayOption.NotWorthDrawing ->
+            PinnableChartLayout(isPinned = false, chart = {}, content = content, modifier = modifier)
+        TimelineDisplayOption.Loading -> PinnableChartLayout(
+            isPinned = false,
+            chart = { LinearProgressIndicator(modifier = Modifier.fillMaxWidth()) },
+            content = content,
+            modifier = modifier
+        )
         is TimelineDisplayOption.Shown -> {
             val timelineModel = timelineDisplayOption.allTimelinesModel
             val liveToggleState = rememberLiveNotificationToggleState(setLive)
@@ -812,70 +821,96 @@ private fun MyTimelineSection(
                     onDismiss = { isShowingChartSettings = false }
                 )
             }
-            ElevatedCard(modifier = Modifier.padding(vertical = verticalCardPadding)) {
-                EffectTimelineHeader(
-                    isLiveNotificationAvailable = isLiveNotificationAvailable,
-                    isLive = isLive,
-                    liveToggleState = liveToggleState,
-                    onSettings = { isShowingChartSettings = true },
-                    onExpand = { navigateToTimelineScreen(YOU) }
-                )
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = horizontalPadding)
-                        .padding(bottom = 10.dp),
-                    verticalArrangement = Arrangement.spacedBy(5.dp)
-                ) {
-                    var selectedTime by remember { mutableStateOf<Instant?>(null) }
-                    val planState = plannedIngestionActions?.let { rememberPlannedIngestionState(timelineModel, it) }
-                    val displayedModel = planState?.displayedModel ?: timelineModel
-                    AllTimelines(
-                        model = displayedModel,
+            var selectedTime by remember { mutableStateOf<Instant?>(null) }
+            val planState = plannedIngestionActions?.let { rememberPlannedIngestionState(timelineModel, it) }
+            val displayedModel = planState?.displayedModel ?: timelineModel
+            val isPlanShown = planState != null && plannedIngestionActions != null && planState.isPossibleNow
+            val hasOralIngestion =
+                oneExperienceScreenModel.ingestionElements.any { it.ingestionWithCompanionAndCustomUnit.ingestion.administrationRoute == AdministrationRoute.ORAL }
+            val isDisclaimerShown = hasOralIngestion && !isOralDisclaimerHidden
+            // the planned dose and the disclaimer, which scroll with the rest when the chart is pinned
+            val extras: @Composable ColumnScope.() -> Unit = {
+                if (planState != null && plannedIngestionActions != null && isPlanShown) {
+                    PlannedIngestionSection(
+                        state = planState,
+                        actions = plannedIngestionActions,
+                        selectedTime = selectedTime,
                         timeDisplayOption = timeDisplayOption,
-                        isShowingCurrentTime = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp),
-                        onSelectedTimeChange = { selectedTime = it }
+                        onChangeDetails = { navigateToChooseDose(it) },
+                        frequencyLine = frequencyLine,
+                        isLogPending = isQuickLogPending,
+                        onLogOpened = onQuickLogOpened,
+                        modifier = Modifier.padding(top = 4.dp)
                     )
-                    // the details always describe the real ingestions, the planned one is described below the chip
-                    // a little more room below the chart's hour labels
-                    TimelineQuantityDetails(model = timelineModel, selectedTime = selectedTime, modifier = Modifier.padding(top = 5.dp))
-                    if (isLiveNotificationAvailable) {
-                        LiveNotificationBlockedMessage(state = liveToggleState)
-                    }
-                    if (planState != null && plannedIngestionActions != null && planState.isPossibleNow) {
-                        PlannedIngestionSection(
-                            state = planState,
-                            actions = plannedIngestionActions,
-                            selectedTime = selectedTime,
-                            timeDisplayOption = timeDisplayOption,
-                            onChangeDetails = { navigateToChooseDose(it) },
-                            frequencyLine = frequencyLine,
-                            isLogPending = isQuickLogPending,
-                            onLogOpened = onQuickLogOpened,
-                            modifier = Modifier.padding(top = 4.dp)
+                }
+                if (isDisclaimerShown) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = FULL_STOMACH_DISCLAIMER,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.weight(1f)
                         )
-                    }
-                    val hasOralIngestion =
-                        oneExperienceScreenModel.ingestionElements.any { it.ingestionWithCompanionAndCustomUnit.ingestion.administrationRoute == AdministrationRoute.ORAL }
-                    if (hasOralIngestion && !isOralDisclaimerHidden) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = FULL_STOMACH_DISCLAIMER,
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.weight(1f)
+                        IconButton(onClick = { onChangeIsOralDisclaimerHidden(true) }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close disclaimer"
                             )
-                            IconButton(onClick = { onChangeIsOralDisclaimerHidden(true) }) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Close disclaimer"
-                                )
-                            }
                         }
                     }
                 }
             }
+            PinnableChartLayout(
+                isPinned = isPinned,
+                modifier = modifier,
+                chart = {
+                    ElevatedCard(modifier = Modifier.padding(vertical = verticalCardPadding)) {
+                        EffectTimelineHeader(
+                            isLiveNotificationAvailable = isLiveNotificationAvailable,
+                            isLive = isLive,
+                            liveToggleState = liveToggleState,
+                            onSettings = { isShowingChartSettings = true },
+                            onExpand = { navigateToTimelineScreen(YOU) }
+                        )
+                        Column(
+                            modifier = Modifier
+                                .padding(horizontal = horizontalPadding)
+                                .padding(bottom = 10.dp),
+                            verticalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            AllTimelines(
+                                model = displayedModel,
+                                timeDisplayOption = timeDisplayOption,
+                                isShowingCurrentTime = true,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp),
+                                onSelectedTimeChange = { selectedTime = it }
+                            )
+                            // the details always describe the real ingestions, the planned one is described below the chip
+                            // a little more room below the chart's hour labels
+                            TimelineQuantityDetails(model = timelineModel, selectedTime = selectedTime, modifier = Modifier.padding(top = 5.dp))
+                            if (isLiveNotificationAvailable) {
+                                LiveNotificationBlockedMessage(state = liveToggleState)
+                            }
+                            if (!isPinned) {
+                                extras()
+                            }
+                        }
+                    }
+                },
+                content = {
+                    if (isPinned && (isPlanShown || isDisclaimerShown)) {
+                        ElevatedCard(modifier = Modifier.padding(vertical = verticalCardPadding)) {
+                            Column(
+                                modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 10.dp),
+                                verticalArrangement = Arrangement.spacedBy(5.dp),
+                                content = extras
+                            )
+                        }
+                    }
+                    content()
+                }
+            )
         }
     }
 }
