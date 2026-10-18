@@ -18,6 +18,8 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.interactions
 
+import androidx.compose.foundation.layout.PaddingValues
+import com.isaakhanimann.journal.ui.tabs.journal.addingestion.spaceBelowNextFAB
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -163,7 +165,7 @@ fun CheckInteractionsScreen(
                 }
             } else {
                 val verticalPaddingInside = 4.dp
-                LazyColumn {
+                LazyColumn(contentPadding = PaddingValues(bottom = spaceBelowNextFAB)) {
                     if (dangerousInteractions.isNotEmpty()) {
                         items(dangerousInteractions) {
                             InteractionRow(

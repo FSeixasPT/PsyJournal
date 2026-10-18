@@ -249,7 +249,7 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "Hide dosage dots")
+                    SettingLabel(text = "Hide dosage dots", modifier = Modifier.weight(1f))
                     Switch(
                         checked = areDosageDotsHidden,
                         onCheckedChange = saveDosageDotsAreHidden
@@ -263,7 +263,7 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "Hide timeline")
+                    SettingLabel(text = "Hide timeline", modifier = Modifier.weight(1f))
                     Switch(
                         checked = isTimelineHidden,
                         onCheckedChange = saveIsTimelineHidden
@@ -504,7 +504,7 @@ fun SettingsButton(imageVector: ImageVector, text: String, onClick: () -> Unit) 
 // a setting with a switch, whose title opens an explanation
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SwitchWithInfoRow(
+internal fun SwitchWithInfoRow(
     title: String,
     info: String,
     checked: Boolean,
@@ -522,13 +522,15 @@ private fun SwitchWithInfoRow(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(5.dp),
+            // gives way to the switch, wrapping the title if even the smaller text doesn't fit
             modifier = Modifier
+                .weight(1f, fill = false)
                 .clickable {
                     showBottomSheet = true
                 }
                 .padding(end = ButtonDefaults.IconSpacing)
         ) {
-            Text(text = title)
+            SettingLabel(text = title, modifier = Modifier.weight(1f, fill = false))
             if (showBottomSheet) {
                 ModalBottomSheet(
                     onDismissRequest = {
@@ -552,4 +554,10 @@ private fun SwitchWithInfoRow(
             onCheckedChange = onCheckedChange
         )
     }
+}
+
+// a little smaller than body text, so the longer settings fit next to their switch on common phones
+@Composable
+private fun SettingLabel(text: String, modifier: Modifier = Modifier) {
+    Text(text = text, style = MaterialTheme.typography.bodyMedium, modifier = modifier)
 }

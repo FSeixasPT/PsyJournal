@@ -18,6 +18,7 @@
 
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.saferuse
 
+import com.isaakhanimann.journal.ui.tabs.journal.addingestion.spaceBelowNextFAB
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -30,7 +31,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.NextFAB
 import com.isaakhanimann.journal.ui.tabs.search.substance.BulletPoints
@@ -58,7 +58,7 @@ fun CheckSaferUseScreen(
                 points = viewModel.substance.saferUse,
                 modifier = Modifier.padding(horizontal = horizontalPadding)
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(spaceBelowNextFAB))
         }
     }
 }
