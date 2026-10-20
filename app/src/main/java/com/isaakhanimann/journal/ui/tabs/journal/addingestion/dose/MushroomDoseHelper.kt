@@ -1,20 +1,27 @@
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.dose
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -25,18 +32,57 @@ import androidx.compose.ui.unit.dp
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toReadableString
 import com.isaakhanimann.journal.ui.theme.horizontalPadding
 
-// Psilocybe cubensis: about 1% psilocybin dried and 0.1% fresh, the same rule the custom unit screen gives
-fun psilocybinMgInMushrooms(grams: Double, isDried: Boolean): Double =
-    grams * 1000 * if (isDried) 0.01 else 0.001
+// psilocybin and psilocin as a percent of dry weight: typical, and the low and high that lab tests commonly find.
+// dryFraction is how much of a fresh one is left once dried: mushrooms are about 90% water, truffles about 75%
+data class MushroomKind(
+    val name: String,
+    val typicalPercent: Double,
+    val lowPercent: Double,
+    val highPercent: Double,
+    val dryFraction: Double = 0.1,
+) {
+    fun psilocybinMg(grams: Double, isDried: Boolean, percent: Double = typicalPercent): Double =
+        grams * 1000 * percent / 100 * if (isDried) 1.0 else dryFraction
+}
+
+// from Stamets, Beug & Bigwood (1982), the Finnish and Swiss semilanceata studies, Psilocybin Cup lab results
+// and Pellegrini et al. (2013) for fresh truffles; cubensis keeps the 1% the custom unit screen gives
+val mushroomKinds = listOf(
+    MushroomKind("P. cubensis", typicalPercent = 1.0, lowPercent = 0.5, highPercent = 1.5),
+    MushroomKind("Penis Envy", typicalPercent = 1.5, lowPercent = 0.7, highPercent = 2.5),
+    MushroomKind("Liberty cap (P. semilanceata)", typicalPercent = 1.4, lowPercent = 0.2, highPercent = 2.4),
+    MushroomKind("Wavy cap (P. cyanescens)", typicalPercent = 1.2, lowPercent = 0.5, highPercent = 2.0),
+    MushroomKind("P. azurescens", typicalPercent = 1.5, lowPercent = 1.0, highPercent = 2.3),
+    MushroomKind("Truffles", typicalPercent = 0.4, lowPercent = 0.24, highPercent = 0.7, dryFraction = 0.25),
+)
 
 // works out mg psilocybin from the weight of mushrooms, for people who weighed them rather than the psilocybin
 @Composable
 fun MushroomDoseHelper(onUseDose: (doseText: String) -> Unit) {
     var gramsText by rememberSaveable { mutableStateOf("") }
     var isDried by rememberSaveable { mutableStateOf(true) }
+    var kindIndex by rememberSaveable { mutableIntStateOf(0) }
+    val kind = mushroomKinds[kindIndex]
     val focusManager = LocalFocusManager.current
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text("Weighed the mushrooms instead?", style = MaterialTheme.typography.titleSmall)
+        var isShowingKinds by remember { mutableStateOf(false) }
+        Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
+            OutlinedButton(onClick = { isShowingKinds = true }, modifier = Modifier.fillMaxWidth()) {
+                Text(text = kind.name)
+            }
+            DropdownMenu(expanded = isShowingKinds, onDismissRequest = { isShowingKinds = false }) {
+                mushroomKinds.forEachIndexed { index, option ->
+                    DropdownMenuItem(
+                        text = { Text(option.name) },
+                        onClick = {
+                            kindIndex = index
+                            isShowingKinds = false
+                        }
+                    )
+                }
+            }
+        }
         OutlinedTextField(
             value = gramsText,
             onValueChange = { gramsText = it.replace(oldChar = ',', newChar = '.') },
@@ -55,20 +101,21 @@ fun MushroomDoseHelper(onUseDose: (doseText: String) -> Unit) {
         }
         val grams = gramsText.toDoubleOrNull()?.takeIf { it > 0 }
         if (grams != null) {
-            val doseText = psilocybinMgInMushrooms(grams, isDried).toReadableString()
+            val doseText = kind.psilocybinMg(grams, isDried).toReadableString()
+            val lowText = kind.psilocybinMg(grams, isDried, kind.lowPercent).toReadableString()
+            val highText = kind.psilocybinMg(grams, isDried, kind.highPercent).toReadableString()
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "About $doseText mg Psilocybin",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f)
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = "About $doseText mg Psilocybin", style = MaterialTheme.typography.titleMedium)
+                    Text(text = "Could be $lowText–$highText mg", style = MaterialTheme.typography.bodyMedium)
+                }
                 TextButton(onClick = { onUseDose(doseText) }) {
                     Text("Use $doseText mg")
                 }
             }
         }
         Text(
-            text = "Based on Psilocybe cubensis. Potency varies a lot between strains and batches, so this is only a rough guide.",
+            text = "Typical lab results. The same strain can test several times stronger or weaker depending on how it was grown, dried and stored, so this is only a rough guide.",
             style = MaterialTheme.typography.bodySmall
         )
     }
