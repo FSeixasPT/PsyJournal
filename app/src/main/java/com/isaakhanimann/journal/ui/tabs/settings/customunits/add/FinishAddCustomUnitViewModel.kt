@@ -32,6 +32,7 @@ import com.isaakhanimann.journal.data.substances.classes.Substance
 import com.isaakhanimann.journal.data.substances.classes.roa.DoseClass
 import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepository
 import com.isaakhanimann.journal.ui.main.navigation.graphs.FinishAddCustomUnitRoute
+import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toReadableString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -112,6 +113,15 @@ class FinishAddCustomUnitViewModel @Inject constructor(
     }
 
     init {
+        finishAddCustomUnitRoute.name?.let { name = it }
+        finishAddCustomUnitRoute.dosePerUnit?.let {
+            onChangeOfUnit("g")
+            doseText = it.toReadableString()
+        }
+        finishAddCustomUnitRoute.estimatedDoseStandardDeviation?.let {
+            isEstimate = true
+            estimatedDoseDeviationText = it.toReadableString()
+        }
         originalUnit = roaDose?.units ?: ""
         viewModelScope.launch {
             substanceName = finishAddCustomUnitRoute.substanceName

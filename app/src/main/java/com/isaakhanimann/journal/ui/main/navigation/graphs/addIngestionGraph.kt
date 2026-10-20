@@ -248,6 +248,18 @@ fun NavGraphBuilder.addIngestionGraph(navController: NavController) {
                             administrationRoute = route.administrationRoute
                         )
                     )
+                },
+                navigateToCreateMushroomUnit = { unit, grams ->
+                    navController.navigate(
+                        FinishAddCustomUnitRoute(
+                            substanceName = route.substanceName,
+                            administrationRoute = route.administrationRoute,
+                            name = unit.name,
+                            dosePerUnit = unit.mgPerGram,
+                            estimatedDoseStandardDeviation = unit.standardDeviation,
+                            count = grams,
+                        )
+                    )
                 }
             )
         }
@@ -267,10 +279,11 @@ fun NavGraphBuilder.addIngestionGraph(navController: NavController) {
         composableWithTransitions<AdministrationRouteExplanationRouteOnJournalTab> {
             RouteExplanationScreen()
         }
-        composableWithTransitions<FinishAddCustomUnitRoute> {
+        composableWithTransitions<FinishAddCustomUnitRoute> { backStackEntry ->
+            val route = backStackEntry.toRoute<FinishAddCustomUnitRoute>()
             FinishAddCustomUnitScreen(
                 dismissAddCustomUnit = { customUnitId ->
-                    navController.navigate(ChooseDoseCustomUnitRoute(customUnitId = customUnitId)) {
+                    navController.navigate(ChooseDoseCustomUnitRoute(customUnitId = customUnitId, count = route.count)) {
                         popUpTo(AddIngestionSearchRoute)
                     }
                 },

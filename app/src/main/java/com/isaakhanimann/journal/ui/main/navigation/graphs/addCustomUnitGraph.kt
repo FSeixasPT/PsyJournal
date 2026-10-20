@@ -99,4 +99,9 @@ data class ChooseRouteOfAddCustomUnitRoute(val substanceName: String)
 data class FinishAddCustomUnitRoute(
     val administrationRoute: AdministrationRoute,
     val substanceName: String,
+    // filled in by the mushroom helper: the unit is a gram, and count is the grams it had
+    val name: String? = null,
+    val dosePerUnit: Double? = null,
+    val estimatedDoseStandardDeviation: Double? = null,
+    val count: Double? = null,
 )

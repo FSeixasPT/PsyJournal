@@ -10,7 +10,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 - **Chart settings next to the chart.** A gear on the effect timeline, and on the full-screen chart, opens a sheet with the chart's switches: independent substance heights, merged routes and duration range. The chart changes behind the sheet as you tap them. They apply to all experiences and are still in Settings too. The sheet links to the explanation of how to read the chart, which replaces the Info button.
 - **Keep chart in view.** A new chart setting, in the gear sheet and in Settings, keeps the effect timeline and its current effects at the top of an experience while the ingestions, notes and ratings scroll below it. It's off by default, and in landscape or on short windows such as split screen the chart scrolls as usual.
-- **Mushroom weight to psilocybin.** When logging Psilocybin mushrooms, the dose screen has a helper: pick the kind (P. cubensis, Penis Envy, liberty cap, wavy cap, P. azurescens or truffles), enter the grams, dried or fresh, and it shows about how much psilocybin that is, with the range lab tests commonly find. Tap Use to fill in the dose.
+- **Mushroom weight to psilocybin.** When logging Psilocybin mushrooms, the dose screen has a helper: pick the kind (P. cubensis, Penis Envy, liberty cap, wavy cap, P. azurescens or truffles), enter the grams, dried or fresh, and it shows about how much psilocybin that is, with the range lab tests commonly find. Tap Use to fill in the dose, or Save as custom unit to log that kind in grams from now on: the custom unit screen opens filled in, and the grams carry over.
 
 ### Changed
 

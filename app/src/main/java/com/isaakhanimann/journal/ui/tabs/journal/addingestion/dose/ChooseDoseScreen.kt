@@ -86,6 +86,7 @@ fun ChooseDoseScreen(
     navigateToVolumetricDosingScreenOnJournalTab: () -> Unit,
     navigateToSaferSniffingScreen: () -> Unit,
     navigateToCreateCustomUnit: () -> Unit,
+    navigateToCreateMushroomUnit: (unit: MushroomCustomUnit, grams: Double) -> Unit,
     viewModel: ChooseDoseViewModel = hiltViewModel()
 ) {
     ChooseDoseScreen(
@@ -130,7 +131,8 @@ fun ChooseDoseScreen(
         isShowingUnitsField = viewModel.roaDose?.units?.isBlank() ?: true,
         units = viewModel.units,
         onChangeOfUnits = { viewModel.units = it },
-        navigateToCreateCustomUnit = navigateToCreateCustomUnit
+        navigateToCreateCustomUnit = navigateToCreateCustomUnit,
+        navigateToCreateMushroomUnit = navigateToCreateMushroomUnit,
     )
 }
 
@@ -164,6 +166,7 @@ fun ChooseDoseScreenPreview(
         units = "mg",
         onChangeOfUnits = {},
         navigateToCreateCustomUnit = {},
+        navigateToCreateMushroomUnit = { _, _ -> },
     )
 }
 
@@ -194,7 +197,8 @@ fun ChooseDoseScreenPreview2() {
         isShowingUnitsField = false,
         units = "mg",
         onChangeOfUnits = {},
-        navigateToCreateCustomUnit = {}
+        navigateToCreateCustomUnit = {},
+        navigateToCreateMushroomUnit = { _, _ -> },
     )
 }
 
@@ -225,6 +229,7 @@ fun ChooseDoseScreen(
     units: String,
     onChangeOfUnits: (units: String) -> Unit,
     navigateToCreateCustomUnit: () -> Unit,
+    navigateToCreateMushroomUnit: (unit: MushroomCustomUnit, grams: Double) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -363,10 +368,13 @@ fun ChooseDoseScreen(
                     )
                     if (substanceName == "Psilocybin mushrooms") {
                         Spacer(modifier = Modifier.height(8.dp))
-                        MushroomDoseHelper(onUseDose = {
-                            onChangeDoseText(it)
-                            focusManager.clearFocus()
-                        })
+                        MushroomDoseHelper(
+                            onUseDose = {
+                                onChangeDoseText(it)
+                                focusManager.clearFocus()
+                            },
+                            onSaveAsCustomUnit = navigateToCreateMushroomUnit,
+                        )
                         Spacer(modifier = Modifier.height(4.dp))
                     }
                     if (isShowingUnitsField) {
