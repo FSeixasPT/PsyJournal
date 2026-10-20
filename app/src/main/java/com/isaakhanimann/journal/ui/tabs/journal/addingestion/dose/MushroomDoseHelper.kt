@@ -66,10 +66,11 @@ val mushroomKinds = listOf(
     MushroomKind("Truffles", typicalPercent = 0.4, lowPercent = 0.24, highPercent = 0.7, dryFraction = 0.25),
 )
 
-// works out mg psilocybin from the weight of mushrooms, for people who weighed them rather than the psilocybin
+// works out mg psilocybin from the weight of mushrooms, for people who weighed them rather than the psilocybin,
+// and fills it in as the dose whenever the weight, kind or dried and fresh change
 @Composable
 fun MushroomDoseHelper(
-    onUseDose: (doseText: String) -> Unit,
+    onDoseChange: (doseText: String) -> Unit,
     onSaveAsCustomUnit: (unit: MushroomCustomUnit, grams: Double) -> Unit,
 ) {
     var gramsText by rememberSaveable { mutableStateOf("") }
@@ -77,6 +78,20 @@ fun MushroomDoseHelper(
     var kindIndex by rememberSaveable { mutableIntStateOf(0) }
     val kind = mushroomKinds[kindIndex]
     val focusManager = LocalFocusManager.current
+
+    // an empty or zero weight clears the dose again, so a deleted weight doesn't leave its dose behind
+    fun update(newGramsText: String = gramsText, newIsDried: Boolean = isDried, newKindIndex: Int = kindIndex) {
+        val wasWeighed = gramsText.isNotEmpty()
+        gramsText = newGramsText
+        isDried = newIsDried
+        kindIndex = newKindIndex
+        val grams = newGramsText.toDoubleOrNull()?.takeIf { it > 0 }
+        if (grams != null) {
+            onDoseChange(mushroomKinds[newKindIndex].psilocybinMg(grams, newIsDried).toReadableString())
+        } else if (wasWeighed) {
+            onDoseChange("")
+        }
+    }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text("Weighed the mushrooms instead?", style = MaterialTheme.typography.titleSmall)
         var isShowingKinds by remember { mutableStateOf(false) }
@@ -89,7 +104,7 @@ fun MushroomDoseHelper(
                     DropdownMenuItem(
                         text = { Text(option.name) },
                         onClick = {
-                            kindIndex = index
+                            update(newKindIndex = index)
                             isShowingKinds = false
                         }
                     )
@@ -98,7 +113,7 @@ fun MushroomDoseHelper(
         }
         OutlinedTextField(
             value = gramsText,
-            onValueChange = { gramsText = it.replace(oldChar = ',', newChar = '.') },
+            onValueChange = { update(newGramsText = it.replace(oldChar = ',', newChar = '.')) },
             label = { Text("Mushrooms") },
             trailingIcon = {
                 Text(text = "g", modifier = Modifier.padding(horizontal = horizontalPadding))
@@ -109,22 +124,21 @@ fun MushroomDoseHelper(
             modifier = Modifier.fillMaxWidth()
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(selected = isDried, onClick = { isDried = true }, label = { Text("Dried") })
-            FilterChip(selected = !isDried, onClick = { isDried = false }, label = { Text("Fresh") })
+            FilterChip(selected = isDried, onClick = { update(newIsDried = true) }, label = { Text("Dried") })
+            FilterChip(selected = !isDried, onClick = { update(newIsDried = false) }, label = { Text("Fresh") })
         }
         val grams = gramsText.toDoubleOrNull()?.takeIf { it > 0 }
         if (grams != null) {
             val doseText = kind.psilocybinMg(grams, isDried).toReadableString()
             val lowText = kind.psilocybinMg(grams, isDried, kind.lowPercent).toReadableString()
             val highText = kind.psilocybinMg(grams, isDried, kind.highPercent).toReadableString()
-            Text(text = "About $doseText mg Psilocybin", style = MaterialTheme.typography.titleMedium)
-            Text(text = "Could be $lowText–$highText mg", style = MaterialTheme.typography.bodyMedium)
-            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = "About $doseText mg Psilocybin", style = MaterialTheme.typography.titleMedium)
+                    Text(text = "Could be $lowText–$highText mg", style = MaterialTheme.typography.bodyMedium)
+                }
                 TextButton(onClick = { onSaveAsCustomUnit(kind.customUnit(isDried), grams) }) {
                     Text("Save as custom unit")
-                }
-                TextButton(onClick = { onUseDose(doseText) }) {
-                    Text("Use $doseText mg")
                 }
             }
         }
