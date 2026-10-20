@@ -369,10 +369,7 @@ fun ChooseDoseScreen(
                     if (substanceName == "Psilocybin mushrooms") {
                         Spacer(modifier = Modifier.height(8.dp))
                         MushroomDoseHelper(
-                            onUseDose = {
-                                onChangeDoseText(it)
-                                focusManager.clearFocus()
-                            },
+                            onDoseChange = onChangeDoseText,
                             onSaveAsCustomUnit = navigateToCreateMushroomUnit,
                         )
                         Spacer(modifier = Modifier.height(4.dp))
