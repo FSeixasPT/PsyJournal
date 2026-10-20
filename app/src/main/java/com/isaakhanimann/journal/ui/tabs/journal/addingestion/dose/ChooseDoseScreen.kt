@@ -361,6 +361,14 @@ fun ChooseDoseScreen(
                             .fillMaxWidth()
                             .focusRequester(focusRequester)
                     )
+                    if (substanceName == "Psilocybin mushrooms") {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        MushroomDoseHelper(onUseDose = {
+                            onChangeDoseText(it)
+                            focusManager.clearFocus()
+                        })
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
                     if (isShowingUnitsField) {
                         OutlinedTextField(
                             value = units,
