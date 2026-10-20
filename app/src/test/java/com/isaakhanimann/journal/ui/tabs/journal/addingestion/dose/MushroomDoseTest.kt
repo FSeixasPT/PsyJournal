@@ -34,4 +34,20 @@ class MushroomDoseTest {
             assert(kind.lowPercent < kind.typicalPercent && kind.typicalPercent < kind.highPercent) { kind.name }
         }
     }
+
+    @Test
+    fun aCustomUnitIsOneGramOfThatKindWithItsRangeAsTheDeviation() {
+        val azurescens = mushroomKinds.single { it.name == "P. azurescens" }
+        val unit = azurescens.customUnit(isDried = true)
+        assertEquals("P. azurescens, dried", unit.name)
+        assertEquals(15.0, unit.mgPerGram, 1e-9)
+        // the low to high range is read as about two standard deviations either side
+        assertEquals(3.25, unit.standardDeviation, 1e-9)
+    }
+
+    @Test
+    fun aFreshCustomUnitHoldsAsMuchAsAFreshGram() {
+        assertEquals("Truffles, fresh", truffles.customUnit(isDried = false).name)
+        assertEquals(1.0, truffles.customUnit(isDried = false).mgPerGram, 1e-9)
+    }
 }

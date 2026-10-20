@@ -43,7 +43,17 @@ data class MushroomKind(
 ) {
     fun psilocybinMg(grams: Double, isDried: Boolean, percent: Double = typicalPercent): Double =
         grams * 1000 * percent / 100 * if (isDried) 1.0 else dryFraction
+
+    // the low to high range is read as about two standard deviations either side of the typical amount
+    fun customUnit(isDried: Boolean) = MushroomCustomUnit(
+        name = "$name, ${if (isDried) "dried" else "fresh"}",
+        mgPerGram = psilocybinMg(grams = 1.0, isDried = isDried),
+        standardDeviation = (psilocybinMg(1.0, isDried, highPercent) - psilocybinMg(1.0, isDried, lowPercent)) / 4,
+    )
 }
+
+// a custom unit of one gram of a kind of mushroom, to fill in the create custom unit screen
+data class MushroomCustomUnit(val name: String, val mgPerGram: Double, val standardDeviation: Double)
 
 // from Stamets, Beug & Bigwood (1982), the Finnish and Swiss semilanceata studies, Psilocybin Cup lab results
 // and Pellegrini et al. (2013) for fresh truffles; cubensis keeps the 1% the custom unit screen gives
@@ -58,7 +68,10 @@ val mushroomKinds = listOf(
 
 // works out mg psilocybin from the weight of mushrooms, for people who weighed them rather than the psilocybin
 @Composable
-fun MushroomDoseHelper(onUseDose: (doseText: String) -> Unit) {
+fun MushroomDoseHelper(
+    onUseDose: (doseText: String) -> Unit,
+    onSaveAsCustomUnit: (unit: MushroomCustomUnit, grams: Double) -> Unit,
+) {
     var gramsText by rememberSaveable { mutableStateOf("") }
     var isDried by rememberSaveable { mutableStateOf(true) }
     var kindIndex by rememberSaveable { mutableIntStateOf(0) }
@@ -104,10 +117,11 @@ fun MushroomDoseHelper(onUseDose: (doseText: String) -> Unit) {
             val doseText = kind.psilocybinMg(grams, isDried).toReadableString()
             val lowText = kind.psilocybinMg(grams, isDried, kind.lowPercent).toReadableString()
             val highText = kind.psilocybinMg(grams, isDried, kind.highPercent).toReadableString()
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "About $doseText mg Psilocybin", style = MaterialTheme.typography.titleMedium)
-                    Text(text = "Could be $lowText–$highText mg", style = MaterialTheme.typography.bodyMedium)
+            Text(text = "About $doseText mg Psilocybin", style = MaterialTheme.typography.titleMedium)
+            Text(text = "Could be $lowText–$highText mg", style = MaterialTheme.typography.bodyMedium)
+            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = { onSaveAsCustomUnit(kind.customUnit(isDried), grams) }) {
+                    Text("Save as custom unit")
                 }
                 TextButton(onClick = { onUseDose(doseText) }) {
                     Text("Use $doseText mg")

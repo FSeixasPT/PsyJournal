@@ -18,9 +18,31 @@ class MushroomDoseHelperTest {
     val rule = createComposeRule()
 
     private var usedDose: String? = null
+    private var savedUnit: MushroomCustomUnit? = null
+    private var savedGrams: Double? = null
 
     private fun showHelper() = rule.setContent {
-        JournalTheme { MushroomDoseHelper(onUseDose = { usedDose = it }) }
+        JournalTheme {
+            MushroomDoseHelper(
+                onUseDose = { usedDose = it },
+                onSaveAsCustomUnit = { unit, grams ->
+                    savedUnit = unit
+                    savedGrams = grams
+                }
+            )
+        }
+    }
+
+    @Test
+    fun savingAsACustomUnitPassesTheKindAndTheGrams() {
+        showHelper()
+        rule.onNodeWithText("P. cubensis").performClick()
+        rule.onNodeWithText("Truffles").performClick()
+        rule.onNodeWithText("Fresh").performClick()
+        rule.onNodeWithText("Mushrooms").performTextInput("10")
+        rule.onNodeWithText("Save as custom unit").performClick()
+        assertEquals("Truffles, fresh", savedUnit?.name)
+        assertEquals(10.0, savedGrams)
     }
 
     @Test
