@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -51,6 +50,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -68,7 +70,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -342,21 +343,22 @@ fun ChooseDoseScreen(
                     val focusRequester = remember { FocusRequester() }
                     val textStyle = MaterialTheme.typography.titleMedium
                     if (isMushrooms) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            modifier = Modifier.toggleable(
-                                value = isWeighingMushrooms,
-                                role = Role.Switch,
-                                onValueChange = {
-                                    isWeighingMushrooms = it
-                                    if (it) onChangeDoseText("")
+                        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                            listOf("Psilocybin dose", "Mushroom weight").forEachIndexed { index, label ->
+                                val isWeight = index == 1
+                                SegmentedButton(
+                                    selected = isWeighingMushrooms == isWeight,
+                                    onClick = {
+                                        if (isWeight && !isWeighingMushrooms) onChangeDoseText("")
+                                        isWeighingMushrooms = isWeight
+                                    },
+                                    shape = SegmentedButtonDefaults.itemShape(index = index, count = 2),
+                                ) {
+                                    Text(label)
                                 }
-                            )
-                        ) {
-                            Switch(checked = isWeighingMushrooms, onCheckedChange = null)
-                            Text("Weighed the mushrooms", style = MaterialTheme.typography.titleMedium)
+                            }
                         }
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                     if (isMushrooms && isWeighingMushrooms) {
                         MushroomDoseHelper(
