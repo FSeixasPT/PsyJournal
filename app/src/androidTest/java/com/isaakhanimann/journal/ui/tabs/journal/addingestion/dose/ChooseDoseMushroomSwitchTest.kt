@@ -91,6 +91,16 @@ class ChooseDoseMushroomSwitchTest {
     }
 
     @Test
+    fun weighingTheMushroomsHidesTheCustomUnitCard() {
+        showDoseScreen()
+        rule.onNodeWithText("Create a custom unit").assertExists()
+        rule.onNodeWithText("Weighed the mushrooms").performClick()
+        rule.onNodeWithText("Create a custom unit").assertDoesNotExist()
+        rule.onNodeWithText("Weighed the mushrooms").performClick()
+        rule.onNodeWithText("Create a custom unit").assertExists()
+    }
+
+    @Test
     fun otherSubstancesHaveNoMushroomSwitch() {
         showDoseScreen(substanceName = "LSD")
         rule.onNodeWithText("Weighed the mushrooms").assertDoesNotExist()
