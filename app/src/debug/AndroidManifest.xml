@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <!-- the activity compose ui tests host screens in: without the app's theme it gets the splash theme's
+             window action bar, which makes screens jump while the keyboard comes up -->
+        <activity
+            android:name="androidx.activity.ComponentActivity"
+            android:theme="@style/Theme.Journal"
+            tools:node="merge" />
+    </application>
+</manifest>
