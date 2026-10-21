@@ -93,7 +93,6 @@ fun MushroomDoseHelper(
         }
     }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("Weighed the mushrooms instead?", style = MaterialTheme.typography.titleSmall)
         var isShowingKinds by remember { mutableStateOf(false) }
         Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
             OutlinedButton(onClick = { isShowingKinds = true }, modifier = Modifier.fillMaxWidth()) {

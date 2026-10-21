@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -59,6 +60,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,6 +68,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -334,45 +337,66 @@ fun ChooseDoseScreen(
                     val focusManager = LocalFocusManager.current
                     val focusRequester = remember { FocusRequester() }
                     val textStyle = MaterialTheme.typography.titleMedium
-                    LaunchedEffect(Unit) {
-                        focusRequester.requestFocus()
+                    // with mushrooms the dose can come from their weight instead, and then the pure dose
+                    // field is hidden so a typed dose can't disagree with the weight
+                    val isMushrooms = substanceName == "Psilocybin mushrooms"
+                    var isWeighingMushrooms by rememberSaveable { mutableStateOf(false) }
+                    if (isMushrooms) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.toggleable(
+                                value = isWeighingMushrooms,
+                                role = Role.Switch,
+                                onValueChange = {
+                                    isWeighingMushrooms = it
+                                    if (it) onChangeDoseText("")
+                                }
+                            )
+                        ) {
+                            Switch(checked = isWeighingMushrooms, onCheckedChange = null)
+                            Text("Weighed the mushrooms", style = MaterialTheme.typography.titleMedium)
+                        }
                     }
-                    OutlinedTextField(
-                        value = doseText,
-                        onValueChange = {
-                            onChangeDoseText(
-                                it.replace(
-                                    oldChar = ',',
-                                    newChar = '.'
-                                )
-                            )
-                        },
-                        textStyle = textStyle,
-                        label = { Text("Pure Dose", style = textStyle) },
-                        isError = !isValidDose,
-                        trailingIcon = {
-                            Text(
-                                text = units,
-                                style = textStyle,
-                                modifier = Modifier.padding(horizontal = horizontalPadding)
-                            )
-                        },
-                        keyboardActions = KeyboardActions(onDone = {
-                            focusManager.clearFocus()
-                        }),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(focusRequester)
-                    )
-                    if (substanceName == "Psilocybin mushrooms") {
-                        Spacer(modifier = Modifier.height(8.dp))
+                    if (isMushrooms && isWeighingMushrooms) {
                         MushroomDoseHelper(
                             onDoseChange = onChangeDoseText,
                             onSaveAsCustomUnit = navigateToCreateMushroomUnit,
                         )
                         Spacer(modifier = Modifier.height(4.dp))
+                    } else {
+                        LaunchedEffect(Unit) {
+                            focusRequester.requestFocus()
+                        }
+                        OutlinedTextField(
+                            value = doseText,
+                            onValueChange = {
+                                onChangeDoseText(
+                                    it.replace(
+                                        oldChar = ',',
+                                        newChar = '.'
+                                    )
+                                )
+                            },
+                            textStyle = textStyle,
+                            label = { Text("Pure Dose", style = textStyle) },
+                            isError = !isValidDose,
+                            trailingIcon = {
+                                Text(
+                                    text = units,
+                                    style = textStyle,
+                                    modifier = Modifier.padding(horizontal = horizontalPadding)
+                                )
+                            },
+                            keyboardActions = KeyboardActions(onDone = {
+                                focusManager.clearFocus()
+                            }),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester)
+                        )
                     }
                     if (isShowingUnitsField) {
                         OutlinedTextField(
