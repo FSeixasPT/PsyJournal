@@ -17,7 +17,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class ChooseDoseMushroomSwitchTest {
+class ChooseDoseMushroomWeightTest {
     @get:Rule
     val rule = createComposeRule()
 
@@ -56,53 +56,62 @@ class ChooseDoseMushroomSwitchTest {
     }
 
     @Test
-    fun thePureDoseIsEnteredUntilTheSwitchIsTurnedOn() {
+    fun thePsilocybinDoseIsEnteredUntilMushroomWeightIsChosen() {
         showDoseScreen()
         rule.onNodeWithText("Pure Dose").assertIsDisplayed()
         rule.onNodeWithText("Mushrooms").assertDoesNotExist()
     }
 
     @Test
-    fun weighingTheMushroomsHidesThePureDoseAndFillsItIn() {
+    fun choosingMushroomWeightHidesThePureDoseAndFillsItIn() {
         showDoseScreen()
-        rule.onNodeWithText("Weighed the mushrooms").performClick()
+        rule.onNodeWithText("Mushroom weight").performClick()
         rule.onNodeWithText("Pure Dose").assertDoesNotExist()
         rule.onNodeWithText("Mushrooms").performTextInput("2,5")
         assertEquals("25", doseText)
     }
 
     @Test
-    fun turningTheSwitchOnClearsATypedDose() {
+    fun choosingMushroomWeightClearsATypedDose() {
         showDoseScreen()
         rule.onNodeWithText("Pure Dose").performTextInput("40")
-        rule.onNodeWithText("Weighed the mushrooms").performClick()
+        rule.onNodeWithText("Mushroom weight").performClick()
         assertEquals("", doseText)
     }
 
     @Test
-    fun turningTheSwitchOffKeepsTheWorkedOutDoseToEdit() {
+    fun choosingMushroomWeightAgainKeepsTheWeighedDose() {
         showDoseScreen()
-        rule.onNodeWithText("Weighed the mushrooms").performClick()
+        rule.onNodeWithText("Mushroom weight").performClick()
         rule.onNodeWithText("Mushrooms").performTextInput("2")
-        rule.onNodeWithText("Weighed the mushrooms").performClick()
+        rule.onNodeWithText("Mushroom weight").performClick()
+        assertEquals("20", doseText)
+    }
+
+    @Test
+    fun goingBackToPsilocybinDoseKeepsTheWorkedOutDoseToEdit() {
+        showDoseScreen()
+        rule.onNodeWithText("Mushroom weight").performClick()
+        rule.onNodeWithText("Mushrooms").performTextInput("2")
+        rule.onNodeWithText("Psilocybin dose").performClick()
         rule.onNodeWithText("Mushrooms").assertDoesNotExist()
         rule.onNodeWithText("Pure Dose").assertIsDisplayed()
         assertEquals("20", doseText)
     }
 
     @Test
-    fun weighingTheMushroomsHidesTheCustomUnitCard() {
+    fun choosingMushroomWeightHidesTheCustomUnitCard() {
         showDoseScreen()
         rule.onNodeWithText("Create a custom unit").assertExists()
-        rule.onNodeWithText("Weighed the mushrooms").performClick()
+        rule.onNodeWithText("Mushroom weight").performClick()
         rule.onNodeWithText("Create a custom unit").assertDoesNotExist()
-        rule.onNodeWithText("Weighed the mushrooms").performClick()
+        rule.onNodeWithText("Psilocybin dose").performClick()
         rule.onNodeWithText("Create a custom unit").assertExists()
     }
 
     @Test
-    fun otherSubstancesHaveNoMushroomSwitch() {
+    fun otherSubstancesHaveNoMushroomWeightChoice() {
         showDoseScreen(substanceName = "LSD")
-        rule.onNodeWithText("Weighed the mushrooms").assertDoesNotExist()
+        rule.onNodeWithText("Mushroom weight").assertDoesNotExist()
     }
 }
