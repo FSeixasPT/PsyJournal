@@ -254,6 +254,10 @@ fun ChooseDoseScreen(
             }
         }
     ) { padding ->
+        // with mushrooms the dose can come from their weight instead, and then the pure dose field
+        // and the custom unit card are hidden so a typed dose can't disagree with the weight
+        val isMushrooms = substanceName == "Psilocybin mushrooms"
+        var isWeighingMushrooms by rememberSaveable { mutableStateOf(false) }
         Column(
             modifier = Modifier
                 .padding(padding)
@@ -337,10 +341,6 @@ fun ChooseDoseScreen(
                     val focusManager = LocalFocusManager.current
                     val focusRequester = remember { FocusRequester() }
                     val textStyle = MaterialTheme.typography.titleMedium
-                    // with mushrooms the dose can come from their weight instead, and then the pure dose
-                    // field is hidden so a typed dose can't disagree with the weight
-                    val isMushrooms = substanceName == "Psilocybin mushrooms"
-                    var isWeighingMushrooms by rememberSaveable { mutableStateOf(false) }
                     if (isMushrooms) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -478,7 +478,7 @@ fun ChooseDoseScreen(
                     }
                 }
             }
-            ElevatedCard(
+            if (!(isMushrooms && isWeighingMushrooms)) ElevatedCard(
                 modifier = Modifier.padding(
                     horizontal = horizontalPadding,
                     vertical = 4.dp
