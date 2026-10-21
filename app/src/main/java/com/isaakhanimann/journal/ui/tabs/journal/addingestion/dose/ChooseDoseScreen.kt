@@ -259,6 +259,9 @@ fun ChooseDoseScreen(
         // and the custom unit card are hidden so a typed dose can't disagree with the weight
         val isMushrooms = substanceName == "Psilocybin mushrooms"
         var isWeighingMushrooms by rememberSaveable { mutableStateOf(false) }
+        // each way keeps what was entered in it, and the dose is whatever the chosen way gives
+        var mushroomWeight by rememberSaveable(stateSaver = MushroomWeight.Saver) { mutableStateOf(MushroomWeight()) }
+        var typedDoseText by rememberSaveable { mutableStateOf("") }
         Column(
             modifier = Modifier
                 .padding(padding)
@@ -349,7 +352,13 @@ fun ChooseDoseScreen(
                                 SegmentedButton(
                                     selected = isWeighingMushrooms == isWeight,
                                     onClick = {
-                                        if (isWeight && !isWeighingMushrooms) onChangeDoseText("")
+                                        if (isWeight && !isWeighingMushrooms) {
+                                            typedDoseText = doseText
+                                            onChangeDoseText(mushroomWeight.doseText)
+                                        } else if (!isWeight && isWeighingMushrooms) {
+                                            // nothing typed yet keeps the weighed dose, to adjust by hand
+                                            onChangeDoseText(typedDoseText.ifEmpty { doseText })
+                                        }
                                         isWeighingMushrooms = isWeight
                                     },
                                     shape = SegmentedButtonDefaults.itemShape(index = index, count = 2),
@@ -362,7 +371,11 @@ fun ChooseDoseScreen(
                     }
                     if (isMushrooms && isWeighingMushrooms) {
                         MushroomDoseHelper(
-                            onDoseChange = onChangeDoseText,
+                            weight = mushroomWeight,
+                            onWeightChange = {
+                                mushroomWeight = it
+                                onChangeDoseText(it.doseText)
+                            },
                             onSaveAsCustomUnit = navigateToCreateMushroomUnit,
                         )
                         Spacer(modifier = Modifier.height(4.dp))

@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -72,7 +73,43 @@ class ChooseDoseMushroomWeightTest {
     }
 
     @Test
-    fun choosingMushroomWeightClearsATypedDose() {
+    fun aTypedDoseIsKeptWhenSwitchingToMushroomWeightAndBack() {
+        showDoseScreen()
+        rule.onNodeWithText("Pure Dose").performTextInput("40")
+        rule.onNodeWithText("Mushroom weight").performClick()
+        rule.onNodeWithText("Psilocybin dose").performClick()
+        rule.onNodeWithText("40").assertIsDisplayed()
+        assertEquals("40", doseText)
+    }
+
+    @Test
+    fun theWeightIsKeptWhenSwitchingToPsilocybinDoseAndBack() {
+        showDoseScreen()
+        rule.onNodeWithText("Mushroom weight").performClick()
+        rule.onNodeWithText("Fresh").performClick()
+        rule.onNodeWithText("Mushrooms").performTextInput("20")
+        rule.onNodeWithText("Psilocybin dose").performClick()
+        rule.onNodeWithText("Mushroom weight").performClick()
+        rule.onNodeWithText("20").assertIsDisplayed()
+        rule.onNodeWithText("Fresh").assertIsSelected()
+        assertEquals("20", doseText)
+    }
+
+    @Test
+    fun eachWayKeepsItsOwnDoseAndTheChosenOneIsLogged() {
+        showDoseScreen()
+        rule.onNodeWithText("Pure Dose").performTextInput("40")
+        rule.onNodeWithText("Mushroom weight").performClick()
+        rule.onNodeWithText("Mushrooms").performTextInput("2")
+        assertEquals("20", doseText)
+        rule.onNodeWithText("Psilocybin dose").performClick()
+        assertEquals("40", doseText)
+        rule.onNodeWithText("Mushroom weight").performClick()
+        assertEquals("20", doseText)
+    }
+
+    @Test
+    fun mushroomWeightWithoutAWeightHasNoDose() {
         showDoseScreen()
         rule.onNodeWithText("Pure Dose").performTextInput("40")
         rule.onNodeWithText("Mushroom weight").performClick()

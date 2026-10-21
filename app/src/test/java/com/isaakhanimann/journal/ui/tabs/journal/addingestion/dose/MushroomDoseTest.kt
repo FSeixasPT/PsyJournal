@@ -46,6 +46,19 @@ class MushroomDoseTest {
     }
 
     @Test
+    fun aWeightWorksOutItsDoseText() {
+        assertEquals("25", MushroomWeight(gramsText = "2.5").doseText)
+        assertEquals("20", MushroomWeight(gramsText = "20", isDried = false).doseText)
+    }
+
+    @Test
+    fun noWeightOrZeroHasNoDose() {
+        assertEquals("", MushroomWeight().doseText)
+        assertEquals("", MushroomWeight(gramsText = "0").doseText)
+        assertEquals("", MushroomWeight(gramsText = ".").doseText)
+    }
+
+    @Test
     fun aFreshCustomUnitHoldsAsMuchAsAFreshGram() {
         assertEquals("Truffles, fresh", truffles.customUnit(isDried = false).name)
         assertEquals(1.0, truffles.customUnit(isDried = false).mgPerGram, 1e-9)

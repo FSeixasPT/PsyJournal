@@ -1,5 +1,8 @@
 package com.isaakhanimann.journal.ui.tabs.journal.addingestion.dose
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -19,14 +22,15 @@ class MushroomDoseHelperTest {
     @get:Rule
     val rule = createComposeRule()
 
-    private var filledDose: String? = null
+    private var weight by mutableStateOf(MushroomWeight())
     private var savedUnit: MushroomCustomUnit? = null
     private var savedGrams: Double? = null
 
     private fun showHelper() = rule.setContent {
         JournalTheme {
             MushroomDoseHelper(
-                onDoseChange = { filledDose = it },
+                weight = weight,
+                onWeightChange = { weight = it },
                 onSaveAsCustomUnit = { unit, grams ->
                     savedUnit = unit
                     savedGrams = grams
@@ -39,14 +43,14 @@ class MushroomDoseHelperTest {
     fun nothingIsFilledInUntilTheMushroomsAreWeighed() {
         showHelper()
         rule.onNodeWithText("Fresh").performClick()
-        assertNull(filledDose)
+        assertEquals("", weight.doseText)
     }
 
     @Test
     fun gramsOfDriedMushroomsFillInTheDose() {
         showHelper()
         rule.onNodeWithText("Mushrooms").performTextInput("2,5")
-        assertEquals("25", filledDose)
+        assertEquals("25", weight.doseText)
     }
 
     @Test
@@ -54,7 +58,7 @@ class MushroomDoseHelperTest {
         showHelper()
         rule.onNodeWithText("Mushrooms").performTextInput("20")
         rule.onNodeWithText("Fresh").performClick()
-        assertEquals("20", filledDose)
+        assertEquals("20", weight.doseText)
     }
 
     @Test
@@ -64,7 +68,7 @@ class MushroomDoseHelperTest {
         rule.onNodeWithText("P. cubensis").performClick()
         rule.onNodeWithText("P. azurescens").performClick()
         rule.onNodeWithText("Could be 20–46 mg", substring = true).assertIsDisplayed()
-        assertEquals("30", filledDose)
+        assertEquals("30", weight.doseText)
     }
 
     @Test
@@ -72,7 +76,7 @@ class MushroomDoseHelperTest {
         showHelper()
         rule.onNodeWithText("Mushrooms").performTextInput("2")
         rule.onNodeWithText("Mushrooms").performTextClearance()
-        assertEquals("", filledDose)
+        assertEquals("", weight.doseText)
     }
 
     @Test
