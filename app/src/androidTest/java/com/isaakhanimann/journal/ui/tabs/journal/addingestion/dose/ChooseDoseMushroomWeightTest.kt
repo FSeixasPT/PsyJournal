@@ -137,6 +137,26 @@ class ChooseDoseMushroomWeightTest {
     }
 
     @Test
+    fun typingAfterGoingBackToPsilocybinDoseAddsToTheEndOfTheKeptDose() {
+        showDoseScreen()
+        rule.onNodeWithText("Pure Dose").performTextInput("40")
+        rule.onNodeWithText("Mushroom weight").performClick()
+        rule.onNodeWithText("Psilocybin dose").performClick()
+        rule.onNodeWithText("Pure Dose").performTextInput("5")
+        assertEquals("405", doseText)
+    }
+
+    @Test
+    fun typingAfterGoingBackToPsilocybinDoseAddsToTheEndOfTheWorkedOutDose() {
+        showDoseScreen()
+        rule.onNodeWithText("Mushroom weight").performClick()
+        rule.onNodeWithText("Mushrooms").performTextInput("2")
+        rule.onNodeWithText("Psilocybin dose").performClick()
+        rule.onNodeWithText("Pure Dose").performTextInput("5")
+        assertEquals("205", doseText)
+    }
+
+    @Test
     fun theCustomUnitIsOfferedOnlyWithMushroomWeight() {
         showDoseScreen()
         rule.onNodeWithText("Create a custom unit").assertDoesNotExist()

@@ -70,7 +70,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -383,15 +385,17 @@ fun ChooseDoseScreen(
                         LaunchedEffect(Unit) {
                             focusRequester.requestFocus()
                         }
+                        // a dose filled in from elsewhere, like the one kept from switching back, puts the cursor at its end
+                        var doseField by remember { mutableStateOf(TextFieldValue(doseText, TextRange(doseText.length))) }
+                        if (doseField.text != doseText) {
+                            doseField = TextFieldValue(doseText, TextRange(doseText.length))
+                        }
                         OutlinedTextField(
-                            value = doseText,
+                            value = doseField,
                             onValueChange = {
-                                onChangeDoseText(
-                                    it.replace(
-                                        oldChar = ',',
-                                        newChar = '.'
-                                    )
-                                )
+                                val newDoseText = it.text.replace(oldChar = ',', newChar = '.')
+                                doseField = it.copy(text = newDoseText)
+                                onChangeDoseText(newDoseText)
                             },
                             textStyle = textStyle,
                             label = { Text("Pure Dose", style = textStyle) },
