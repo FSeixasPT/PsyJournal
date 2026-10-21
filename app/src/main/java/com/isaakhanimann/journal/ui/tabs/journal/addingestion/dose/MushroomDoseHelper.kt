@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.text.KeyboardActions
@@ -16,7 +18,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -71,7 +72,7 @@ val mushroomKinds = listOf(
 @Composable
 fun MushroomDoseHelper(
     onDoseChange: (doseText: String) -> Unit,
-    onSaveAsCustomUnit: (unit: MushroomCustomUnit, grams: Double) -> Unit,
+    onSaveAsCustomUnit: (unit: MushroomCustomUnit, grams: Double?) -> Unit,
 ) {
     var gramsText by rememberSaveable { mutableStateOf("") }
     var isDried by rememberSaveable { mutableStateOf(true) }
@@ -94,19 +95,22 @@ fun MushroomDoseHelper(
     }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         var isShowingKinds by remember { mutableStateOf(false) }
-        Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
-            OutlinedButton(onClick = { isShowingKinds = true }, modifier = Modifier.fillMaxWidth()) {
-                Text(text = kind.name)
-            }
-            DropdownMenu(expanded = isShowingKinds, onDismissRequest = { isShowingKinds = false }) {
-                mushroomKinds.forEachIndexed { index, option ->
-                    DropdownMenuItem(
-                        text = { Text(option.name) },
-                        onClick = {
-                            update(newKindIndex = index)
-                            isShowingKinds = false
-                        }
-                    )
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("Kind", style = MaterialTheme.typography.titleMedium)
+            Box(modifier = Modifier.weight(1f).wrapContentSize(Alignment.TopStart)) {
+                OutlinedButton(onClick = { isShowingKinds = true }, modifier = Modifier.fillMaxWidth()) {
+                    Text(text = kind.name)
+                }
+                DropdownMenu(expanded = isShowingKinds, onDismissRequest = { isShowingKinds = false }) {
+                    mushroomKinds.forEachIndexed { index, option ->
+                        DropdownMenuItem(
+                            text = { Text(option.name) },
+                            onClick = {
+                                update(newKindIndex = index)
+                                isShowingKinds = false
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -131,19 +135,18 @@ fun MushroomDoseHelper(
             val doseText = kind.psilocybinMg(grams, isDried).toReadableString()
             val lowText = kind.psilocybinMg(grams, isDried, kind.lowPercent).toReadableString()
             val highText = kind.psilocybinMg(grams, isDried, kind.highPercent).toReadableString()
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "About $doseText mg Psilocybin", style = MaterialTheme.typography.titleMedium)
-                    Text(text = "Could be $lowText–$highText mg", style = MaterialTheme.typography.bodyMedium)
-                }
-                TextButton(onClick = { onSaveAsCustomUnit(kind.customUnit(isDried), grams) }) {
-                    Text("Save as custom unit")
-                }
-            }
+            Text(text = "About $doseText mg Psilocybin", style = MaterialTheme.typography.titleMedium)
+            Text(text = "Could be $lowText–$highText mg", style = MaterialTheme.typography.bodyMedium)
         }
         Text(
             text = "Typical lab results. The same strain can test several times stronger or weaker depending on how it was grown, dried and stored, so this is only a rough guide.",
             style = MaterialTheme.typography.bodySmall
         )
+        // a custom unit of this kind, so mushrooms can be logged in grams from then on
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("Always prefer to log mushroom weight?")
+        OutlinedButton(onClick = { onSaveAsCustomUnit(kind.customUnit(isDried), gramsText.toDoubleOrNull()?.takeIf { it > 0 }) }) {
+            Text("Create a custom unit")
+        }
     }
 }

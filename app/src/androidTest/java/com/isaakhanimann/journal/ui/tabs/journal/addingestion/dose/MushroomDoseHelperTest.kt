@@ -82,8 +82,23 @@ class MushroomDoseHelperTest {
         rule.onNodeWithText("Truffles").performClick()
         rule.onNodeWithText("Fresh").performClick()
         rule.onNodeWithText("Mushrooms").performTextInput("10")
-        rule.onNodeWithText("Save as custom unit").performClick()
+        rule.onNodeWithText("Create a custom unit").performClick()
         assertEquals("Truffles, fresh", savedUnit?.name)
         assertEquals(10.0, savedGrams)
+    }
+
+    @Test
+    fun aCustomUnitCanBeCreatedBeforeWeighing() {
+        showHelper()
+        rule.onNodeWithText("Always prefer to log mushroom weight?").assertIsDisplayed()
+        rule.onNodeWithText("Create a custom unit").performClick()
+        assertEquals("P. cubensis, dried", savedUnit?.name)
+        assertNull(savedGrams)
+    }
+
+    @Test
+    fun theKindPickerIsLabelled() {
+        showHelper()
+        rule.onNodeWithText("Kind").assertIsDisplayed()
     }
 }

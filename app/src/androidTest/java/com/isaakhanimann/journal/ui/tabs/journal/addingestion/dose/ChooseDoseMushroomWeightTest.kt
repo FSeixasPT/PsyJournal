@@ -100,12 +100,16 @@ class ChooseDoseMushroomWeightTest {
     }
 
     @Test
-    fun choosingMushroomWeightHidesTheCustomUnitCard() {
+    fun theCustomUnitIsOfferedOnlyWithMushroomWeight() {
         showDoseScreen()
-        rule.onNodeWithText("Create a custom unit").assertExists()
-        rule.onNodeWithText("Mushroom weight").performClick()
         rule.onNodeWithText("Create a custom unit").assertDoesNotExist()
-        rule.onNodeWithText("Psilocybin dose").performClick()
+        rule.onNodeWithText("Mushroom weight").performClick()
+        rule.onNodeWithText("Create a custom unit").assertExists()
+    }
+
+    @Test
+    fun otherSubstancesKeepTheCustomUnitCard() {
+        showDoseScreen(substanceName = "LSD")
         rule.onNodeWithText("Create a custom unit").assertExists()
     }
 

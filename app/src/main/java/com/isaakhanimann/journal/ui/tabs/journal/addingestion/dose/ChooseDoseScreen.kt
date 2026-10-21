@@ -90,7 +90,7 @@ fun ChooseDoseScreen(
     navigateToVolumetricDosingScreenOnJournalTab: () -> Unit,
     navigateToSaferSniffingScreen: () -> Unit,
     navigateToCreateCustomUnit: () -> Unit,
-    navigateToCreateMushroomUnit: (unit: MushroomCustomUnit, grams: Double) -> Unit,
+    navigateToCreateMushroomUnit: (unit: MushroomCustomUnit, grams: Double?) -> Unit,
     viewModel: ChooseDoseViewModel = hiltViewModel()
 ) {
     ChooseDoseScreen(
@@ -233,7 +233,7 @@ fun ChooseDoseScreen(
     units: String,
     onChangeOfUnits: (units: String) -> Unit,
     navigateToCreateCustomUnit: () -> Unit,
-    navigateToCreateMushroomUnit: (unit: MushroomCustomUnit, grams: Double) -> Unit,
+    navigateToCreateMushroomUnit: (unit: MushroomCustomUnit, grams: Double?) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -480,7 +480,8 @@ fun ChooseDoseScreen(
                     }
                 }
             }
-            if (!(isMushrooms && isWeighingMushrooms)) ElevatedCard(
+            // mushrooms offer their custom unit in the mushroom weight section instead
+            if (!isMushrooms) ElevatedCard(
                 modifier = Modifier.padding(
                     horizontal = horizontalPadding,
                     vertical = 4.dp
@@ -496,8 +497,6 @@ fun ChooseDoseScreen(
                 ) {
                     if (substanceName == "Cannabis" && administrationRoute == AdministrationRoute.SMOKED) {
                         Text("Prefer to log weight of bud, hash or log another unit related to joint, vaporizer or bong?")
-                    } else if (substanceName == "Psilocybin mushrooms") {
-                        Text("Prefer to log weight of mushrooms instead of mg Psilocybin?")
                     } else if (substanceName == "Alcohol") {
                         Text("Prefer to log number of drinks, beer or wine instead of g of Ethanol?")
                     } else if (substanceName == "Caffeine") {
