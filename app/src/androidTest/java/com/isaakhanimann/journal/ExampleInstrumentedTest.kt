@@ -35,6 +35,7 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.isaakhanimann.journal", appContext.packageName)
+        // the fork's application id; a debug build installed beside the release one carries a .demo suffix
+        assertEquals("io.github.fseixaspt.psyjournal", appContext.packageName.removeSuffix(".demo"))
     }
 }
