@@ -115,6 +115,40 @@ class ChangelogTest {
     }
 
     @Test
+    fun withoutDonationsTheKofiItemsAreLeftOut() {
+        val all = parseChangelog(markdown.replace("- **Live notification.**", "- **Donate.** Opens the Ko-fi page.\n- **Live notification.**"))
+        val kept = withoutDonationMentions(all)
+        assertEquals(listOf("**Live notification.** Follow it from the shade."), kept[1].sections[0].items.map { it.text })
+        assertEquals(releases[0], kept[0])
+    }
+
+    @Test
+    fun aSectionOrReleaseLeftEmptyIsDropped() {
+        val onlyDonate = parseChangelog(
+            """
+            ## 12.1 — 2026-10-17
+
+            ### Added
+
+            - **Donate.** Opens the ko-fi page.
+
+            ### Fixed
+
+            - A fix.
+
+            ## 12.0 — 2026-10-14
+
+            ### Added
+
+            - **Donate.** Ko-fi.
+            """.trimIndent()
+        )
+        val kept = withoutDonationMentions(onlyDonate)
+        assertEquals(listOf("12.1"), kept.map { it.version })
+        assertEquals(listOf("Fixed"), kept[0].sections.map { it.title })
+    }
+
+    @Test
     fun theAppsOwnChangelogHasAnEntryForThisVersion() {
         val own = parseChangelog(File("../CHANGELOG.md").readText())
         assertTrue(own.any { it.version == VERSION_NAME })

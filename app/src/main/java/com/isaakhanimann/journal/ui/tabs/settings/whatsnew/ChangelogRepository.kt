@@ -1,6 +1,7 @@
 package com.isaakhanimann.journal.ui.tabs.settings.whatsnew
 
 import android.content.Context
+import com.isaakhanimann.journal.ui.tabs.settings.isDonationOffered
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -11,6 +12,7 @@ class ChangelogRepository @Inject constructor(
 ) {
     // read on first use, off the main thread by the callers
     val releases: List<ChangelogRelease> by lazy {
-        parseChangelog(appContext.assets.open(CHANGELOG_ASSET).bufferedReader().use { it.readText() })
+        val all = parseChangelog(appContext.assets.open(CHANGELOG_ASSET).bufferedReader().use { it.readText() })
+        if (isDonationOffered(appContext)) all else withoutDonationMentions(all)
     }
 }
