@@ -44,6 +44,8 @@ import com.isaakhanimann.journal.ui.main.navigation.graphs.settingsGraph
 import com.isaakhanimann.journal.ui.main.navigation.graphs.statsGraph
 import com.isaakhanimann.journal.ui.main.navigation.JournalTopLevelRoute
 import com.isaakhanimann.journal.ui.main.navigation.topLevelRoutes
+import com.isaakhanimann.journal.ui.main.navigation.graphs.WhatsNewRoute
+import com.isaakhanimann.journal.ui.tabs.settings.whatsnew.WhatsNewDialog
 
 @Composable
 fun MainScreen(
@@ -122,6 +124,17 @@ fun MainScreen(
                     is NotificationTarget.Substance -> navController.navigate(SubstanceRoute(target.substanceName)) { launchSingleTop = true }
                 }
                 onNotificationTargetHandled()
+            }
+            val releasesToAnnounce by viewModel.releasesToAnnounceFlow.collectAsState()
+            if (releasesToAnnounce.isNotEmpty()) {
+                WhatsNewDialog(
+                    releases = releasesToAnnounce,
+                    onDismiss = viewModel::markWhatsNewSeen,
+                    onShowDetails = {
+                        viewModel.markWhatsNewSeen()
+                        navController.navigate(WhatsNewRoute) { launchSingleTop = true }
+                    }
+                )
             }
         }
     } else {

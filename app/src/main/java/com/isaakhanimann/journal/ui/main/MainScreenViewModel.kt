@@ -23,22 +23,31 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.isaakhanimann.journal.ui.VERSION_NAME
+import com.isaakhanimann.journal.ui.tabs.settings.whatsnew.ChangelogRelease
+import com.isaakhanimann.journal.ui.tabs.settings.whatsnew.ChangelogRepository
+import com.isaakhanimann.journal.ui.tabs.settings.whatsnew.releasesToAnnounce
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 val ARE_CONDITIONS_ACCEPTED = booleanPreferencesKey("are_conditions_accepted")
+val LAST_SEEN_WHATS_NEW_VERSION = stringPreferencesKey("last_seen_whats_new_version")
 
 @HiltViewModel
 class MainScreenViewModel @Inject constructor(
     private val dataStore: DataStore<Preferences>,
     private val experienceRepo: ExperienceRepository,
+    private val changelogRepository: ChangelogRepository,
 ) : ViewModel() {
 
     suspend fun experienceExists(experienceId: Int): Boolean = experienceRepo.getExperience(experienceId) != null
@@ -52,10 +61,37 @@ class MainScreenViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000)
         )
 
+    // a new install has nothing to catch up on, so What's new only pops up after updates
+    val releasesToAnnounceFlow: StateFlow<List<ChangelogRelease>> = dataStore.data
+        .map { preferences ->
+            if (preferences[ARE_CONDITIONS_ACCEPTED] != true) {
+                emptyList()
+            } else {
+                releasesToAnnounce(
+                    releases = changelogRepository.releases,
+                    lastSeenVersion = preferences[LAST_SEEN_WHATS_NEW_VERSION],
+                    currentVersion = VERSION_NAME
+                )
+            }
+        }.flowOn(Dispatchers.IO).stateIn(
+            initialValue = emptyList(),
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000)
+        )
+
+    fun markWhatsNewSeen() {
+        viewModelScope.launch {
+            dataStore.edit { settings ->
+                settings[LAST_SEEN_WHATS_NEW_VERSION] = VERSION_NAME
+            }
+        }
+    }
+
     fun accept() {
         viewModelScope.launch {
             dataStore.edit { settings ->
                 settings[ARE_CONDITIONS_ACCEPTED] = true
+                settings[LAST_SEEN_WHATS_NEW_VERSION] = VERSION_NAME
             }
         }
     }

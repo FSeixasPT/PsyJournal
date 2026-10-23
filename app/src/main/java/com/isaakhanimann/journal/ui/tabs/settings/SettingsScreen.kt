@@ -50,6 +50,7 @@ import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Medication
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.outlined.QuestionAnswer
 import androidx.compose.material.icons.outlined.Route
 import androidx.compose.material.icons.outlined.Share
@@ -103,6 +104,7 @@ fun SettingsPreview() {
         navigateToSubstanceColors = {},
         navigateToCustomUnits = {},
         navigateToRouteVisibility = {},
+        navigateToWhatsNew = {},
         importFile = {},
         pendingImport = null,
         onConfirmImport = {},
@@ -138,6 +140,7 @@ fun SettingsScreen(
     navigateToSubstanceColors: () -> Unit,
     navigateToCustomUnits: () -> Unit,
     navigateToRouteVisibility: () -> Unit,
+    navigateToWhatsNew: () -> Unit,
 ) {
     SettingsScreen(
         navigateToFAQ = navigateToFAQ,
@@ -145,6 +148,7 @@ fun SettingsScreen(
         navigateToSubstanceColors = navigateToSubstanceColors,
         navigateToCustomUnits = navigateToCustomUnits,
         navigateToRouteVisibility = navigateToRouteVisibility,
+        navigateToWhatsNew = navigateToWhatsNew,
         deleteEverything = viewModel::deleteEverything,
         importFile = viewModel::importFile,
         pendingImport = viewModel.pendingImportFlow.collectAsState().value,
@@ -181,6 +185,7 @@ fun SettingsScreen(
     navigateToSubstanceColors: () -> Unit,
     navigateToCustomUnits: () -> Unit,
     navigateToRouteVisibility: () -> Unit,
+    navigateToWhatsNew: () -> Unit,
     deleteEverything: () -> Unit,
     importFile: (uri: Uri) -> Unit,
     // a read export waiting for confirmation
@@ -458,6 +463,10 @@ fun SettingsScreen(
                 }
             }
             CardWithTitle(title = "App", innerPaddingHorizontal = 0.dp) {
+                SettingsButton(imageVector = Icons.Outlined.NewReleases, text = "What's new") {
+                    navigateToWhatsNew()
+                }
+                HorizontalDivider()
                 SettingsButton(imageVector = Icons.Outlined.Code, text = "Source Code") {
                     uriHandler.openUri(SOURCE_CODE_URL)
                 }

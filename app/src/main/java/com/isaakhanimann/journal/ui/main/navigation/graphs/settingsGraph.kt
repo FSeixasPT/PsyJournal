@@ -31,6 +31,7 @@ import com.isaakhanimann.journal.ui.tabs.settings.customunits.CustomUnitsScreen
 import com.isaakhanimann.journal.ui.tabs.settings.customunits.archive.CustomUnitArchiveScreen
 import com.isaakhanimann.journal.ui.tabs.settings.customunits.edit.EditCustomUnitScreen
 import com.isaakhanimann.journal.ui.tabs.settings.routes.RouteVisibilityScreen
+import com.isaakhanimann.journal.ui.tabs.settings.whatsnew.WhatsNewScreen
 import kotlinx.serialization.Serializable
 
 fun NavGraphBuilder.settingsGraph(navController: NavHostController) {
@@ -54,9 +55,13 @@ fun NavGraphBuilder.settingsGraph(navController: NavHostController) {
                 navigateToRouteVisibility = {
                     navController.navigate(RouteVisibilityRoute)
                 },
+                navigateToWhatsNew = {
+                    navController.navigate(WhatsNewRoute)
+                },
             )
         }
         composableWithTransitions<FAQRoute> { FAQScreen() }
+        composableWithTransitions<WhatsNewRoute> { WhatsNewScreen() }
         composableWithTransitions<CombinationSettingsRoute> { CombinationSettingsScreen() }
         composableWithTransitions<SubstanceColorsRoute> { SubstanceColorsScreen() }
         composableWithTransitions<RouteVisibilityRoute> { RouteVisibilityScreen() }
@@ -90,6 +95,9 @@ object SettingsScreenRoute
 
 @Serializable
 object FAQRoute
+
+@Serializable
+object WhatsNewRoute
 
 @Serializable
 object CombinationSettingsRoute
