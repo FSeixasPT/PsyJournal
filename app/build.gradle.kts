@@ -118,3 +118,28 @@ dependencies {
 kapt {
     correctErrorTypes = true
 }
+
+// What's new reads the release notes from CHANGELOG.md, so it goes into the assets as it is
+abstract class CopyChangelogTask : DefaultTask() {
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
+    abstract val changelog: RegularFileProperty
+
+    @get:OutputDirectory
+    abstract val outputDirectory: DirectoryProperty
+
+    @TaskAction
+    fun copy() {
+        changelog.get().asFile.copyTo(outputDirectory.file("CHANGELOG.md").get().asFile, overwrite = true)
+    }
+}
+
+val copyChangelog = tasks.register<CopyChangelogTask>("copyChangelog") {
+    changelog.set(rootProject.layout.projectDirectory.file("CHANGELOG.md"))
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.sources.assets?.addGeneratedSourceDirectory(copyChangelog, CopyChangelogTask::outputDirectory)
+    }
+}
