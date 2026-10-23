@@ -18,10 +18,14 @@
 
 package com.isaakhanimann.journal.ui.tabs.search
 
+import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
+
 data class SubstanceModel(
     val name: String,
     val commonNames: List<String>,
     val categories: List<CategoryModel>,
     val hasSaferUse: Boolean,
-    val hasInteractions: Boolean
+    val hasInteractions: Boolean,
+    // the color the user gave the substance, null until they take it
+    val color: AdaptiveColor? = null
 )
