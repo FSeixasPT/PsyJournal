@@ -22,6 +22,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
+import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
+import com.isaakhanimann.journal.data.room.experiences.entities.SubstanceCompanion
 import com.isaakhanimann.journal.data.substances.repositories.SearchRepository
 import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -81,8 +83,19 @@ class SearchViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000)
     )
 
-    val filteredSubstancesFlow = combine(searchTextFlow, filtersFlow, experienceRepo.getSortedLastUsedSubstanceNamesFlow(limit = 200)) { searchText, filters, recents ->
-        return@combine searchRepository.getMatchingSubstances(searchText = searchText, filterCategories = filters, recentlyUsedSubstanceNamesSorted = recents).map { it.toSubstanceModel() }
+    private val companionsFlow = experienceRepo.getAllSubstanceCompanionsFlow()
+
+    val substanceColorsFlow: StateFlow<Map<String, AdaptiveColor>> = companionsFlow.map { companions ->
+        companions.associate { it.substanceName to it.color }
+    }.stateIn(
+        initialValue = emptyMap(),
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000)
+    )
+
+    val filteredSubstancesFlow = combine(searchTextFlow, filtersFlow, experienceRepo.getSortedLastUsedSubstanceNamesFlow(limit = 200), companionsFlow) { searchText, filters, recents, companions ->
+        val substances = searchRepository.getMatchingSubstances(searchText = searchText, filterCategories = filters, recentlyUsedSubstanceNamesSorted = recents).map { it.toSubstanceModel() }
+        return@combine withCompanionColors(substances, companions)
     }.stateIn(
         initialValue = emptyList(),
         scope = viewModelScope,
@@ -112,6 +125,11 @@ class SearchViewModel @Inject constructor(
 }
 
 val customColor = Color.Cyan
+
+fun withCompanionColors(substances: List<SubstanceModel>, companions: List<SubstanceCompanion>): List<SubstanceModel> {
+    val colors = companions.associate { it.substanceName to it.color }
+    return substances.map { substance -> substance.copy(color = colors[substance.name]) }
+}
 
 data class CategoryChipModel(
     val chipName: String, val color: Color, val isActive: Boolean

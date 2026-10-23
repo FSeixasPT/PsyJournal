@@ -20,14 +20,21 @@ package com.isaakhanimann.journal.ui.tabs.search.substancerow
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,29 +62,45 @@ fun SubstanceRow(
     substanceModel: SubstanceModel,
     onTap: (substanceName: String) -> Unit
 ) {
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
+            .height(IntrinsicSize.Min)
             .clickable {
                 onTap(substanceModel.name)
             }
             .padding(horizontal = horizontalPadding, vertical = 3.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text(
-            text = substanceModel.name,
-            style = MaterialTheme.typography.titleMedium,
-        )
-        if (substanceModel.commonNames.isNotEmpty()) {
-            val commaSeparatedNames = substanceModel.commonNames.joinToString(separator = ", ")
-            Text(text = commaSeparatedNames, style = MaterialTheme.typography.bodySmall)
+        val color = substanceModel.color
+        if (color != null) {
+            // the same bar as the journal's experience rows, in the color the user gave the substance
+            Box(
+                modifier = Modifier
+                    .padding(vertical = 2.dp)
+                    .width(11.dp)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(color.getComposeColor(isSystemInDarkTheme()))
+            )
         }
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(3.dp),
-            verticalArrangement = Arrangement.spacedBy(3.dp),
-            modifier = Modifier.padding(vertical = 3.dp)
-        ) {
-            substanceModel.categories.forEach {
-                CategoryChipStatic(categoryModel = it)
+        Column {
+            Text(
+                text = substanceModel.name,
+                style = MaterialTheme.typography.titleMedium,
+            )
+            if (substanceModel.commonNames.isNotEmpty()) {
+                val commaSeparatedNames = substanceModel.commonNames.joinToString(separator = ", ")
+                Text(text = commaSeparatedNames, style = MaterialTheme.typography.bodySmall)
+            }
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(3.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
+                modifier = Modifier.padding(vertical = 3.dp)
+            ) {
+                substanceModel.categories.forEach {
+                    CategoryChipStatic(categoryModel = it)
+                }
             }
         }
     }

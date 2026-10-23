@@ -98,6 +98,7 @@ fun SearchScreen(
             val filteredSubstances = searchViewModel.filteredSubstancesFlow.collectAsState().value
             val filteredCustomSubstances =
                 searchViewModel.filteredCustomSubstancesFlow.collectAsState().value
+            val substanceColors = searchViewModel.substanceColorsFlow.collectAsState().value
             if (activeFilters.isNotEmpty()) {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(2.dp),
@@ -158,7 +159,8 @@ fun SearchScreen(
                                 )
                             ),
                             hasSaferUse = false,
-                            hasInteractions = false
+                            hasInteractions = false,
+                            color = substanceColors[customSubstance.name]
                         ), onTap = {
                             onCustomSubstanceTap(customSubstance.id)
                         })
