@@ -112,6 +112,18 @@ fun releasesToAnnounce(
     }
 }
 
+// Play installs don't offer donations, so they also don't hear about the Ko-fi page
+fun withoutDonationMentions(releases: List<ChangelogRelease>): List<ChangelogRelease> = releases.mapNotNull { release ->
+    val sections = release.sections.mapNotNull { section ->
+        val items = section.items.filterNot { it.mentionsKofi() }
+        if (items.isEmpty()) null else section.copy(items = items)
+    }
+    if (sections.isEmpty()) null else release.copy(sections = sections)
+}
+
+private fun ChangelogItem.mentionsKofi(): Boolean =
+    text.contains("ko-fi", ignoreCase = true) || children.any { it.mentionsKofi() }
+
 // the changelog only uses **bold** and [links](url)
 fun inlineMarkdown(text: String, linkStyles: TextLinkStyles? = null): AnnotatedString = buildAnnotatedString {
     var index = 0
