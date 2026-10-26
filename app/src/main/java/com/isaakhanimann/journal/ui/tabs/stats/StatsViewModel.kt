@@ -180,8 +180,7 @@ class StatsViewModel @Inject constructor(
                 ingestionCount = groupedIngestions.size,
                 routeCounts = getRouteCounts(groupedIngestions.map { it.ingestion }),
                 doseTotals = totalDoses(groupedIngestions.map { it.toDoseEntry() }),
-                lastTaken = datesTaken[name]?.maxOrNull(),
-                usualGapDays = datesTaken[name]?.let { usualGapInDays(it) }
+                lastTaken = datesTaken[name]?.maxOrNull()
             )
         }.sortedByDescending { it.experienceCount }
     }
@@ -257,7 +256,6 @@ data class StatItem(
     val routeCounts: List<RouteCount>,
     val doseTotals: DoseTotals,
     val lastTaken: LocalDate? = null,
-    val usualGapDays: Int? = null,
 )
 
 data class RouteCount(

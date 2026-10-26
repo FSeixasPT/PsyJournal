@@ -1,7 +1,6 @@
 package com.isaakhanimann.journal.ui.tabs.stats
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
 import java.time.LocalDate
 
@@ -51,34 +50,5 @@ class StatsCalculationsTest {
     fun longAgoIsSaidInMonthsThenYears() {
         assertEquals("last taken 3 months ago", lastTakenText(today.minusMonths(3), today))
         assertEquals("last taken 2 years ago", lastTakenText(today.minusYears(2), today))
-    }
-
-    @Test
-    fun theUsualGapIsTheMedianBetweenDaysTaken() {
-        val dates = listOf(today, today.minusDays(7), today.minusDays(14), today.minusDays(60))
-        assertEquals(7, usualGapInDays(dates))
-    }
-
-    @Test
-    fun severalTimesOnOneDayCountAsOneDay() {
-        assertEquals(10, usualGapInDays(listOf(today, today, today.minusDays(10))))
-    }
-
-    @Test
-    fun withOnlyOneDayThereIsNoGap() {
-        assertNull(usualGapInDays(listOf(today, today)))
-    }
-
-    @Test
-    fun theGapIsWrittenAsUsuallyEvery() {
-        assertEquals("usually every day", usualGapText(1))
-        assertEquals("usually every 9 days", usualGapText(9))
-    }
-
-    @Test
-    fun longGapsAreWrittenInMonths() {
-        assertEquals("usually every 59 days", usualGapText(59))
-        assertEquals("usually every 2 months", usualGapText(60))
-        assertEquals("usually every 14 months", usualGapText(427))
     }
 }

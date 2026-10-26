@@ -50,21 +50,3 @@ fun lastTakenText(lastTaken: LocalDate, today: LocalDate): String {
     }
     return "last taken $ago ago"
 }
-
-// the median, so a long break or a binge doesn't decide what's usual
-fun usualGapInDays(useDates: List<LocalDate>): Int? {
-    val days = useDates.distinct().sorted()
-    if (days.size < 2) return null
-    val gaps = days.zipWithNext { earlier, later -> ChronoUnit.DAYS.between(earlier, later) }.sorted()
-    val middle = gaps.size / 2
-    val median = if (gaps.size % 2 == 1) gaps[middle].toDouble() else (gaps[middle - 1] + gaps[middle]) / 2.0
-    return Math.round(median).toInt()
-}
-
-fun usualGapText(days: Int): String = when {
-    days == 1 -> "usually every day"
-    days < 60 -> "usually every $days days"
-    else -> "usually every ${Math.round(days / DAYS_PER_MONTH)} months"
-}
-
-private const val DAYS_PER_MONTH = 30.44

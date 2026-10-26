@@ -250,9 +250,8 @@ fun StatsScreen(
                                             )
                                             val lastTaken = subStat.lastTaken
                                             if (lastTaken != null) {
-                                                val usualGap = subStat.usualGapDays?.let { " · " + usualGapText(it) } ?: ""
                                                 Text(
-                                                    text = lastTakenText(lastTaken, LocalDate.now()) + usualGap,
+                                                    text = lastTakenText(lastTaken, LocalDate.now()),
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
