@@ -41,11 +41,16 @@ class StatsPreviewProvider : PreviewParameterProvider<StatsModel> {
                             count = 3
                         )
                     ),
-                    totalDose = TotalDose(
-                        dose = 500.0,
-                        units = "ug",
-                        isEstimate = false,
-                        estimatedDoseStandardDeviation = null
+                    doseTotals = DoseTotals(
+                        totals = listOf(
+                            TotalDose(
+                                dose = 500.0,
+                                units = "ug",
+                                isEstimate = false,
+                                estimatedDoseStandardDeviation = null
+                            )
+                        ),
+                        unknownCount = 0
                     )
                 ),
                 StatItem(
@@ -63,11 +68,16 @@ class StatsPreviewProvider : PreviewParameterProvider<StatsModel> {
                             count = 2
                         )
                     ),
-                    totalDose = TotalDose(
-                        dose = 950.0,
-                        units = "mg",
-                        isEstimate = true,
-                        estimatedDoseStandardDeviation = 50.0
+                    doseTotals = DoseTotals(
+                        totals = listOf(
+                            TotalDose(
+                                dose = 950.0,
+                                units = "mg",
+                                isEstimate = true,
+                                estimatedDoseStandardDeviation = 50.0
+                            )
+                        ),
+                        unknownCount = 0
                     )
                 ),
                 StatItem(
@@ -81,7 +91,7 @@ class StatsPreviewProvider : PreviewParameterProvider<StatsModel> {
                             count = 11
                         )
                     ),
-                    totalDose = null
+                    doseTotals = DoseTotals(totals = emptyList(), unknownCount = 11)
                 ),
                 StatItem(
                     substanceName = "Ketamine",
@@ -94,11 +104,16 @@ class StatsPreviewProvider : PreviewParameterProvider<StatsModel> {
                             count = 1
                         )
                     ),
-                    totalDose = TotalDose(
-                        dose = 30.0,
-                        units = "mg",
-                        isEstimate = true,
-                        estimatedDoseStandardDeviation = 5.0
+                    doseTotals = DoseTotals(
+                        totals = listOf(
+                            TotalDose(
+                                dose = 30.0,
+                                units = "mg",
+                                isEstimate = true,
+                                estimatedDoseStandardDeviation = 5.0
+                            )
+                        ),
+                        unknownCount = 0
                     )
                 )
             ),

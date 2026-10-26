@@ -12,6 +12,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 - **Keep chart in view.** A new chart setting, in the gear sheet and in Settings, keeps the effect timeline and its current effects at the top of an experience while the ingestions, notes and ratings scroll below it. It's off by default, and in landscape or on short windows such as split screen the chart scrolls as usual.
 - **What's new.** The first time you open PsyJournal after an update, a popup lists what changed, and Details shows the full notes. Settings → App → What's new has the changes of every PsyJournal release. New installs don't get the popup. Copies installed from Google Play leave out the notes about the Ko-fi page.
 - **Substance colors in Drugs.** Substances you've given a color show it as a bar on the left in the Drugs list, like the experiences in the Journal.
+- **When you last took it.** Each substance in Stats says how long ago you last took it, such as "last taken 12 days ago", and how often you usually take it, from the middle gap between the days you took it across your whole journal, so one long break doesn't change it.
 - **Mushroom weight to psilocybin.** When logging Psilocybin mushrooms, the dose screen lets you choose between entering the Psilocybin dose or the Mushroom weight. With Mushroom weight, pick the kind (P. cubensis, Penis Envy, liberty cap, wavy cap, P. azurescens or truffles), enter the grams, dried or fresh, and it works out about how much psilocybin that is as the dose, in place of the pure dose field, and shows the range lab tests commonly find. Switching between the two keeps what was entered in each, with the cursor at the end ready to carry on typing, and the dose logged is the one from the way chosen. To always log mushrooms by weight, create a custom unit from there: the custom unit screen opens filled in for that kind, and any grams entered carry over.
 
 ### Changed
@@ -23,6 +24,7 @@ PsyJournal is a fork of [PsychonautWiki Journal](https://github.com/isaakhaniman
 
 ### Fixed
 
+- **Stats totals with an unknown dose.** One ingestion without a dose, or in a different unit, no longer turns a substance's whole total into "total dose unknown". Stats adds up the known doses, one total per unit, and says how many doses are unknown.
 - **Settings switches no longer cut off.** On narrower phones, the switches of longer settings such as "Start live notification automatically" were pushed partly off the card; the label now wraps instead.
 - **Drug testing services with long city lists show their name.** Ai Laket in Spain showed as "Ai …"; long city lists now wrap, and it now lists Vitoria-Gasteiz, Pamplona, Bilbao and Donostia.
 - **The last interactions and safer-use tips scroll clear of the Next button** when logging an ingestion.
