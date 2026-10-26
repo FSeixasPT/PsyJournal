@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -38,7 +37,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.ButtonDefaults
@@ -57,7 +55,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -91,7 +88,6 @@ fun StatsScreen(
         onChangeConsumerName = viewModel::onChangeConsumer,
         consumerNamesSorted = viewModel.sortedConsumerNamesFlow.collectAsState().value,
         onChangeChartMetric = viewModel::onChangeChartMetric,
-        onChooseDoseSubstance = viewModel::onChooseDoseSubstance,
     )
 }
 
@@ -122,7 +118,6 @@ fun StatsScreen(
     onChangeConsumerName: (String?) -> Unit,
     consumerNamesSorted: List<String>,
     onChangeChartMetric: (ChartMetric) -> Unit = {},
-    onChooseDoseSubstance: (String) -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -222,43 +217,22 @@ fun StatsScreen(
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.padding(start = 10.dp)
                         )
-                        val doseChoice = statsModel.doseChoice
-                        if (statsModel.chartMetric == ChartMetric.TOTAL_DOSE) {
-                            if (doseChoice == null) {
-                                Text(
-                                    text = "No doses with a known amount in this range",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    modifier = Modifier.padding(start = 10.dp, bottom = 10.dp)
-                                )
+                        Text(
+                            text = if (statsModel.chartMetric == ChartMetric.EXPERIENCES) {
+                                "Substance counted once per experience"
                             } else {
-                                DoseSubstancePicker(
-                                    doseChoice = doseChoice,
-                                    doseSubstances = statsModel.doseSubstances,
-                                    dosesLeftOut = statsModel.dosesLeftOut,
-                                    onChooseDoseSubstance = onChooseDoseSubstance
-                                )
-                            }
-                        } else {
-                            Text(
-                                text = if (statsModel.chartMetric == ChartMetric.EXPERIENCES) {
-                                    "Substance counted once per experience"
-                                } else {
-                                    "Every dose counted"
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.padding(
-                                    start = 10.dp,
-                                    bottom = 10.dp
-                                )
+                                "Every dose counted"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(
+                                start = 10.dp,
+                                bottom = 10.dp
                             )
-                        }
-                        if (statsModel.chartMetric != ChartMetric.TOTAL_DOSE || doseChoice != null) {
-                            BarChart(
-                                buckets = statsModel.chartBuckets,
-                                startDateText = statsModel.startDateText,
-                                isCount = statsModel.chartMetric != ChartMetric.TOTAL_DOSE
-                            )
-                        }
+                        )
+                        BarChart(
+                            buckets = statsModel.chartBuckets,
+                            startDateText = statsModel.startDateText
+                        )
                         HorizontalDivider()
                         LazyColumn {
                             items(statsModel.statItems) { subStat ->
@@ -348,57 +322,6 @@ fun StatsScreen(
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun DoseSubstancePicker(
-    doseChoice: DoseChoice,
-    doseSubstances: List<String>,
-    dosesLeftOut: Int,
-    onChooseDoseSubstance: (String) -> Unit
-) {
-    Column(modifier = Modifier.padding(start = 10.dp, end = 10.dp, bottom = 10.dp)) {
-        Box {
-            var isExpanded by remember { mutableStateOf(false) }
-            TextButton(
-                onClick = { isExpanded = true },
-                contentPadding = PaddingValues(horizontal = 0.dp),
-                enabled = doseSubstances.size > 1
-            ) {
-                Text("${doseChoice.substanceName} in ${doseChoice.units}")
-                if (doseSubstances.size > 1) {
-                    Icon(Icons.Filled.ArrowDropDown, contentDescription = "Choose substance")
-                }
-            }
-            DropdownMenu(expanded = isExpanded, onDismissRequest = { isExpanded = false }) {
-                doseSubstances.forEach { substanceName ->
-                    DropdownMenuItem(
-                        text = { Text(substanceName) },
-                        onClick = {
-                            onChooseDoseSubstance(substanceName)
-                            isExpanded = false
-                        },
-                        leadingIcon = {
-                            if (substanceName == doseChoice.substanceName) {
-                                Icon(
-                                    Icons.Filled.Check,
-                                    contentDescription = "Check",
-                                    modifier = Modifier.size(ButtonDefaults.IconSize)
-                                )
-                            }
-                        }
-                    )
-                }
-            }
-        }
-        if (dosesLeftOut > 0) {
-            val doses = if (dosesLeftOut == 1) "dose" else "doses"
-            Text(
-                text = "$dosesLeftOut $doses with an unknown amount or another unit left out",
-                style = MaterialTheme.typography.bodySmall
-            )
         }
     }
 }

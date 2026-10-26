@@ -31,10 +31,16 @@ import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepositor
 import com.isaakhanimann.journal.ui.main.navigation.graphs.SubstanceCompanionRoute
 import com.isaakhanimann.journal.ui.tabs.journal.addingestion.search.suggestion.models.CustomUnitDose
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toReadableString
+import com.isaakhanimann.journal.ui.tabs.stats.DoseChart
+import com.isaakhanimann.journal.ui.tabs.stats.TimePickerOption
+import com.isaakhanimann.journal.ui.tabs.stats.TimedDose
+import com.isaakhanimann.journal.ui.tabs.stats.doseChart
+import com.isaakhanimann.journal.ui.tabs.stats.getEndOfDay
 import com.isaakhanimann.journal.ui.utils.getTimeDifferenceText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -42,6 +48,9 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 @HiltViewModel
@@ -73,9 +82,43 @@ class SubstanceCompanionViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000)
         )
 
-    val ingestionBurstsFlow: StateFlow<List<IngestionsBurst>> =
+    private val ingestionsFlow =
         experienceRepo.getSortedIngestionsWithExperienceAndCustomUnitFlow(substanceName)
             .map { list -> list.filter { it.ingestion.consumerName == consumerName } }
+
+    private val doseChartOptionFlow = MutableStateFlow(TimePickerOption.WEEKS_26)
+
+    fun onTapDoseChartOption(option: TimePickerOption) {
+        doseChartOptionFlow.value = option
+    }
+
+    val doseChartFlow: StateFlow<DoseChartModel?> =
+        ingestionsFlow.combine(doseChartOptionFlow) { ingestions, option ->
+            val doses = ingestions.map {
+                val withCustomUnit = IngestionsBurst.IngestionAndCustomUnit(ingestion = it.ingestion, customUnit = it.customUnit)
+                TimedDose(
+                    time = it.ingestion.time,
+                    dose = withCustomUnit.customUnitDose?.calculatedDose ?: it.ingestion.dose,
+                    units = it.customUnit?.originalUnit ?: it.ingestion.units
+                )
+            }
+            // a substance never logged with a known dose has nothing to chart in any range
+            if (doses.none { it.dose != null }) return@combine null
+            val end = Instant.now().getEndOfDay()
+            val startDate = LocalDateTime.ofInstant(end.minus(option.allBucketSizes), ZoneId.systemDefault())
+            DoseChartModel(
+                option = option,
+                startDateText = startDate.format(DateTimeFormatter.ofPattern("EEE, dd MMM yyyy")),
+                chart = doseChart(doses, option, end)
+            )
+        }.stateIn(
+            initialValue = null,
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000)
+        )
+
+    val ingestionBurstsFlow: StateFlow<List<IngestionsBurst>> =
+        ingestionsFlow
             .combine(currentTimeFlow) { sortedIngestionsWithExperiences, currentTime ->
                 val experiencesWithIngestions =
                     sortedIngestionsWithExperiences.groupBy { it.ingestion.experienceId }
@@ -109,6 +152,12 @@ class SubstanceCompanionViewModel @Inject constructor(
                 started = SharingStarted.WhileSubscribed(5000)
             )
 }
+
+data class DoseChartModel(
+    val option: TimePickerOption,
+    val startDateText: String,
+    val chart: DoseChart?
+)
 
 data class IngestionsBurst(
     val timeUntil: String,
