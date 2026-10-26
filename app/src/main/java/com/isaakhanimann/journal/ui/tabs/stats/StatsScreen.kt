@@ -70,6 +70,7 @@ import com.isaakhanimann.journal.ui.YOU
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toReadableString
 import com.isaakhanimann.journal.ui.theme.JournalTheme
 import com.isaakhanimann.journal.ui.theme.horizontalPadding
+import java.time.LocalDate
 
 
 @Composable
@@ -236,7 +237,8 @@ fun StatsScreen(
                                                 .width(11.dp)
                                                 .fillMaxHeight()
                                         ) {}
-                                        Column {
+                                        // takes the room left by the totals, so long lines wrap here instead of squeezing them
+                                        Column(modifier = Modifier.weight(1f)) {
                                             Text(
                                                 text = subStat.substanceName,
                                                 style = MaterialTheme.typography.titleMedium
@@ -246,11 +248,19 @@ fun StatsScreen(
                                             Text(
                                                 text = subStat.experienceCount.toString() + addOn,
                                             )
+                                            val lastTaken = subStat.lastTaken
+                                            if (lastTaken != null) {
+                                                val usualGap = subStat.usualGapDays?.let { " · " + usualGapText(it) } ?: ""
+                                                Text(
+                                                    text = lastTakenText(lastTaken, LocalDate.now()) + usualGap,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
                                         }
-                                        Spacer(modifier = Modifier.weight(1f))
                                         Column(horizontalAlignment = Alignment.End) {
-                                            val cumulativeDose = subStat.totalDose
-                                            if (cumulativeDose != null) {
+                                            val doseTotals = subStat.doseTotals
+                                            doseTotals.totals.forEach { cumulativeDose ->
                                                 if (cumulativeDose.isEstimate) {
                                                     if (cumulativeDose.estimatedDoseStandardDeviation != null) {
                                                         Text(text = "total ${cumulativeDose.dose.toReadableString()}±${cumulativeDose.estimatedDoseStandardDeviation.toReadableString()} ${cumulativeDose.units}")
@@ -259,10 +269,13 @@ fun StatsScreen(
                                                     }
                                                 } else {
                                                     Text(text = "total ${cumulativeDose.dose.toReadableString()} ${cumulativeDose.units}")
-
                                                 }
-                                            } else {
+                                            }
+                                            if (doseTotals.totals.isEmpty()) {
                                                 Text(text = "total dose unknown")
+                                            } else if (doseTotals.unknownCount > 0) {
+                                                val doses = if (doseTotals.unknownCount == 1) "dose" else "doses"
+                                                Text(text = "+ ${doseTotals.unknownCount} unknown $doses")
                                             }
                                             subStat.routeCounts.forEach {
                                                 Text(

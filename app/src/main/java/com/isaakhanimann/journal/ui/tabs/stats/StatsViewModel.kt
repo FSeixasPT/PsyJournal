@@ -25,7 +25,6 @@ import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
 import com.isaakhanimann.journal.data.room.experiences.entities.Ingestion
 import com.isaakhanimann.journal.data.room.experiences.entities.SubstanceCompanion
 import com.isaakhanimann.journal.data.room.experiences.relations.ExperienceWithIngestionsAndCompanions
-import com.isaakhanimann.journal.data.room.experiences.relations.IngestionWithCompanionAndCustomUnit
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -38,6 +37,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.Period
@@ -144,11 +144,22 @@ class StatsViewModel @Inject constructor(
             }.sortedByDescending { it.count }
     }
 
+    // when each substance was taken, over the whole journal, for how long ago and how often
+    private val datesTakenFlow: Flow<Map<String, List<LocalDate>>> =
+        allExperiencesSortedFlow.combine(consumerFlow) { experiences, consumerName ->
+            val now = Instant.now()
+            experiences.flatMap { it.ingestionsWithCompanionAndCustomUnit }
+                .map { it.ingestion }
+                .filter { it.consumerName == consumerName && !it.time.isAfter(now) }
+                .groupBy({ it.substanceName }, { it.time.atZone(ZoneId.systemDefault()).toLocalDate() })
+        }
+
     private val statsFlowItem: Flow<List<StatItem>> = combine(
         relevantExperiencesSortedFlow,
         consumerFlow,
-        companionFlow
-    ) { relevantExperiencesSorted, consumerName, companions ->
+        companionFlow,
+        datesTakenFlow
+    ) { relevantExperiencesSorted, consumerName, companions, datesTaken ->
         val allIngestions =
             relevantExperiencesSorted.flatMap { experience -> experience.ingestionsWithCompanionAndCustomUnit.filter { it.ingestion.consumerName == consumerName } }
         val experienceNamesMap =
@@ -168,7 +179,9 @@ class StatsViewModel @Inject constructor(
                 experienceCount = experienceCounts,
                 ingestionCount = groupedIngestions.size,
                 routeCounts = getRouteCounts(groupedIngestions.map { it.ingestion }),
-                totalDose = getTotalDose(groupedIngestions)
+                doseTotals = totalDoses(groupedIngestions.map { it.toDoseEntry() }),
+                lastTaken = datesTaken[name]?.maxOrNull(),
+                usualGapDays = datesTaken[name]?.let { usualGapInDays(it) }
             )
         }.sortedByDescending { it.experienceCount }
     }
@@ -179,19 +192,6 @@ class StatsViewModel @Inject constructor(
             val route = it.firstOrNull()?.administrationRoute ?: return@mapNotNull null
             RouteCount(administrationRoute = route, count = it.size)
         }
-    }
-
-    private fun getTotalDose(groupedIngestions: List<IngestionWithCompanionAndCustomUnit>): TotalDose? {
-        val units = groupedIngestions.firstOrNull()?.originalUnit ?: return null
-        if (groupedIngestions.any { it.originalUnit != units || it.pureDose == null }) return null
-        val sumDose = groupedIngestions.sumOf { it.pureDose ?: 0.0 }
-        val sumStandardDeviations = groupedIngestions.sumOf { it.pureDoseStandardDeviation ?: 0.0 }
-        val isEstimate = groupedIngestions.any { it.isEstimate }
-        return TotalDose(
-            dose = sumDose,
-            units = units,
-            isEstimate = isEstimate,
-            estimatedDoseStandardDeviation = sumStandardDeviations.takeIf { it > 0 })
     }
 
     val statsModelFlow: StateFlow<StatsModel> =
@@ -255,7 +255,9 @@ data class StatItem(
     val experienceCount: Int,
     val ingestionCount: Int,
     val routeCounts: List<RouteCount>,
-    val totalDose: TotalDose?,
+    val doseTotals: DoseTotals,
+    val lastTaken: LocalDate? = null,
+    val usualGapDays: Int? = null,
 )
 
 data class RouteCount(
