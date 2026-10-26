@@ -22,6 +22,8 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -33,6 +35,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -47,10 +51,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
 import com.isaakhanimann.journal.data.room.experiences.entities.SubstanceCompanion
 import com.isaakhanimann.journal.data.substances.classes.Tolerance
 import com.isaakhanimann.journal.ui.tabs.journal.experience.components.CardWithTitle
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.ToleranceSection
+import com.isaakhanimann.journal.ui.tabs.stats.BarChart
+import com.isaakhanimann.journal.ui.tabs.stats.ColorCount
+import com.isaakhanimann.journal.ui.tabs.stats.TimePickerOption
 import com.isaakhanimann.journal.ui.theme.JournalTheme
 import com.isaakhanimann.journal.ui.theme.horizontalPadding
 import com.isaakhanimann.journal.ui.utils.getDateWithWeekdayText
@@ -72,7 +80,9 @@ fun SubstanceCompanionScreen(
             ingestionBursts = viewModel.ingestionBurstsFlow.collectAsState().value,
             tolerance = viewModel.tolerance,
             crossTolerances = viewModel.crossTolerances,
-            consumerName = viewModel.consumerName
+            consumerName = viewModel.consumerName,
+            doseChart = viewModel.doseChartFlow.collectAsState().value,
+            onTapDoseChartOption = viewModel::onTapDoseChartOption
         )
     }
 }
@@ -104,7 +114,9 @@ fun SubstanceCompanionScreen(
     ingestionBursts: List<IngestionsBurst>,
     tolerance: Tolerance?,
     crossTolerances: List<String>,
-    consumerName: String? = null
+    consumerName: String? = null,
+    doseChart: DoseChartModel? = null,
+    onTapDoseChartOption: (TimePickerOption) -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -124,6 +136,13 @@ fun SubstanceCompanionScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
+                if (doseChart != null) {
+                    DoseChartCard(
+                        doseChart = doseChart,
+                        color = substanceCompanion.color,
+                        onTapOption = onTapDoseChartOption
+                    )
+                }
                 if (tolerance != null || crossTolerances.isNotEmpty()) {
                     CardWithTitle(title = "Tolerance", modifier = Modifier.fillMaxWidth()) {
                         ToleranceSection(
@@ -164,6 +183,58 @@ fun SubstanceCompanionScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun DoseChartCard(
+    doseChart: DoseChartModel,
+    color: AdaptiveColor,
+    onTapOption: (TimePickerOption) -> Unit
+) {
+    CardWithTitle(title = "Total dose", innerPaddingHorizontal = 0.dp, modifier = Modifier.fillMaxWidth()) {
+        TabRow(
+            selectedTabIndex = doseChart.option.tabIndex,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            containerColor = Color.Transparent
+        ) {
+            TimePickerOption.entries.forEach { option ->
+                Tab(
+                    text = { Text(option.displayText) },
+                    selected = doseChart.option == option,
+                    onClick = { onTapOption(option) }
+                )
+            }
+        }
+        val chart = doseChart.chart
+        if (chart == null) {
+            Text(
+                text = "No doses with a known amount since ${doseChart.startDateText}",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp)
+            )
+        } else {
+            Text(
+                text = "In ${chart.units} since ${doseChart.startDateText}",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 8.dp)
+            )
+            if (chart.dosesLeftOut > 0) {
+                val doses = if (chart.dosesLeftOut == 1) "dose" else "doses"
+                Text(
+                    text = "${chart.dosesLeftOut} $doses with an unknown amount or another unit left out",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 10.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            BarChart(
+                buckets = chart.buckets.map { dose -> if (dose > 0) listOf(ColorCount(color = color, value = dose)) else emptyList() },
+                startDateText = doseChart.startDateText,
+                isCount = false
+            )
         }
     }
 }

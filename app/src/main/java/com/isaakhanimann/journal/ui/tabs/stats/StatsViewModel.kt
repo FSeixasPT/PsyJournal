@@ -97,15 +97,8 @@ class StatsViewModel @Inject constructor(
 
     private val chartMetricFlow = MutableStateFlow(ChartMetric.EXPERIENCES)
 
-    // null until the user picks one, then the substance with the most experiences is charted
-    private val doseSubstanceFlow = MutableStateFlow<String?>(null)
-
     fun onChangeChartMetric(metric: ChartMetric) {
         chartMetricFlow.value = metric
-    }
-
-    fun onChooseDoseSubstance(substanceName: String) {
-        doseSubstanceFlow.value = substanceName
     }
 
     private val chartIngestionBucketsFlow: Flow<List<List<ChartIngestion>>> =
@@ -134,21 +127,10 @@ class StatsViewModel @Inject constructor(
     private val chartFlow: Flow<ChartModel> = combine(
         chartIngestionBucketsFlow,
         companionFlow,
-        chartMetricFlow,
-        doseSubstanceFlow
-    ) { buckets, companions, metric, doseSubstance ->
-        val allIngestions = buckets.reversed().flatten()
-        val doseSubstances = doseSubstances(allIngestions)
-        val choice = (doseSubstance?.takeIf { it in doseSubstances } ?: doseSubstances.firstOrNull())
-            ?.let { doseChoice(allIngestions, it) }
+        chartMetricFlow
+    ) { buckets, companions, metric ->
         val colors = companions.associate { it.substanceName to it.color }
-        ChartModel(
-            metric = metric,
-            buckets = buckets.map { barSegments(it, metric, colors, choice) },
-            doseChoice = choice,
-            doseSubstances = doseSubstances,
-            dosesLeftOut = choice?.let { dosesLeftOut(allIngestions, it) } ?: 0
-        )
+        ChartModel(metric = metric, buckets = buckets.map { barSegments(it, metric, colors) })
     }
 
     // when each substance was taken, over the whole journal, for how long ago and how often
@@ -217,10 +199,7 @@ class StatsViewModel @Inject constructor(
                 statItems = pair.first.first.second,
                 chartBuckets = chart.buckets,
                 consumerName = pair.second,
-                chartMetric = chart.metric,
-                doseChoice = chart.doseChoice,
-                doseSubstances = chart.doseSubstances,
-                dosesLeftOut = chart.dosesLeftOut
+                chartMetric = chart.metric
             )
         }.stateIn(
             initialValue = StatsModel(
@@ -252,18 +231,12 @@ data class StatsModel(
     val statItems: List<StatItem>,
     val chartBuckets: List<List<ColorCount>>,
     val consumerName: String?,
-    val chartMetric: ChartMetric = ChartMetric.EXPERIENCES,
-    val doseChoice: DoseChoice? = null,
-    val doseSubstances: List<String> = emptyList(),
-    val dosesLeftOut: Int = 0
+    val chartMetric: ChartMetric = ChartMetric.EXPERIENCES
 )
 
 data class ChartModel(
     val metric: ChartMetric,
-    val buckets: List<List<ColorCount>>,
-    val doseChoice: DoseChoice?,
-    val doseSubstances: List<String>,
-    val dosesLeftOut: Int
+    val buckets: List<List<ColorCount>>
 )
 
 data class ColorCount(
