@@ -121,11 +121,11 @@ class StatsPreviewProvider : PreviewParameterProvider<StatsModel> {
                 listOf(
                     ColorCount(
                         color = AdaptiveColor.PINK,
-                        count = 2
+                        value = 2.0
                     ),
                     ColorCount(
                         color = AdaptiveColor.BLUE,
-                        count = 3
+                        value = 3.0
                     ),
                 ),
                 listOf(),
@@ -135,13 +135,13 @@ class StatsPreviewProvider : PreviewParameterProvider<StatsModel> {
                 listOf(
                     ColorCount(
                         color = AdaptiveColor.ORANGE,
-                        count = 1
+                        value = 1.0
                     ),
                 ),
                 listOf(
                     ColorCount(
                         color = AdaptiveColor.PURPLE,
-                        count = 1
+                        value = 1.0
                     )
                 )
             ),

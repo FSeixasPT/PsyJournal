@@ -36,9 +36,12 @@ import androidx.compose.ui.graphics.drawscope.inset
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toReadableString
+import kotlin.math.floor
 
 @Composable
-fun BarChart(buckets: List<List<ColorCount>>, startDateText: String) {
+// counts keep whole-number labels; doses are split exactly in half
+fun BarChart(buckets: List<List<ColorCount>>, startDateText: String, isCount: Boolean = true) {
     Column {
         val isDarkTheme = isSystemInDarkTheme()
         val tickColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.20f)
@@ -53,17 +56,19 @@ fun BarChart(buckets: List<List<ColorCount>>, startDateText: String) {
             val canvasHeightOuter = size.height
             if (canvasHeightOuter > 0) { // for unknown reason canvasHeight can be 0 and then the app crashes
                 val maxCount = buckets.maxOf { bucket ->
-                    bucket.sumOf { it.count }
+                    bucket.sumOf { it.value }
                 }
-                val half = maxCount / 2
-                val halfLineHeight = half.toFloat() * canvasHeightOuter / maxCount
+                val half = if (isCount) floor(maxCount / 2) else maxCount / 2
+                val halfLineHeight = (half * canvasHeightOuter / maxCount).toFloat()
                 val halfLabelHeight = labelHeight / 2
-                val numLettersInLabel = maxCount.toString().length
+                val halfText = if (isCount) half.toInt().toString() else half.toReadableString()
+                val maxText = if (isCount) maxCount.toInt().toString() else maxCount.toReadableString()
+                val numLettersInLabel = maxOf(halfText.length, maxText.length)
                 val labelWidth = (numLettersInLabel + 1) * labelHeight * 0.6f
                 val spaceBetweenLabelAndChart = labelHeight * 0.5f
                 drawContext.canvas.nativeCanvas.apply {
                     drawText(
-                        half.toString(),
+                        halfText,
                         labelWidth - spaceBetweenLabelAndChart,
                         canvasHeightOuter - halfLineHeight + halfLabelHeight,
                         Paint().apply {
@@ -73,7 +78,7 @@ fun BarChart(buckets: List<List<ColorCount>>, startDateText: String) {
                         }
                     )
                     drawText(
-                        maxCount.toString(),
+                        maxText,
                         labelWidth - spaceBetweenLabelAndChart,
                         halfLabelHeight,
                         Paint().apply {
@@ -141,7 +146,7 @@ fun BarChart(buckets: List<List<ColorCount>>, startDateText: String) {
                             val xBucket = (((index * 2f) + 1) / 2) * (spaceWidth + bucketWidth)
                             var yStart = canvasHeightInner
                             colorCounts.forEach { colorCount ->
-                                val yLength = colorCount.count * canvasHeightInner / maxCount
+                                val yLength = (colorCount.value * canvasHeightInner / maxCount).toFloat()
                                 val yEnd = yStart - yLength
                                 val cornerRadius = bucketWidth / 6
                                 drawRoundRect(
