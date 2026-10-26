@@ -23,7 +23,6 @@ import androidx.lifecycle.viewModelScope
 import com.isaakhanimann.journal.data.room.experiences.ExperienceRepository
 import com.isaakhanimann.journal.data.room.experiences.entities.AdaptiveColor
 import com.isaakhanimann.journal.data.room.experiences.entities.Ingestion
-import com.isaakhanimann.journal.data.room.experiences.entities.SubstanceCompanion
 import com.isaakhanimann.journal.data.room.experiences.relations.ExperienceWithIngestionsAndCompanions
 import com.isaakhanimann.journal.data.substances.AdministrationRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -96,7 +95,20 @@ class StatsViewModel @Inject constructor(
 
     private val companionFlow = experienceRepo.getAllSubstanceCompanionsFlow()
 
-    private val experienceChartBucketsFlow: Flow<List<List<ColorCount>>> =
+    private val chartMetricFlow = MutableStateFlow(ChartMetric.EXPERIENCES)
+
+    // null until the user picks one, then the substance with the most experiences is charted
+    private val doseSubstanceFlow = MutableStateFlow<String?>(null)
+
+    fun onChangeChartMetric(metric: ChartMetric) {
+        chartMetricFlow.value = metric
+    }
+
+    fun onChooseDoseSubstance(substanceName: String) {
+        doseSubstanceFlow.value = substanceName
+    }
+
+    private val chartIngestionBucketsFlow: Flow<List<List<ChartIngestion>>> =
         relevantExperiencesSortedFlow.combine(optionFlow) { sortedExperiences, option ->
             var remainingExperiences = sortedExperiences
             val buckets = mutableListOf<List<ExperienceWithIngestionsAndCompanions>>()
@@ -112,36 +124,31 @@ class StatsViewModel @Inject constructor(
             }
             return@combine buckets
         }.combine(consumerFlow) { buckets, consumerName ->
-            Pair(buckets, consumerName)
-        }.combine(companionFlow) { pair, companions ->
-            return@combine pair.first.map { experiencesInBucket ->
-                return@map getColorCountsForExperiences(
-                    experiencesInBucket,
-                    companions,
-                    pair.second
-                )
+            buckets.map { experiencesInBucket ->
+                experiencesInBucket.flatMap { it.ingestionsWithCompanionAndCustomUnit }
+                    .filter { it.ingestion.consumerName == consumerName }
+                    .map { it.toChartIngestion() }
             }.reversed()
         }
 
-    private fun getColorCountsForExperiences(
-        experiences: List<ExperienceWithIngestionsAndCompanions>,
-        companions: List<SubstanceCompanion>,
-        consumerName: String?
-    ): List<ColorCount> {
-        return experiences.map { experience ->
-            experience.ingestionsWithCompanionAndCustomUnit.filter { it.ingestion.consumerName == consumerName }
-                .map { it.ingestion.substanceName }.toSet()
-        }.flatten()
-            .groupBy { it }.values.mapNotNull { sameNames ->
-                val name =
-                    sameNames.firstOrNull() ?: return@mapNotNull null
-                val oneCompanion =
-                    companions.firstOrNull { it.substanceName == name } ?: return@mapNotNull null
-                return@mapNotNull ColorCount(
-                    color = oneCompanion.color,
-                    count = sameNames.size
-                )
-            }.sortedByDescending { it.count }
+    private val chartFlow: Flow<ChartModel> = combine(
+        chartIngestionBucketsFlow,
+        companionFlow,
+        chartMetricFlow,
+        doseSubstanceFlow
+    ) { buckets, companions, metric, doseSubstance ->
+        val allIngestions = buckets.reversed().flatten()
+        val doseSubstances = doseSubstances(allIngestions)
+        val choice = (doseSubstance?.takeIf { it in doseSubstances } ?: doseSubstances.firstOrNull())
+            ?.let { doseChoice(allIngestions, it) }
+        val colors = companions.associate { it.substanceName to it.color }
+        ChartModel(
+            metric = metric,
+            buckets = buckets.map { barSegments(it, metric, colors, choice) },
+            doseChoice = choice,
+            doseSubstances = doseSubstances,
+            dosesLeftOut = choice?.let { dosesLeftOut(allIngestions, it) } ?: 0
+        )
     }
 
     // when each substance was taken, over the whole journal, for how long ago and how often
@@ -202,14 +209,18 @@ class StatsViewModel @Inject constructor(
             return@combine Pair(first = pair, second = areThere)
         }.combine(consumerFlow) { pair, consumerName ->
             return@combine Pair(first = pair, second = consumerName)
-        }.combine(experienceChartBucketsFlow) { pair, chartBuckets ->
+        }.combine(chartFlow) { pair, chart ->
             return@combine StatsModel(
                 areThereAnyIngestions = pair.first.second,
                 selectedOption = pair.first.first.first.first,
                 startDateText = pair.first.first.first.second,
                 statItems = pair.first.first.second,
-                chartBuckets = chartBuckets,
-                consumerName = pair.second
+                chartBuckets = chart.buckets,
+                consumerName = pair.second,
+                chartMetric = chart.metric,
+                doseChoice = chart.doseChoice,
+                doseSubstances = chart.doseSubstances,
+                dosesLeftOut = chart.dosesLeftOut
             )
         }.stateIn(
             initialValue = StatsModel(
@@ -240,12 +251,24 @@ data class StatsModel(
     val startDateText: String,
     val statItems: List<StatItem>,
     val chartBuckets: List<List<ColorCount>>,
-    val consumerName: String?
+    val consumerName: String?,
+    val chartMetric: ChartMetric = ChartMetric.EXPERIENCES,
+    val doseChoice: DoseChoice? = null,
+    val doseSubstances: List<String> = emptyList(),
+    val dosesLeftOut: Int = 0
+)
+
+data class ChartModel(
+    val metric: ChartMetric,
+    val buckets: List<List<ColorCount>>,
+    val doseChoice: DoseChoice?,
+    val doseSubstances: List<String>,
+    val dosesLeftOut: Int
 )
 
 data class ColorCount(
     val color: AdaptiveColor,
-    val count: Int
+    val value: Double
 )
 
 data class StatItem(
